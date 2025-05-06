@@ -1,0 +1,6 @@
+tt/settings.py
+.venv
+.env
+migrations
+node_modules
+venv

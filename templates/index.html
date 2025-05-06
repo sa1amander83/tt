@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PingPong Club</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+     <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-green-600 text-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="fas fa-table-tennis-paddle-ball text-2xl mr-2"></i>
+                <h1 class="text-xl font-bold">PingPong Club</h1>
+            </div>
+            <nav class="hidden md:block">
+                <ul class="flex space-x-6">
+                    <li><a href="index.html" class="hover:text-green-200 font-medium">Главная</a></li>
+                    <li><a href="bookings.html" class="hover:text-green-200">Бронирование</a></li>
+                    <li><a href="admin-bookings.html" class="hover:text-green-200">Текущие</a></li>
+                    <li><a href="statistics.html" class="hover:text-green-200">Статистика</a></li>
+                    <li><a href="login.html" class="hover:text-green-200">Вход</a></li>
+                    <li><a href="register.html" class="hover:text-green-200">Регистрация</a></li>
+                    <li><a href="contacts.html" class="hover:text-green-200">Контакты</a></li>
+                    <li><a href="about.html" class="hover:text-green-200">О клубе</a></li>
+                    <li><a href="logout.html" class="hover:text-green-200">Выход</a></li>
+                    <li><a href="404.html" class="hover:text-green-200">Не найдено</a></li>
+
+
+                </ul>
+            </nav>
+            <button id="mobile-menu-button" class="md:hidden text-white">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden bg-green-700">
+            <ul class="container mx-auto px-4 py-2">
+                <li class="py-2"><a href="index.html" class="block hover:text-green-200">Главная</a></li>
+                <li class="py-2"><a href="bookings.html" class="block hover:text-green-200">Бронирование</a></li>
+                <li class="py-2"><a href="statistics.html" class="block hover:text-green-200">Статистика</a></li>
+                <li class="py-2"><a href="login.html" class="block hover:text-green-200">Вход</a></li>
+                <li class="py-2"><a href="register.html" class="block hover:text-green-200">Регистрация</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="relative">
+            <div class="bg-cover bg-center h-96" style="background-image: url('https://images.unsplash.com/photo-1609710228159-0fa9bd7c0827?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80');">
+                <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+                <div class="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-white text-center">
+                    <h2 class="text-4xl font-bold mb-4">Добро пожаловать в PingPong Club</h2>
+                    <p class="text-xl mb-8">Лучший клуб настольного тенниса в городе</p>
+                    <a href="bookings.html" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">Забронировать стол</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="py-12 bg-white">
+            <div class="container mx-auto px-4">
+                <h2 class="text-3xl font-bold text-center mb-12">Наши преимущества</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="text-center p-6 bg-gray-50 rounded-lg shadow-sm">
+                        <div class="text-green-600 text-4xl mb-4">
+                            <i class="fas fa-table-tennis"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">Профессиональные столы</h3>
+                        <p class="text-gray-600">10 столов высшего качества для игроков любого уровня</p>
+                    </div>
+                    <div class="text-center p-6 bg-gray-50 rounded-lg shadow-sm">
+                        <div class="text-green-600 text-4xl mb-4">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">Удобное бронирование</h3>
+                        <p class="text-gray-600">Бронируйте столы онлайн в любое удобное для вас время</p>
+                    </div>
+                    <div class="text-center p-6 bg-gray-50 rounded-lg shadow-sm">
+                        <div class="text-green-600 text-4xl mb-4">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">Турниры и соревнования</h3>
+                        <p class="text-gray-600">Регулярные турниры для игроков всех уровней</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Schedule Section -->
+        <section class="py-12 bg-gray-100">
+            <div class="container mx-auto px-4">
+                <h2 class="text-3xl font-bold text-center mb-8">Расписание работы</h2>
+                <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="grid grid-cols-2 divide-x divide-gray-200">
+                        <div class="p-6">
+                            <h3 class="text-xl font-semibold mb-4">Будние дни</h3>
+                            <ul class="space-y-2">
+                                <li class="flex justify-between">
+                                    <span class="text-gray-600">Понедельник - Пятница:</span>
+                                    <span class="font-medium">09:00 - 22:00</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-semibold mb-4">Выходные дни</h3>
+                            <ul class="space-y-2">
+                                <li class="flex justify-between">
+                                    <span class="text-gray-600">Суббота:</span>
+                                    <span class="font-medium">10:00 - 23:00</span>
+                                </li>
+                                <li class="flex justify-between">
+                                    <span class="text-gray-600">Воскресенье:</span>
+                                    <span class="font-medium">10:00 - 21:00</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="py-12 bg-green-600 text-white">
+            <div class="container mx-auto px-4 text-center">
+                <h2 class="text-3xl font-bold mb-4">Готовы начать игру?</h2>
+                <p class="text-xl mb-8 max-w-2xl mx-auto">Присоединяйтесь к нашему клубу сегодня и получите доступ к лучшим столам для настольного тенниса</p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <a href="register.html" class="bg-white text-green-600 hover:bg-gray-100 font-bold py-3 px-6 rounded-lg transition duration-300">Зарегистрироваться</a>
+                    <a href="bookings.html" class="bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-6 rounded-lg transition duration-300">Забронировать стол</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">PingPong Club</h3>
+                    <p class="text-gray-400">Лучший клуб настольного тенниса в городе с профессиональными столами и дружелюбной атмосферой.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Контакты</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li class="flex items-center">
+                            <i class="fas fa-map-marker-alt mr-2"></i>
+                            <span>ул. Спортивная, 123</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone mr-2"></i>
+                            <span>+7 (123) 456-78-90</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope mr-2"></i>
+                            <span>info@pingpongclub.ru</span>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Мы в соцсетях</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                            <i class="fab fa-facebook-f text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                            <i class="fab fa-instagram text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                            <i class="fab fa-vk text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                            <i class="fab fa-telegram text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                <p>&copy; 2023 PingPong Club. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>

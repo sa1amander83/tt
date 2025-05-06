@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки - PingPong Club</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-green-600 text-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="fas fa-table-tennis-paddle-ball text-2xl mr-2"></i>
+                <h1 class="text-xl font-bold">PingPong Club</h1>
+            </div>
+            <nav class="hidden md:block">
+                <ul class="flex space-x-6">
+                    <li><a href="index.html" class="hover:text-green-200 font-medium">Главная</a></li>
+                    <li><a href="bookings.html" class="hover:text-green-200">Бронирование</a></li>
+                    <li><a href="admin-bookings.html" class="hover:text-green-200">Текущие</a></li>
+                    <li><a href="statistics.html" class="hover:text-green-200">Статистика</a></li>
+                    <li><a href="login.html" class="hover:text-green-200">Вход</a></li>
+                    <li><a href="register.html" class="hover:text-green-200">Регистрация</a></li>
+                    <li><a href="contacts.html" class="hover:text-green-200">Контакты</a></li>
+                    <li><a href="about.html" class="hover:text-green-200">О клубе</a></li>
+                </ul>
+            </nav>
+            <button id="mobile-menu-button" class="md:hidden text-white">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden bg-green-700">
+            <ul class="container mx-auto px-4 py-2">
+                <li class="py-2"><a href="index.html" class="block hover:text-green-200">Главная</a></li>
+                <li class="py-2"><a href="admin-users.html" class="block hover:text-green-200">Пользователи</a></li>
+                <li class="py-2"><a href="admin-reports.html" class="block hover:text-green-200">Отчеты</a></li>
+                <li class="py-2"><a href="settings.html" class="block hover:text-green-200">Настройки</a></li>
+                <li class="py-2"><a href="#" id="mobile-logout-link" class="block hover:text-green-200">Выход</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <h1 class="text-2xl font-bold mb-8">Настройки клуба</h1>
+
+        <!-- Settings Tabs -->
+        <div class="mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8">
+                    <a href="#" class="border-green-500 text-green-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" id="tab-tables">
+                        Столы
+                    </a>
+                    <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" id="tab-pricing">
+                        Цены
+                    </a>
+                    <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" id="tab-memberships">
+                        Абонементы
+                    </a>
+                    <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" id="tab-schedule">
+                        Расписание
+                    </a>
+                    <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" id="tab-general">
+                        Общие
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Tables Settings -->
+        <div id="tab-content-tables" class="tab-content">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold">Управление столами</h2>
+                    <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                        <i class="fas fa-plus mr-2"></i> Добавить стол
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Тип</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Стоимость (час)</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Стол #1</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Профессиональный</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активен</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">500 ₽</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-green-600 hover:text-green-900 mr-3">Редактировать</button>
+                                    <button class="text-red-600 hover:text-red-900">Удалить</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Стол #2</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Профессиональный</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активен</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">500 ₽</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-green-600 hover:text-green-900 mr-3">Редактировать</button>
+                                    <button class="text-red-600 hover:text-red-900">Удалить</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Стол #3</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Профессиональный</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активен</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">500 ₽</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-green-600 hover:text-green-900 mr-3">Редактировать</button>
+                                    <button class="text-red-600 hover:text-red-900">Удалить</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">4</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Стол #4</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Стандартный</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активен</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">400 ₽</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-green-600 hover:text-green-900 mr-3">Редактировать</button>
+                                    <button class="text-red-600 hover:text-red-900">Удалить</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">5</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Стол #5</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Стандартный</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">На обслуживании</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">400 ₽</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-green-600 hover:text-green-900 mr-3">Редактировать</button>
+                                    <button class="text-red-600 hover:text-red-900">Удалить</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Добавить новый стол</h3>
+                <form class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="table-name" class="block text-sm font-medium text-gray-700 mb-1">Название стола</label>
+                            <input type="text" id="table-name" name="table-name" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        </div>
+                        <div>
+                            <label for="table-type" class="block text-sm font-medium text-gray-700 mb-1">Тип стола</label>
+                            <select id="table-type" name="table-type" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                <option value="professional">Профессиональный</option>
+                                <option value="standard">Стандартный</option>
+                                <option value="training">Тренировочный</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="table-price" class="block text-sm font-medium text-gray-700 mb-1">Стоимость за час (₽)</label>
+                            <input type="number" id="table-price" name="table-price" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        </div>
+                        <div>
+                            <label for="table-status" class="block text-sm font-medium text-gray-700 mb-1">Статус</label>
+                            <select id="table-status" name="table-status" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                <option value="active">Активен</option>
+                                <option value="maintenance">На обслуживании</option>
+                                <option value="inactive">Неактивен</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="table-description" class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
+                        <textarea id="table-description" name="table-description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"></textarea>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                            Сохранить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Pricing Settings -->
+        <div id="tab-content-pricing" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-xl font-semibold mb-6">Настройка цен</h2>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-medium mb-4">Стоимость аренды столов</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Тип стола</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">30 минут</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">1 час</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Профессиональный</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <input type="number" value="300" class="w-24 px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"> ₽
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <input type="number" value="500" class="w-24 px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"> ₽
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-green-600 hover:text-green-900">Сохранить</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Стандартный</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <input type="number" value="250" class="w-24 px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"> ₽
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <input type="number" value="400" class="w-24 px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"> ₽
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-green-600 hover:text-green-900">Сохранить</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Тренировочный</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <input type="number" value="200" class="w-24 px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"> ₽
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <input type="number" value="350" class="w-24 px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"> ₽
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-green-600 hover:text-green-900">Сохранить</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="border-t pt-6">
+                        <h3 class="text-lg font-medium mb-4">Специальные предложения</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Описание</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Скидка</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Утренние часы</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">Скидка на бронирование с 9:00 до 12:00</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">20%</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активно</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-green-600 hover:text-green-900 mr-3">Редактировать</button>
+                                            <button class="text-red-600 hover:text-red-900">Удалить</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Счастливые выходные</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">Скидка на бронирование в выходные дни</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">15%</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активно</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-green-600 hover:text-green-900 mr-3">Редактировать</button>
+                                            <button class="text-red-600 hover:text-red-900">Удалить</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">День рождения</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">Скидка в день рождения клиента</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">30%</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активно</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-green-600 hover:text-green-900 mr-3">Редактировать</button>
+                                            <button class="text-red-600 hover:text-red-900">Удалить</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4">
+                            <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                                <i class="fas fa-plus mr-2"></i> Добавить спецпредложение
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Memberships Settings -->
+        <div id="tab-content-memberships" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold">Управление абонементами</h2>
+                    <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                        <i class="fas fa-plus mr-2"></i> Добавить абонемент
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Описание</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Длительность</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Стоимость</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Стандартный</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">Базовый абонемент с доступом ко всем столам</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1 месяц</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3 000 ₽</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активен</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-green-600 hover:text-green-900 mr-3">Редактировать</button>
+                                    <button class="text-red-600 hover:text-red-900">Удалить</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Премиум</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">Расширенный абонемент с приоритетным бронированием</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1 месяц</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">5 000 ₽</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активен</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-green-600 hover:text-green-900 mr-3">Редактировать</button>
+                                    <button class="text-red-600 hover:text-red-900">Удалить</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Семейный</td>
+                                <td class="px-6 py-4 text-sm text-gray-500">Абонемент для всей семьи (до 4 человек)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1 месяц</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">8 000 ₽</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активен</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-green-600 hover:text-green-900 mr-3">Редактировать</button>
+                                    <button class="text-red-600 hover:text-red-900">Удалить</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Добавить новый абонемент</h3>
+                <form class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="membership-name" class="block text-sm font-medium text-gray-700 mb-1">Название абонемента</label>
+                            <input type="text" id="membership-name" name="membership-name" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        </div>
+                        <div>
+                            <label for="membership-duration" class="block text-sm font-medium text-gray-700 mb-1">Длительность</label>
+                            <select id="membership-duration" name="membership-duration" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                <option value="1">1 месяц</option>
+                                <option value="3">3 месяца</option>
+                                <option value="6">6 месяцев</option>
+                                <option value="12">12 месяцев</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="membership-price" class="block text-sm font-medium text-gray-700 mb-1">Стоимость (₽)</label>
+                            <input type="number" id="membership-price" name="membership-price" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        </div>
+                        <div>
+                            <label for="membership-status" class="block text-sm font-medium text-gray-700 mb-1">Статус</label>
+                            <select id="membership-status" name="membership-status" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                <option value="active">Активен</option>
+                                <option value="inactive">Неактивен</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="membership-description" class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
+                        <textarea id="membership-description" name="membership-description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Включенные услуги</label>
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="service-booking" name="service-booking" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                                <label for="service-booking" class="ml-2 block text-sm text-gray-900">Бронирование столов</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="service-discount" name="service-discount" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                                <label for="service-discount" class="ml-2 block text-sm text-gray-900">Скидка на аренду инвентаря</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="service-tournaments" name="service-tournaments" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                                <label for="service-tournaments" class="ml-2 block text-sm text-gray-900">Участие в клубных турнирах</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="service-training" name="service-training" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                                <label for="service-training" class="ml-2 block text-sm text-gray-900">Групповые тренировки</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                            Сохранить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Schedule Settings -->
+        <div id="tab-content-schedule" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-xl font-semibold mb-6">Настройка расписания работы</h2>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-medium mb-4">Часы работы клуба</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">День недели</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Открытие</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Закрытие</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Понедельник</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <input type="time" value="09:00" class="px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <input type="time" value="22:00" class="px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Вторник</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <input type="time" value="09:00" class="px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <input type="time" value="22:00" class="px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Среда</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <input type="time" value="09:00" class="px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <input type="time" value="22:00" class="px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Четверг</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <input type="time" value="09:00" class="px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <input type="time" value="22:00" class="px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Пятница</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <input type="time" value="09:00" class="px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <input type="time" value="23:00" class="px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Суббота</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <input type="time" value="10:00" class="px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <input type="time" value="23:00" class="px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Воскресенье</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <input type="time" value="10:00" class="px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <input type="time" value="22:00" class="px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="mt-4 flex justify-end">
+                                    <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                                        Сохранить расписание
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 class="text-md font-medium mb-2">Настройки бронирования</h4>
+                                <div class="space-y-4 bg-gray-50 p-4 rounded-lg">
+                                    <div>
+                                        <label for="booking-interval" class="block text-sm font-medium text-gray-700 mb-1">Интервал бронирования</label>
+                                        <select id="booking-interval" name="booking-interval" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            <option value="30">30 минут</option>
+                                            <option value="60" selected>1 час</option>
+                                            <option value="90">1.5 часа</option>
+                                            <option value="120">2 часа</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="max-advance-booking" class="block text-sm font-medium text-gray-700 mb-1">Максимальный срок предварительного бронирования</label>
+                                        <select id="max-advance-booking" name="max-advance-booking" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            <option value="1">1 день</option>
+                                            <option value="3">3 дня</option>
+                                            <option value="7" selected>1 неделя</option>
+                                            <option value="14">2 недели</option>
+                                            <option value="30">1 месяц</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="min-cancel-time" class="block text-sm font-medium text-gray-700 mb-1">Минимальное время для отмены без штрафа</label>
+                                        <select id="min-cancel-time" name="min-cancel-time" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            <option value="1">1 час</option>
+                                            <option value="2">2 часа</option>
+                                            <option value="3" selected>3 часа</option>
+                                            <option value="6">6 часов</option>
+                                            <option value="12">12 часов</option>
+                                            <option value="24">24 часа</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="cancel-penalty" class="block text-sm font-medium text-gray-700 mb-1">Штраф за позднюю отмену (% от стоимости)</label>
+                                        <input type="number" id="cancel-penalty" name="cancel-penalty" value="50" min="0" max="100" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="allow-member-priority" name="allow-member-priority" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" checked>
+                                        <label for="allow-member-priority" class="ml-2 block text-sm text-gray-900">Приоритет бронирования для владельцев абонементов</label>
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                                            Сохранить настройки
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-t pt-6">
+                        <h3 class="text-lg font-medium mb-4">Выходные и праздничные дни</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Описание</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">01.01.2023</td>
+                                                <td class="px-6 py-4 text-sm text-gray-500">Новый год</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Закрыто</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <button class="text-red-600 hover:text-red-900">Удалить</button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">07.01.2023</td>
+                                                <td class="px-6 py-4 text-sm text-gray-500">Рождество</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Сокращенный день</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <button class="text-red-600 hover:text-red-900">Удалить</button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">23.02.2023</td>
+                                                <td class="px-6 py-4 text-sm text-gray-500">День защитника Отечества</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Сокращенный день</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <button class="text-red-600 hover:text-red-900">Удалить</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 class="text-md font-medium mb-2">Добавить выходной или праздничный день</h4>
+                                <div class="space-y-4 bg-gray-50 p-4 rounded-lg">
+                                    <div>
+                                        <label for="holiday-date" class="block text-sm font-medium text-gray-700 mb-1">Дата</label>
+                                        <input type="date" id="holiday-date" name="holiday-date" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                    </div>
+                                    <div>
+                                        <label for="holiday-description" class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
+                                        <input type="text" id="holiday-description" name="holiday-description" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                    </div>
+                                    <div>
+                                        <label for="holiday-status" class="block text-sm font-medium text-gray-700 mb-1">Статус</label>
+                                        <select id="holiday-status" name="holiday-status" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            <option value="closed">Закрыто</option>
+                                            <option value="shortened">Сокращенный день</option>
+                                            <option value="special">Особый режим работы</option>
+                                        </select>
+                                    </div>
+                                    <div id="shortened-hours" class="space-y-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Часы работы</label>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label for="holiday-open" class="block text-xs text-gray-500">Открытие</label>
+                                                <input type="time" id="holiday-open" name="holiday-open" value="10:00" class="w-full px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            </div>
+                                            <div>
+                                                <label for="holiday-close" class="block text-xs text-gray-500">Закрытие</label>
+                                                <input type="time" id="holiday-close" name="holiday-close" value="18:00" class="w-full px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                                            Добавить
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- General Settings -->
+        <div id="tab-content-general" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-xl font-semibold mb-6">Общие настройки</h2>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-medium mb-4">Информация о клубе</h3>
+                        <form class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="club-name" class="block text-sm font-medium text-gray-700 mb-1">Название клуба</label>
+                                    <input type="text" id="club-name" name="club-name" value="PingPong Club" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                </div>
+                                <div>
+                                    <label for="club-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                    <input type="email" id="club-email" name="club-email" value="info@pingpongclub.com" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                </div>
+                                <div>
+                                    <label for="club-phone" class="block text-sm font-medium text-gray-700 mb-1">Телефон</label>
+                                    <input type="tel" id="club-phone" name="club-phone" value="+7 (123) 456-78-90" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                </div>
+                                <div>
+                                    <label for="club-address" class="block text-sm font-medium text-gray-700 mb-1">Адрес</label>
+                                    <input type="text" id="club-address" name="club-address" value="г. Москва, ул. Спортивная, д. 123" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="club-description" class="block text-sm font-medium text-gray-700 mb-1">Описание клуба</label>
+                                <textarea id="club-description" name="club-description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">PingPong Club - современный клуб настольного тенниса с профессиональными столами и комфортными условиями для игры. Мы предлагаем индивидуальные и групповые тренировки, проводим турниры и мероприятия для всех уровней игры.</textarea>
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                                    Сохранить
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="border-t pt-6">
+                        <h3 class="text-lg font-medium mb-4">Настройки системы</h3>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="currency" class="block text-sm font-medium text-gray-700 mb-1">Валюта</label>
+                                    <select id="currency" name="currency" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                        <option value="RUB" selected>Российский рубль (₽)</option>
+                                        <option value="USD">Доллар США ($)</option>
+                                        <option value="EUR">Евро (€)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="timezone" class="block text-sm font-medium text-gray-700 mb-1">Часовой пояс</label>
+                                    <select id="timezone" name="timezone" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                        <option value="Europe/Moscow" selected>Москва (GMT+3)</option>
+                                        <option value="Europe/Kaliningrad">Калининград (GMT+2)</option>
+                                        <option value="Asia/Yekaterinburg">Екатеринбург (GMT+5)</option>
+                                        <option value="Asia/Novosibirsk">Новосибирск (GMT+7)</option>
+                                        <option value="Asia/Vladivostok">Владивосток (GMT+10)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="date-format" class="block text-sm font-medium text-gray-700 mb-1">Формат даты</label>
+                                    <select id="date-format" name="date-format" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                        <option value="DD.MM.YYYY" selected>ДД.ММ.ГГГГ</option>
+                                        <option value="MM/DD/YYYY">ММ/ДД/ГГГГ</option>
+                                        <option value="YYYY-MM-DD">ГГГГ-ММ-ДД</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="time-format" class="block text-sm font-medium text-gray-700 mb-1">Формат времени</label>
+                                    <select id="time-format" name="time-format" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                        <option value="24" selected>24-часовой (14:30)</option>
+                                        <option value="12">12-часовой (2:30 PM)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <h4 class="text-md font-medium">Уведомления</h4>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="notify-bookings" name="notify-bookings" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" checked>
+                                    <label for="notify-bookings" class="ml-2 block text-sm text-gray-900">Уведомления о новых бронированиях</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="notify-cancellations" name="notify-cancellations" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" checked>
+                                    <label for="notify-cancellations" class="ml-2 block text-sm text-gray-900">Уведомления об отмене бронирований</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="notify-payments" name="notify-payments" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" checked>
+                                    <label for="notify-payments" class="ml-2 block text-sm text-gray-900">Уведомления о платежах</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="notify-registrations" name="notify-registrations" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" checked>
+                                    <label for="notify-registrations" class="ml-2 block text-sm text-gray-900">Уведомления о новых регистрациях</label>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end">
+                                <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                                    Сохранить настройки
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-t pt-6">
+                        <h3 class="text-lg font-medium mb-4">Резервное копирование</h3>
+                        <div class="space-y-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="text-md font-medium mb-2">Последнее резервное копирование</h4>
+                                <p class="text-sm text-gray-600">15.05.2023 в 03:00</p>
+                                <div class="mt-4 flex space-x-2">
+                                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                                        <i class="fas fa-download mr-2"></i> Скачать
+                                    </button>
+                                    <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                                        <i class="fas fa-sync-alt mr-2"></i> Создать новое
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="text-md font-medium mb-2">Настройки автоматического резервного копирования</h4>
+                                <div class="space-y-2">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="auto-backup" name="auto-backup" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" checked>
+                                        <label for="auto-backup" class="ml-2 block text-sm text-gray-900">Включить автоматическое резервное копирование</label>
+                                    </div>
+                                    <div>
+                                        <label for="backup-frequency" class="block text-sm font-medium text-gray-700 mb-1">Частота</label>
+                                        <select id="backup-frequency" name="backup-frequency" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            <option value="daily" selected>Ежедневно</option>
+                                            <option value="weekly">Еженедельно</option>
+                                            <option value="monthly">Ежемесячно</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="backup-time" class="block text-sm font-medium text-gray-700 mb-1">Время</label>
+                                        <input type="time" id="backup-time" name="backup-time" value="03:00" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                    </div>
+                                    <div>
+                                        <label for="backup-retention" class="block text-sm font-medium text-gray-700 mb-1">Хранить резервные копии</label>
+                                        <select id="backup-retention" name="backup-retention" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                            <option value="7">7 дней</option>
+                                            <option value="14">14 дней</option>
+                                            <option value="30" selected>30 дней</option>
+                                            <option value="90">90 дней</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-4 flex justify-end">
+                                    <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                                        Сохранить настройки
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                <p>&copy; 2023 PingPong Club. Панель администратора.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+
+            // Tab switching functionality
+            const tabButtons = document.querySelectorAll('[id^="tab-"]');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // Remove active class from all tabs
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('border-green-500', 'text-green-600');
+                        btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                    });
+
+                    // Add active class to clicked tab
+                    this.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                    this.classList.add('border-green-500', 'text-green-600');
+
+                    // Hide all tab contents
+                    tabContents.forEach(content => {
+                        content.classList.add('hidden');
+                    });
+
+                    // Show corresponding tab content
+                    const tabId = this.id.replace('tab-', 'tab-content-');
+                    document.getElementById(tabId).classList.remove('hidden');
+                });
+            });
+
+            // Holiday status change handler
+            const holidayStatus = document.getElementById('holiday-status');
+            const shortenedHours = document.getElementById('shortened-hours');
+
+            if (holidayStatus && shortenedHours) {
+                holidayStatus.addEventListener('change', function() {
+                    if (this.value === 'shortened' || this.value === 'special') {
+                        shortenedHours.classList.remove('hidden');
+                    } else {
+                        shortenedHours.classList.add('hidden');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

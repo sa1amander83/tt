@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статистика - PingPong Club</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+   <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-green-600 text-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="fas fa-table-tennis-paddle-ball text-2xl mr-2"></i>
+                <h1 class="text-xl font-bold">PingPong Club</h1>
+            </div>
+            <nav class="hidden md:block">
+                <ul class="flex space-x-6">
+                    <li><a href="index.html" class="hover:text-green-200 font-medium">Главная</a></li>
+                    <li><a href="bookings.html" class="hover:text-green-200">Бронирование</a></li>
+                    <li><a href="admin-bookings.html" class="hover:text-green-200">Текущие</a></li>
+                    <li><a href="statistics.html" class="hover:text-green-200">Статистика</a></li>
+                    <li><a href="login.html" class="hover:text-green-200">Вход</a></li>
+                    <li><a href="register.html" class="hover:text-green-200">Регистрация</a></li>
+                    <li><a href="contacts.html" class="hover:text-green-200">Контакты</a></li>
+                    <li><a href="about.html" class="hover:text-green-200">О клубе</a></li>
+                </ul>
+            </nav>
+            <button id="mobile-menu-button" class="md:hidden text-white">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden bg-green-700">
+            <ul class="container mx-auto px-4 py-2">
+                <li class="py-2"><a href="index.html" class="block hover:text-green-200">Главная</a></li>
+                <li class="py-2"><a href="bookings.html" class="block hover:text-green-200">Бронирование</a></li>
+                <li class="py-2"><a href="statistics.html" class="block hover:text-green-200">Статистика</a></li>
+                <li class="py-2"><a href="profile.html" class="block hover:text-green-200">Личный кабинет</a></li>
+                <li class="py-2"><a href="#" id="mobile-logout-link" class="block hover:text-green-200">Выход</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8 text-center">Моя статистика</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Всего игр</p>
+                        <h2 class="text-3xl font-bold">42</h2>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full">
+                        <i class="fas fa-table-tennis text-green-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-green-600 text-sm flex items-center">
+                        <i class="fas fa-arrow-up mr-1"></i> 12% с прошлого месяца
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Победы</p>
+                        <h2 class="text-3xl font-bold">28</h2>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <i class="fas fa-trophy text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-blue-600 text-sm flex items-center">
+                        <i class="fas fa-arrow-up mr-1"></i> 8% с прошлого месяца
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Поражения</p>
+                        <h2 class="text-3xl font-bold">14</h2>
+                    </div>
+                    <div class="bg-red-100 p-3 rounded-full">
+                        <i class="fas fa-times text-red-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-red-600 text-sm flex items-center">
+                        <i class="fas fa-arrow-down mr-1"></i> 5% с прошлого месяца
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Процент побед</p>
+                        <h2 class="text-3xl font-bold">67%</h2>
+                    </div>
+                    <div class="bg-purple-100 p-3 rounded-full">
+                        <i class="fas fa-chart-pie text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-purple-600 text-sm flex items-center">
+                        <i class="fas fa-arrow-up mr-1"></i> 3% с прошлого месяца
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-bold mb-4">Статистика игр по месяцам</h3>
+                <div class="h-80">
+                    <canvas id="monthlyStats"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-bold mb-4">Соотношение побед и поражений</h3>
+                <div class="h-80">
+                    <canvas id="winLossRatio"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h3 class="text-xl font-bold mb-4">Последние игры</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Соперник</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Счет</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Результат</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">12.05.2023</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Алексей Петров</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">11:7, 11:9, 9:11, 11:8</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Победа</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">10.05.2023</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Сергей Иванов</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">11:8, 11:6, 11:9</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Победа</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">08.05.2023</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Дмитрий Смирнов</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">9:11, 7:11, 11:9, 8:11</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Поражение</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">05.05.2023</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Андрей Козлов</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">11:7, 11:9, 11:6</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Победа</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">03.05.2023</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Михаил Новиков</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">8:11, 9:11, 7:11</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Поражение</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-xl font-bold mb-4">Рейтинг игроков клуба</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Место</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Игрок</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Рейтинг</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Игры</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Победы</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">1</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Алексей Петров</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1850</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">78</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">62</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Дмитрий Смирнов</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1820</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">65</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">51</td>
+                        </tr>
+                        <tr class="bg-green-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">3</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Иван Иванов (Вы)</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1780</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">42</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">28</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">4</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Сергей Иванов</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1750</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">56</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">39</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">5</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Андрей Козлов</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1720</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">48</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">32</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">PingPong Club</h3>
+                    <p class="text-gray-400">Лучший клуб настольного тенниса в городе с профессиональными столами и дружелюбной атмосферой.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Контакты</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li class="flex items-center">
+                            <i class="fas fa-map-marker-alt mr-2"></i>
+                            <span>ул. Спортивная, 123</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone mr-2"></i>
+                            <span>+7 (123) 456-78-90</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope mr-2"></i>
+                            <span>info@pingpongclub.ru</span>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Мы в соцсетях</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                            <i class="fab fa-facebook-f text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                            <i class="fab fa-instagram text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                            <i class="fab fa-vk text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                            <i class="fab fa-telegram text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                <p>&copy; 2023 PingPong Club. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Monthly Stats Chart
+        const monthlyStatsCtx = document.getElementById('monthlyStats').getContext('2d');
+        const monthlyStatsChart = new Chart(monthlyStatsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май'],
+                datasets: [
+                    {
+                        label: 'Победы',
+                        data: [4, 5, 6, 7, 6],
+                        backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                        borderColor: 'rgba(34, 197, 94, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Поражения',
+                        data: [3, 2, 3, 2, 4],
+                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                        borderColor: 'rgba(239, 68, 68, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+
+        // Win/Loss Ratio Chart
+        const winLossRatioCtx = document.getElementById('winLossRatio').getContext('2d');
+        const winLossRatioChart = new Chart(winLossRatioCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Победы', 'Поражения'],
+                datasets: [{
+                    data: [28, 14],
+                    backgroundColor: [
+                        'rgba(34, 197, 94, 0.7)',
+                        'rgba(239, 68, 68, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(34, 197, 94, 1)',
+                        'rgba(239, 68, 68, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+
+        // Logout functionality
+        document.getElementById('logout-link')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            // In a real app, you would handle logout here
+            alert('Выход из системы...');
+            window.location.href = 'login.html';
+        });
+
+        document.getElementById('mobile-logout-link')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            // In a real app, you would handle logout here
+            alert('Выход из системы...');
+            window.location.href = 'login.html';
+        });
+    </script>
+</body>
+</html>

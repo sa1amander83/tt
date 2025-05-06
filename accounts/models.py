@@ -7,6 +7,8 @@ from django.contrib.auth.models import (
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import validate_email
 
+from admin_settings.models import LoyaltyProfile
+
 
 class UserManager(BaseUserManager):
     """ User manager """
@@ -72,21 +74,21 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=150,
         blank=True,
     )
-    middle_name = models.CharField(
-        _("Middle Name"),
-        max_length=150,
-        blank=True,
-    )
+
     role = models.CharField(
         _("Role"),
         max_length=10,
         choices=Role.choices,
         default=Role.USER,
     )
-    is_staff = models.BooleanField(_("Staff status"), default=False)
-    is_active = models.BooleanField(_("Active"), default=True)
-    date_joined = models.DateTimeField(_("Date Joined"), auto_now_add=True)
-    last_updated = models.DateTimeField(_("Last Updated"), auto_now=True)
+
+    status=models.CharField(_("Статус"), max_length=10, choices=[('active', 'Активен'),
+                                                                ('not_active', 'Не активен'), ('blocked', 'Заблокирован')], default='active')
+    user_age=models.PositiveIntegerField(_("Возраст"), blank=True, null=True)
+    is_staff = models.BooleanField(_("Статус"), default=False)
+    date_joined = models.DateTimeField(_("Зарегистрирован"), auto_now_add=True)
+    last_updated = models.DateTimeField(_("Был в последний раз"), auto_now=True)
+    loyalty=models.ForeignKey(LoyaltyProfile, on_delete=models.SET_NULL, blank=True, null=True)
 
     objects = UserManager()
 
@@ -98,8 +100,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_full_name(self):
         full_name = f"{self.last_name} {self.first_name}"
-        if self.middle_name:
-            full_name += f" {self.middle_name}"
+
         return full_name.strip()
 
     def get_short_name(self):

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Страница не найдена - PingPong Club</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <header class="bg-green-600 text-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="fas fa-table-tennis-paddle-ball text-2xl mr-2"></i>
+                <h1 class="text-xl font-bold">PingPong Club</h1>
+            </div>
+            <nav class="hidden md:block">
+                <ul class="flex space-x-6">
+                    <li><a href="index.html" class="hover:text-green-200">Главная</a></li>
+                    <li><a href="about.html" class="hover:text-green-200">О клубе</a></li>
+                    <li><a href="contacts.html" class="hover:text-green-200">Контакты</a></li>
+                    <li><a href="login.html" class="hover:text-green-200">Вход</a></li>
+                    <li><a href="register.html" class="hover:text-green-200">Регистрация</a></li>
+                </ul>
+            </nav>
+            <button id="mobile-menu-button" class="md:hidden text-white">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden bg-green-700">
+            <ul class="container mx-auto px-4 py-2">
+                <li class="py-2"><a href="index.html" class="block hover:text-green-200">Главная</a></li>
+                <li class="py-2"><a href="about.html" class="block hover:text-green-200">О клубе</a></li>
+                <li class="py-2"><a href="contacts.html" class="block hover:text-green-200">Контакты</a></li>
+                <li class="py-2"><a href="login.html" class="block hover:text-green-200">Вход</a></li>
+                <li class="py-2"><a href="register.html" class="block hover:text-green-200">Регистрация</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-grow flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-md p-8 max-w-lg w-full text-center">
+            <div class="mb-6">
+                <div class="text-9xl font-bold text-green-600 mb-4">404</div>
+                <div class="text-6xl mb-6">
+                    <i class="fas fa-table-tennis-paddle-ball text-gray-300 animate-bounce"></i>
+                </div>
+            </div>
+            <h1 class="text-2xl font-bold mb-4">Упс! Страница не найдена</h1>
+            <p class="text-gray-600 mb-8">Похоже, что страница, которую вы ищете, не существует или была перемещена.</p>
+            <div class="space-y-4">
+                <a href="index.html" class="block w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md transition duration-300">
+                    Вернуться на главную
+                </a>
+                <a href="contacts.html" class="block w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-md transition duration-300">
+                    Связаться с нами
+                </a>
+            </div>
+            <div class="mt-8 text-gray-500">
+                <p>Вы также можете воспользоваться навигацией выше, чтобы найти нужную информацию.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">О нас</h3>
+                    <p class="text-gray-400">PingPong Club - современный клуб настольного тенниса с профессиональными столами и комфортными условиями для игры.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Контакты</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li class="flex items-center">
+                            <i class="fas fa-map-marker-alt mr-2 text-green-500"></i>
+                            г. Москва, ул. Спортивная, д. 123
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone-alt mr-2 text-green-500"></i>
+                            +7 (123) 456-78-90
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope mr-2 text-green-500"></i>
+                            info@pingpongclub.com
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Навигация</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="index.html" class="hover:text-green-500">Главная</a></li>
+                        <li><a href="about.html" class="hover:text-green-500">О клубе</a></li>
+                        <li><a href="contacts.html" class="hover:text-green-500">Контакты</a></li>
+                        <li><a href="login.html" class="hover:text-green-500">Вход</a></li>
+                        <li><a href="register.html" class="hover:text-green-500">Регистрация</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Подписка</h3>
+                    <p class="text-gray-400 mb-2">Подпишитесь на нашу рассылку, чтобы получать новости о турнирах и акциях</p>
+                    <form class="flex">
+                        <input type="email" placeholder="Ваш email" class="px-3 py-2 bg-gray-700 text-white rounded-l-md focus:outline-none">
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-r-md transition duration-300">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                <p>&copy; 2023 PingPong Club. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

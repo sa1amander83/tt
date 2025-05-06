@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет - PingPong Club</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+<header class="bg-green-600 text-white shadow-md">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center">
+            <i class="fas fa-table-tennis-paddle-ball text-2xl mr-2"></i>
+            <h1 class="text-xl font-bold">PingPong Club</h1>
+        </div>
+        <nav class="hidden md:block">
+            <ul class="flex space-x-6">
+                <li><a href="index.html" class="hover:text-green-200 font-medium">Главная</a></li>
+                <li><a href="bookings.html" class="hover:text-green-200">Бронирование</a></li>
+                <li><a href="admin-bookings.html" class="hover:text-green-200">Текущие</a></li>
+                <li><a href="statistics.html" class="hover:text-green-200">Статистика</a></li>
+                <li><a href="login.html" class="hover:text-green-200">Вход</a></li>
+                <li><a href="register.html" class="hover:text-green-200">Регистрация</a></li>
+                <li><a href="contacts.html" class="hover:text-green-200">Контакты</a></li>
+                <li><a href="about.html" class="hover:text-green-200">О клубе</a></li>
+                <li><a href="logout.html" class="hover:text-green-200">Выход</a></li>
+
+            </ul>
+        </nav>
+        <button id="mobile-menu-button" class="md:hidden text-white">
+            <i class="fas fa-bars text-xl"></i>
+        </button>
+    </div>
+    <div id="mobile-menu" class="hidden md:hidden bg-green-700">
+        <ul class="container mx-auto px-4 py-2">
+            <li class="py-2"><a href="index.html" class="block hover:text-green-200">Главная</a></li>
+            <li class="py-2"><a href="bookings.html" class="block hover:text-green-200">Бронирование</a></li>
+            <li class="py-2"><a href="statistics.html" class="block hover:text-green-200">Статистика</a></li>
+            <li class="py-2"><a href="#" id="mobile-logout-link" class="block hover:text-green-200">Выход</a></li>
+        </ul>
+    </div>
+</header>
+
+<main class="container mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row gap-8">
+        <!-- Sidebar -->
+        <div class="w-full md:w-1/4">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-green-600 text-white p-4">
+                    <h2 class="text-xl font-bold">Личный кабинет</h2>
+                </div>
+                <div class="p-4">
+                    <div class="flex items-center space-x-4 mb-6">
+                        <div class="bg-green-100 text-green-600 rounded-full w-16 h-16 flex items-center justify-center">
+                            <i class="fas fa-user text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold" id="user-name">Иван Иванов</h3>
+                            <p class="text-gray-600" id="user-email">ivan@example.com</p>
+                        </div>
+                    </div>
+                    <nav>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="#profile-info"
+                                   class="block py-2 px-4 rounded-md bg-green-50 text-green-700 font-medium">
+                                    <i class="fas fa-user-circle mr-2"></i> Профиль
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#my-bookings"
+                                   class="block py-2 px-4 rounded-md hover:bg-gray-50 transition duration-200">
+                                    <i class="fas fa-calendar-check mr-2"></i> Мои бронирования
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="#my-loyalty"
+                                   class="block py-2 px-4 rounded-md hover:bg-gray-50 transition duration-200">
+                                    <i class="fas fa-medal mr-2"></i> Программа лояльности
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#password-change"
+                                   class="block py-2 px-4 rounded-md hover:bg-gray-50 transition duration-200">
+                                    <i class="fas fa-lock mr-2"></i> Изменить пароль
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="w-full md:w-3/4">
+            <!-- Profile Info Section -->
+            <section id="profile-info" class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+                <div class="bg-green-600 text-white p-4">
+                    <h2 class="text-xl font-bold">Информация профиля</h2>
+                </div>
+                <div class="p-6">
+                    <form id="profile-form" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label for="fullname" class="block text-sm font-medium text-gray-700">ФИО</label>
+                                <input type="text" id="fullname" name="fullname" value="Иван Иванов"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                            </div>
+                            <div class="space-y-2">
+                                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                                <input type="email" id="email" name="email" value="ivan@example.com"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                            </div>
+                            <div class="space-y-2">
+                                <label for="phone" class="block text-sm font-medium text-gray-700">Телефон</label>
+                                <input type="tel" id="phone" name="phone" value="+7 (123) 456-78-90"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                            </div>
+                            <div class="space-y-2">
+                                <label for="level" class="block text-sm font-medium text-gray-700">Уровень игры</label>
+                                <select id="level" name="level"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                                    <option value="beginner">Начинающий</option>
+                                    <option value="intermediate" selected>Средний</option>
+                                    <option value="advanced">Продвинутый</option>
+                                    <option value="professional">Профессиональный</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <button type="submit"
+                                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                                Сохранить изменения
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- My Bookings Section -->
+            <section id="my-bookings" class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+                <div class="bg-green-600 text-white p-4">
+                    <h2 class="text-xl font-bold">Мои бронирования</h2>
+                </div>
+                <div class="p-6">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Дата
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Время
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Стол
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Статус
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Действия
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="bookings-table-body">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">15.05.2023</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">18:00 - 19:00</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Стол #3</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Подтверждено</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <button class="text-red-600 hover:text-red-900 mr-3">Отменить</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">17.05.2023</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">19:00 - 20:00</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Стол #5</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Ожидание</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <button class="text-red-600 hover:text-red-900 mr-3">Отменить</button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4">
+                        <a href="bookings.html" class="inline-flex items-center text-green-600 hover:text-green-700">
+                            <i class="fas fa-plus-circle mr-2"></i> Забронировать новый стол
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <section id="my-loyalty" class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+                <div class="bg-green-600 text-white p-4">
+                    <h2 class="text-xl font-bold">Программа лояльности</h2>
+                </div>
+
+                <div class="p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="mr-4">
+                            <!-- Different badge icons based on level -->
+                            <div class="w-16 h-16 rounded-full flex items-center justify-center">
+                                <!-- Platinum badge -->
+                                <div class="hidden platinum-badge">
+                                    <div class="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
+                                        <i class="fas fa-crown text-purple-600 text-2xl"></i>
+                                    </div>
+                                    <p class="text-center mt-1 font-medium text-purple-600">Платиновый</p>
+                                </div>
+
+                                <!-- Gold badge -->
+                                <div class="hidden gold-badge">
+                                    <div class="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center">
+                                        <i class="fas fa-medal text-yellow-600 text-2xl"></i>
+                                    </div>
+                                    <p class="text-center mt-1 font-medium text-yellow-600">Золотой</p>
+                                </div>
+
+                                <!-- Silver badge -->
+                                <div class="hidden silver-badge">
+                                    <div class="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
+                                        <i class="fas fa-award text-gray-500 text-2xl"></i>
+                                    </div>
+                                    <p class="text-center mt-1 font-medium text-gray-500">Серебряный</p>
+                                </div>
+
+                                <!-- Basic badge -->
+                                <div class="basic-badge">
+                                    <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                                        <i class="fas fa-star text-green-600 text-2xl"></i>
+                                    </div>
+                                    <p class="text-center mt-1 font-medium text-green-600">Старт</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex-1">
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-700">Ваш текущий уровень: <span
+                                        class="current-level font-semibold">Старт</span></span>
+                                <span class="text-sm font-medium text-gray-700">Скидка: <span
+                                        class="current-discount font-semibold">0%</span></span>
+                            </div>
+
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div class="bg-green-600 h-2.5 rounded-full progress-bar" style="width: 10%"></div>
+                            </div>
+
+                            <div class="flex justify-between mt-1">
+                                <span class="text-xs text-gray-500">Текущие баллы: <span
+                                        class="current-points">150</span></span>
+                                <span class="text-xs text-gray-500">До следующего уровня: <span
+                                        class="points-to-next-level">850</span></span>
+                            </div>
+
+                            <div class="mt-4 grid grid-cols-4 gap-2 text-center text-xs">
+                                <div class="level-marker">
+                                    <div class="h-1 bg-green-600 rounded"></div>
+                                    <span class="text-gray-600">Старт</span>
+                                    <span class="block text-gray-500">0</span>
+                                </div>
+                                <div class="level-marker">
+                                    <div class="h-1 bg-gray-300 rounded"></div>
+                                    <span class="text-gray-600">Серебряный</span>
+                                    <span class="block text-gray-500">1000</span>
+                                </div>
+                                <div class="level-marker">
+                                    <div class="h-1 bg-gray-300 rounded"></div>
+                                    <span class="text-gray-600">Золотой</span>
+                                    <span class="block text-gray-500">5000</span>
+                                </div>
+                                <div class="level-marker">
+                                    <div class="h-1 bg-gray-300 rounded"></div>
+                                    <span class="text-gray-600">Платиновый</span>
+                                    <span class="block text-gray-500">10000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-md font-medium mb-2">Преимущества программы лояльности</h3>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>Серебряный уровень: 5% скидка на все бронирования</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>Золотой уровень: 10% скидка на все бронирования</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>Платиновый уровень: 15% скидка на все бронирования и приоритетное бронирование</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-4 text-sm text-gray-600">
+                        <p>Баллы начисляются за каждое бронирование: 1 балл за каждые 10 рублей.</p>
+                        <p>Ваш уровень обновляется автоматически при достижении необходимого количества баллов.</p>
+                    </div>
+
+
+                    <!-- Recent Loyalty Activity -->
+                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                        <h2 class="text-xl font-semibold mb-4">История начисления баллов</h2>
+
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Дата
+                                    </th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Описание
+                                    </th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Баллы
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">15.05.2023</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Бронирование стола
+                                        #1
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+50</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">10.05.2023</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Бронирование стола
+                                        #3
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+40</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">05.05.2023</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Бронирование стола
+                                        #2
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+60</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Change Password Section -->
+            <section id="password-change" class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-green-600 text-white p-4">
+                    <h2 class="text-xl font-bold">Изменить пароль</h2>
+                </div>
+                <div class="p-6">
+                    <form id="password-form" class="space-y-6">
+                        <div class="space-y-2">
+                            <label for="current-password" class="block text-sm font-medium text-gray-700">Текущий
+                                пароль</label>
+                            <input type="password" id="current-password" name="current-password" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="new-password" class="block text-sm font-medium text-gray-700">Новый
+                                пароль</label>
+                            <input type="password" id="new-password" name="new-password" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="confirm-new-password" class="block text-sm font-medium text-gray-700">Подтверждение
+                                нового пароля</label>
+                            <input type="password" id="confirm-new-password" name="confirm-new-password" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        </div>
+                        <div>
+                            <button type="submit"
+                                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                                Изменить пароль
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+
+        </div>
+
+
+    </div>
+
+
+</main>
+
+<footer class="bg-gray-800 text-white py-8 mt-12">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+                <h3 class="text-lg font-semibold mb-4">PingPong Club</h3>
+                <p class="text-gray-400">Лучший клуб настольного тенниса в городе с профессиональными столами и
+                    дружелюбной атмосферой.</p>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Контакты</h3>
+                <ul class="space-y-2 text-gray-400">
+                    <li class="flex items-center">
+                        <i class="fas fa-map-marker-alt mr-2"></i>
+                        <span>ул. Спортивная, 123</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-phone mr-2"></i>
+                        <span>+7 (123) 456-78-90</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-envelope mr-2"></i>
+                        <span>info@pingpongclub.ru</span>
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Мы в соцсетях</h3>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                        <i class="fab fa-facebook-f text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                        <i class="fab fa-instagram text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                        <i class="fab fa-vk text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                        <i class="fab fa-telegram text-xl"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+            <p>&copy; 2023 PingPong Club. Все права защищены.</p>
+        </div>
+    </div>
+</footer>
+
+<!--    <script src="js/script.js"></script>-->
+</body>
+</html>

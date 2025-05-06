@@ -5,20 +5,33 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d4c01c07-d34d-4800-9c93-29a8be58a0c7" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/accounts/forms.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/accounts/templates/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/accounts/urls.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/admin_settings/templates/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/admin_settings/urls.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bookings/templates/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bookings/urls.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/events/templates/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/events/urls.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/accounts/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/admin/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/bookings/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/events/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tt/forms.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/css/styles.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/js/script.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/404.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/about.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/accounts/login.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/accounts/logout.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/accounts/profile.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/accounts/recover.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/accounts/register.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/admin-bookings.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/admin-reports.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/admin-settings.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/admin-users-detail.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/admin-users.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/settings.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/statistics.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/bookings/bookings.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/contacts.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accounts/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_settings/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/admin_settings/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_settings/templates/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bookings/templates/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/tt/signals.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/events/templates/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tt/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/tt/settings.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,6 +41,7 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
+        <option value="HTML File" />
         <option value="Python Script" />
       </list>
     </option>
@@ -60,7 +74,9 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
     "Django Server.tt.executor": "Run",
+    "JavaScript Debug.admin-users.html.executor": "Run",
     "RunOnceActivity.ChatTagsLlmMigration": "true",
     "RunOnceActivity.CodyAccountHistoryMigration": "true",
     "RunOnceActivity.CodyAccountsIdsRefresh": "true",
@@ -74,8 +90,9 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.ToggleCodyToolWindowAfterMigration": "true",
     "com.codeium.enabled": "true",
+    "django.template.preview.state": "SHOW_EDITOR",
     "git-widget-placeholder": "main",
-    "last_opened_file_path": "C:/Users/admin/PycharmProjects/tt/accounts",
+    "last_opened_file_path": "C:/Users/admin/PycharmProjects/tt/tt",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -86,14 +103,20 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\admin\PycharmProjects\tt\accounts" />
       <recent name="C:\Users\admin\PycharmProjects\tt\tt" />
-      <recent name="C:\Users\admin\PycharmProjects\tt\events" />
-      <recent name="C:\Users\admin\PycharmProjects\tt\bookings" />
-      <recent name="C:\Users\admin\PycharmProjects\tt\admin_settings" />
+      <recent name="C:\Users\admin\PycharmProjects\tt\static" />
+      <recent name="C:\Users\admin\PycharmProjects\tt\templates\admin" />
+      <recent name="C:\Users\admin\PycharmProjects\tt\templates\accounts" />
+      <recent name="C:\Users\admin\PycharmProjects\tt\templates\bookings" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\admin\PycharmProjects\tt\templates" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Django Server.tt">
+    <configuration name="admin-users.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63342/tt/templates/admin/admin-users.html" useBuiltInWebServerPort="true">
+      <method v="2" />
+    </configuration>
     <configuration name="tt" type="Python.DjangoServer" factoryName="Django server">
       <module name="tt" />
       <option name="ENV_FILES" value="" />
@@ -119,6 +142,11 @@
       <option name="customRunCommand" value="" />
       <method v="2" />
     </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JavaScript Debug.admin-users.html" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -136,7 +164,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1746541020401</updated>
-      <workItem from="1746541021780" duration="1818000" />
+      <workItem from="1746541021780" duration="6385000" />
     </task>
     <servers />
   </component>
