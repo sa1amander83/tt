@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="d4c01c07-d34d-4800-9c93-29a8be58a0c7" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/accounts/forms.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/accounts/templates/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/accounts/urls.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/admin_settings/templates/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/admin_settings/urls.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/bookings/templates/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/bookings/urls.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/events/templates/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/events/urls.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/accounts/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/bookings/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/events/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tt/forms.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "sa1amander83"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/sa1amander83/tt.git",
+    "accountId": "0b8de348-beb1-4a81-957e-8b26ccef7f78"
+  }
+}]]></component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 4
+}]]></component>
+  <component name="ProjectId" id="2wj3BYFd7CqJcGknKkJflJaRwLY" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Django Server.tt.executor": "Run",
+    "RunOnceActivity.ChatTagsLlmMigration": "true",
+    "RunOnceActivity.CodyAccountHistoryMigration": "true",
+    "RunOnceActivity.CodyAccountsIdsRefresh": "true",
+    "RunOnceActivity.CodyAssignOrphanedChatsToActiveAccount": "true",
+    "RunOnceActivity.CodyConvertUrlToCodebaseName": "true",
+    "RunOnceActivity.CodyHistoryLlmMigration": "true",
+    "RunOnceActivity.CodyMigrateChatHistory-v2": "true",
+    "RunOnceActivity.CodyProjectSettingsMigration": "true",
+    "RunOnceActivity.DeprecatedChatLlmMigration": "true",
+    "RunOnceActivity.OpenDjangoStructureViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.ToggleCodyToolWindowAfterMigration": "true",
+    "com.codeium.enabled": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "C:/Users/admin/PycharmProjects/tt/accounts",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\admin\PycharmProjects\tt\accounts" />
+      <recent name="C:\Users\admin\PycharmProjects\tt\tt" />
+      <recent name="C:\Users\admin\PycharmProjects\tt\events" />
+      <recent name="C:\Users\admin\PycharmProjects\tt\bookings" />
+      <recent name="C:\Users\admin\PycharmProjects\tt\admin_settings" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="tt" type="Python.DjangoServer" factoryName="Django server">
+      <module name="tt" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+        <env name="DJANGO_SETTINGS_MODULE" value="tt.settings" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="launchJavascriptDebuger" value="false" />
+      <option name="port" value="8000" />
+      <option name="host" value="localhost" />
+      <option name="additionalOptions" value="" />
+      <option name="browserUrl" value="" />
+      <option name="runTestServer" value="false" />
+      <option name="runNoReload" value="false" />
+      <option name="useCustomRunCommand" value="false" />
+      <option name="customRunCommand" value="" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-PY-242.23339.19" />
+        <option value="bundled-python-sdk-0029f7779945-399fe30bd8c1-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-242.23339.19" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="d4c01c07-d34d-4800-9c93-29a8be58a0c7" name="Changes" comment="" />
+      <created>1746541020401</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1746541020401</updated>
+      <workItem from="1746541021780" duration="1818000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tt/urls.py</url>
+          <line>24</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>
