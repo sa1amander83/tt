@@ -1,129 +1,142 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход - PingPong Club</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/styles.css">
-</head>
-<body class="bg-gray-100 min-h-screen">
-    <header class="bg-green-600 text-white shadow-md">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center">
-                <i class="fas fa-table-tennis-paddle-ball text-2xl mr-2"></i>
-                <h1 class="text-xl font-bold">PingPong Club</h1>
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<main class="container mx-auto px-4 py-8">
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold text-center mb-6">Вход в личный кабинет</h1>
+
+        <div class="mb-4">
+            <div class="flex justify-center space-x-4">
+                <button type="button" id="emailLoginBtn" class="py-2 px-4 font-medium focus:outline-none border-b-2 border-green-500">По Email</button>
+                <button type="button" id="phoneLoginBtn" class="py-2 px-4 font-medium focus:outline-none border-b-2 border-transparent text-gray-500">По телефону</button>
             </div>
-            <nav class="hidden md:block">
-              <ul class="flex space-x-6">
-                    <li><a href="index.html" class="hover:text-green-200 font-medium">Главная</a></li>
-                    <li><a href="bookings.html" class="hover:text-green-200">Бронирование</a></li>
-                    <li><a href="admin-bookings.html" class="hover:text-green-200">Текущие</a></li>
-                    <li><a href="statistics.html" class="hover:text-green-200">Статистика</a></li>
-                    <li><a href="login.html" class="hover:text-green-200">Вход</a></li>
-                    <li><a href="register.html" class="hover:text-green-200">Регистрация</a></li>
-                    <li><a href="contacts.html" class="hover:text-green-200">Контакты</a></li>
-                    <li><a href="about.html" class="hover:text-green-200">О клубе</a></li>
-                </ul>
-            </nav>
-            <button id="mobile-menu-button" class="md:hidden text-white">
-                <i class="fas fa-bars text-xl"></i>
+        </div>
+
+        <form id="loginForm" method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" id="loginMethod" name="login_method" value="email">
+            
+            <!-- Email login fields -->
+            <div id="emailFields">
+                <div class="mb-4">
+                    <label for="loginEmailField" class="block text-gray-700 mb-2">Email</label>
+                    <input type="email" id="loginEmailField" name="login_email" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" 
+                           placeholder="example@example.com" required>
+                    {% if form.login.errors %}
+                        <div class="text-red-500 text-sm mt-1">{{ form.login.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Phone login fields (hidden by default) -->
+            <div id="phoneFields" class="hidden">
+                <div class="mb-4">
+                    <label for="loginPhoneField" class="block text-gray-700 mb-2">Номер телефона</label>
+                    <div class="flex">
+                        <div class="flex-shrink-0 inline-flex items-center px-3 py-2 text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">
+                            +7
+                        </div>
+                        <input type="tel" id="loginPhoneField" name="login_phone" class="w-full px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                               placeholder="9XXXXXXXXX" pattern="[0-9]{10}" maxlength="10">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Введите 10 цифр номера без +7</p>
+                    {% if form.login.errors %}
+                        <div class="text-red-500 text-sm mt-1">{{ form.login.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label for="{{ form.password.id_for_label }}" class="block text-gray-700 mb-2">{{ form.password.label }}</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <div class="text-red-500 text-sm mt-1">{{ form.password.errors }}</div>
+                {% endif %}
+                <div class="mt-1 text-right">
+                    <a href="{% url 'accounts:restore' %}" class="text-sm text-green-500 hover:underline">Забыли пароль?</a>
+                </div>
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="text-red-500 text-sm mb-4">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <button type="submit" class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+                Войти
             </button>
-        </div>
-        <div id="mobile-menu" class="hidden md:hidden bg-green-700">
-            <ul class="container mx-auto px-4 py-2">
-                <li class="py-2"><a href="index.html" class="block hover:text-green-200">Главная</a></li>
-                <li class="py-2"><a href="bookings.html" class="block hover:text-green-200">Бронирование</a></li>
-                <li class="py-2"><a href="statistics.html" class="block hover:text-green-200">Статистика</a></li>
-                <li class="py-2"><a href="login.html" class="block hover:text-green-200">Вход</a></li>
-                <li class="py-2"><a href="register.html" class="block hover:text-green-200">Регистрация</a></li>
-            </ul>
-        </div>
-    </header>
+        </form>
 
-    <main class="container mx-auto px-4 py-12">
-        <div class="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden">
-            <div class="bg-green-600 text-white py-4 px-6">
-                <h2 class="text-2xl font-bold">Вход в аккаунт</h2>
-                <p class="text-green-100">Войдите для бронирования столов</p>
-            </div>
-            <form id="login-form" class="p-6 space-y-6">
-                <div class="space-y-2">
-                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" id="email" name="email" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-                </div>
-                <div class="space-y-2">
-                    <label for="password" class="block text-sm font-medium text-gray-700">Пароль</label>
-                    <input type="password" id="password" name="password" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-                </div>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <input type="checkbox" id="remember-me" name="remember-me" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
-                        <label for="remember-me" class="ml-2 block text-sm text-gray-700">
-                            Запомнить меня
-                        </label>
-                    </div>
-                    <a href="recover.html" class="text-sm text-green-600 hover:text-green-500">Забыли пароль?</a>
-                </div>
-                <div>
-                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md transition duration-300">Войти</button>
-                </div>
-                <div class="text-center text-sm text-gray-600">
-                    Нет аккаунта? <a href="register.html" class="text-green-600 hover:text-green-500 font-medium">Зарегистрироваться</a>
-                </div>
-            </form>
+        <div class="mt-4 text-center">
+            <p class="text-gray-600">Нет аккаунта? <a href="{% url 'accounts:signup' %}" class="text-green-500 hover:underline">Зарегистрироваться</a></p>
         </div>
-    </main>
+    </div>
+</main>
+{% endblock %}
 
-    <footer class="bg-gray-800 text-white py-8 mt-12">
-        <div class="container mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">PingPong Club</h3>
-                    <p class="text-gray-400">Лучший клуб настольного тенниса в городе с профессиональными столами и дружелюбной атмосферой.</p>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Контакты</h3>
-                    <ul class="space-y-2 text-gray-400">
-                        <li class="flex items-center">
-                            <i class="fas fa-map-marker-alt mr-2"></i>
-                            <span>ул. Спортивная, 123</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-phone mr-2"></i>
-                            <span>+7 (123) 456-78-90</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-envelope mr-2"></i>
-                            <span>info@pingpongclub.ru</span>
-                        </li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Мы в соцсетях</h3>
-                    <div class="flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-white transition duration-300">
-                            <i class="fab fa-facebook-f text-xl"></i>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-white transition duration-300">
-                            <i class="fab fa-instagram text-xl"></i>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-white transition duration-300">
-                            <i class="fab fa-vk text-xl"></i>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-white transition duration-300">
-                            <i class="fab fa-telegram text-xl"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
-                <p>&copy; 2023 PingPong Club. Все права защищены.</p>
-            </div>
-        </div>
-    </footer>
-
-    <script src="js/script.js"></script>
-</body>
-</html>
+{% block extrascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const emailBtn = document.getElementById('emailLoginBtn');
+    const phoneBtn = document.getElementById('phoneLoginBtn');
+    const emailFields = document.getElementById('emailFields');
+    const phoneFields = document.getElementById('phoneFields');
+    const loginEmailField = document.getElementById('loginEmailField');
+    const loginPhoneField = document.getElementById('loginPhoneField');
+    const loginMethod = document.getElementById('loginMethod');
+    const loginForm = document.getElementById('loginForm');
+    
+    // Инициализация - делаем поле email обязательным, а phone - нет
+    loginEmailField.required = true;
+    loginPhoneField.required = false;
+    
+    // Переключение на email форму
+    emailBtn.addEventListener('click', function() {
+        emailFields.classList.remove('hidden');
+        phoneFields.classList.add('hidden');
+        loginMethod.value = 'email';
+        
+        // Переключаем обязательные поля
+        loginEmailField.required = true;
+        loginPhoneField.required = false;
+        
+        emailBtn.classList.add('border-green-500');
+        emailBtn.classList.remove('text-gray-500', 'border-transparent');
+        phoneBtn.classList.remove('border-green-500');
+        phoneBtn.classList.add('text-gray-500', 'border-transparent');
+    });
+    
+    // Переключение на телефонную форму
+    phoneBtn.addEventListener('click', function() {
+        emailFields.classList.add('hidden');
+        phoneFields.classList.remove('hidden');
+        loginMethod.value = 'phone';
+        
+        // Переключаем обязательные поля
+        loginEmailField.required = false;
+        loginPhoneField.required = true;
+        
+        phoneBtn.classList.add('border-green-500');
+        phoneBtn.classList.remove('text-gray-500', 'border-transparent');
+        emailBtn.classList.remove('border-green-500');
+        emailBtn.classList.add('text-gray-500', 'border-transparent');
+    });
+    
+    // Валидация ввода для телефона
+    loginPhoneField.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+    
+    // Обработка отправки формы
+    loginForm.addEventListener('submit', function(e) {
+        if (loginMethod.value === 'phone' && !/^\d{10}$/.test(loginPhoneField.value)) {
+            e.preventDefault();
+            alert('Пожалуйста, введите 10 цифр номера телефона');
+            loginPhoneField.focus();
+        }
+    });
+});
+</script>
+{% endblock %}

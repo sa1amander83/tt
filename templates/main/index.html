@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+
+<main>
+    <!-- Hero Section -->
+    <section class="relative">
+        <div class="bg-cover bg-center h-96"
+             style="background-image: url('{% static 'images/main.jpg' %}')">
+{#            <div class="absolute inset-0 bg-black bg-opacity-50"></div>#}
+            <div class="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-white text-center">
+                <h2 class="text-4xl font-bold mb-4">Добро пожаловать в PingPong Club</h2>
+                <p class="text-xl mb-8">Лучший клуб настольного тенниса в городе</p>
+                <a href="{% url 'bookings:bookings' %}"
+                   class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">Забронировать
+                    стол</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-12 bg-white">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">Наши преимущества</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center p-6 bg-gray-50 rounded-lg shadow-sm">
+                    <div class="text-green-600 text-4xl mb-4">
+                        <i class="fas fa-table-tennis"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Профессиональные столы</h3>
+                    <p class="text-gray-600">10 столов высшего качества для игроков любого уровня</p>
+                </div>
+                <div class="text-center p-6 bg-gray-50 rounded-lg shadow-sm">
+                    <div class="text-green-600 text-4xl mb-4">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Удобное бронирование</h3>
+                    <p class="text-gray-600">Бронируйте столы онлайн в любое удобное для вас время</p>
+                </div>
+                <div class="text-center p-6 bg-gray-50 rounded-lg shadow-sm">
+                    <div class="text-green-600 text-4xl mb-4">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Турниры и соревнования</h3>
+                    <p class="text-gray-600">Регулярные турниры для игроков всех уровней</p>
+                </div>
+
+                  <div class="text-center p-6 bg-gray-50 rounded-lg shadow-sm">
+                    <div class="text-green-600 text-4xl mb-4">
+                        <i class="fas fa-percent"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Программа лояльности</h3>
+                    <p class="text-gray-600">Скидки для постоянных участников</p>
+                </div>
+
+
+               <div class="text-center p-6 bg-gray-50 rounded-lg shadow-sm">
+                    <div class="text-green-600 text-4xl mb-4">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Индивидуальные и групповые тренировки</h3>
+                    <p class="text-gray-600">Улучши свою игру с опытными тренерами: подберём программу под твой уровень и цели</p>
+                </div>
+
+                 <div class="text-center p-6 bg-gray-50 rounded-lg shadow-sm">
+                    <div class="text-green-600 text-4xl mb-4">
+                        <i class="fas fa-face-smile"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Комфортная атмосфера</h3>
+                    <p class="text-gray-600">Мы готовы предоставить дружелюбную обстановку для игры</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Schedule Section -->
+    <section class="py-12 bg-gray-100">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-8">Расписание работы</h2>
+            <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="grid grid-cols-2 divide-x divide-gray-200">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-4">Будние дни</h3>
+                        <ul class="space-y-2">
+                            <li class="flex justify-between">
+                                <span class="text-gray-600">Понедельник - Пятница:</span>
+                                <span class="font-medium">09:00 - 22:00</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-4">Выходные дни</h3>
+                        <ul class="space-y-2">
+                            <li class="flex justify-between">
+                                <span class="text-gray-600">Суббота:</span>
+                                <span class="font-medium">10:00 - 23:00</span>
+                            </li>
+                            <li class="flex justify-between">
+                                <span class="text-gray-600">Воскресенье:</span>
+                                <span class="font-medium">10:00 - 21:00</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-12 bg-green-600 text-white">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-3xl font-bold mb-4">Готовы начать игру?</h2>
+            <p class="text-xl mb-8 max-w-2xl mx-auto">Присоединяйтесь к нашему клубу сегодня и получите доступ к лучшим
+                столам для настольного тенниса</p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="{% url 'accounts:signup' %}"
+                   class="bg-white text-green-600 hover:bg-gray-100 font-bold py-3 px-6 rounded-lg transition duration-300">Зарегистрироваться</a>
+                <a href="{% url 'bookings:bookings' %}"
+                   class="bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-6 rounded-lg transition duration-300">Забронировать
+                    стол</a>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}
+
+
+

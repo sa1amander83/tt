@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<main class="container mx-auto px-4 py-12">
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="bg-green-600 text-white py-4 px-6">
+            <h2 class="text-2xl font-bold">Регистрация</h2>
+            <p class="text-green-100">Создайте аккаунт для бронирования столов</p>
+        </div>
+        
+        <form id="register-form" class="p-6 space-y-6" method="post" novalidate>
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="text-red-500 text-sm">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <!-- Полное имя -->
+            <div class="space-y-2">
+                <label for="{{ form.user_name.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                    {{ form.user_name.label }}
+                </label>
+                {{ form.user_name }}
+                {% if form.user_name.errors %}
+                    <div class="text-red-500 text-sm">{{ form.user_name.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <!-- Email -->
+            <div class="space-y-2">
+                <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                    {{ form.email.label }}
+                </label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <div class="text-red-500 text-sm">{{ form.email.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <!-- Номер телефона с префиксом +7 -->
+            <div class="space-y-2">
+                <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                    {{ form.phone.label }}
+                </label>
+                <div class="flex">
+                    <div class="flex-shrink-0 inline-flex items-center px-3 py-2 text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">
+                        +7
+                    </div>
+                    {{ form.phone }}
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Введите 10 цифр номера без +7</p>
+                {% if form.phone.errors %}
+                    <div class="text-red-500 text-sm">{{ form.phone.errors }}</div>
+                {% endif %}
+            </div>
+            
+        
+             <div class="space-y-2">
+                <label for="{{ form.level.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                    {{ form.level.label }}
+                </label>
+                {{ form.level }}
+                {% if form.level.errors %}
+                    <div class="text-red-500 text-sm">{{ form..errors }}</div>
+                {% endif %}
+            </div>
+            
+        
+        
+            <!-- Пароль -->
+            <div class="space-y-2">
+                <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                    {{ form.password1.label }}
+                </label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                    <div class="text-red-500 text-sm">{{ form.password1.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <!-- Подтверждение пароля -->
+            <div class="space-y-2">
+                <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                    {{ form.password2.label }}
+                </label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                    <div class="text-red-500 text-sm">{{ form.password2.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <!-- Чекбокс согласия -->
+            <div class="flex items-start">
+                {{ form.terms }}
+                <label for="{{ form.terms.id_for_label }}" class="ml-2 block text-sm text-gray-700">
+                    Я согласен с <a href="{% url 'main:terms' %}" class="text-green-600 hover:text-green-500">условиями использования</a> и <a href="{% url 'main:terms' %}" class="text-green-600 hover:text-green-500">политикой конфиденциальности</a>
+                </label>
+                {% if form.terms.errors %}
+                    <div class="text-red-500 text-sm">{{ form.terms.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <!-- Кнопка отправки -->
+            <div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md transition duration-300">
+                    Зарегистрироваться
+                </button>
+            </div>
+            
+            <!-- Ссылка на вход -->
+            <div class="text-center text-sm text-gray-600">
+                Уже есть аккаунт? <a href="{% url 'accounts:signin' %}" class="text-green-600 hover:text-green-500 font-medium">Войти</a>
+            </div>
+        </form>
+    </div>
+</main>
+{% endblock %}
+
+{% block extrascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработка ввода телефона - только цифры
+    const phoneInput = document.getElementById('{{ form.phone.id_for_label }}');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value.length > 10) {
+                this.value = this.value.substring(0, 10);
+            }
+        });
+    }
+    
+    // Валидация формы перед отправкой
+    const form = document.getElementById('register-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Дополнительная валидация телефона
+            if (phoneInput && phoneInput.value.length !== 10) {
+                e.preventDefault();
+                alert('Пожалуйста, введите 10 цифр номера телефона');
+                phoneInput.focus();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

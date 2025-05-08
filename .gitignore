@@ -4,3 +4,6 @@ tt/settings.py
 migrations
 node_modules
 venv
+
+staticfiles
+media

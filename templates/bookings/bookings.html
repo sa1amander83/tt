@@ -1,60 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Бронирование - PingPong Club</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body class="bg-gray-100 min-h-screen">
-    <header class="bg-green-600 text-white shadow-md">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center">
-                <i class="fas fa-table-tennis-paddle-ball text-2xl mr-2"></i>
-                <h1 class="text-xl font-bold">PingPong Club</h1>
-            </div>
-            <nav class="hidden md:block">
-                <ul class="flex space-x-6">
-                    <li><a href="index.html" class="hover:text-green-200">Главная</a></li>
-                    <li><a href="profile.html" class="hover:text-green-200">Профиль</a></li>
-                    <li><a href="statistics.html" class="hover:text-green-200">Статистика</a></li>
-                    <li><a href="bookings.html" class="hover:text-green-200 font-medium">Бронирование</a></li>
-                    <li><a href="#" id="logout-link" class="hover:text-green-200">Выход</a></li>
-                </ul>
-            </nav>
-            <button id="mobile-menu-button" class="md:hidden text-white">
-                <i class="fas fa-bars text-xl"></i>
-            </button>
-        </div>
-        <div id="mobile-menu" class="hidden md:hidden bg-green-700">
-            <ul class="container mx-auto px-4 py-2">
-                <li class="py-2"><a href="index.html" class="block hover:text-green-200">Главная</a></li>
-                <li class="py-2"><a href="profile.html" class="block hover:text-green-200">Профиль</a></li>
-                <li class="py-2"><a href="statistics.html" class="block hover:text-green-200">Статистика</a></li>
-                <li class="py-2"><a href="bookings.html" class="block hover:text-green-200">Бронирование</a></li>
-                <li class="py-2"><a href="#" id="mobile-logout-link" class="block hover:text-green-200">Выход</a></li>
-            </ul>
-        </div>
-    </header>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
 
     <main class="container mx-auto px-4 py-8">
         <h1 class="text-2xl font-bold mb-6">Бронирование столов</h1>
-
-        <!-- Add this after the h1 heading "Бронирование столов" -->
-        <div class="flex items-center mb-4">
-            <div class="mr-2">
-                <!-- Basic badge by default, others would be shown based on user level -->
-                <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                    <i class="fas fa-star text-green-600 text-sm"></i>
-                </div>
-            </div>
-            <div>
-                <span class="text-sm text-gray-700">Ваш уровень: <span class="font-medium">Старт</span></span>
-                <span class="text-sm text-gray-700 ml-4">Скидка: <span class="font-medium">0%</span></span>
-            </div>
-        </div>
 
         <!-- Календарь и управление -->
         <div class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-8">
@@ -632,17 +582,7 @@
                         <input type="checkbox" id="booking-equipment" name="booking-equipment" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
                         <label for="booking-equipment" class="ml-2 block text-sm text-gray-900">Арендовать ракетки и мячи</label>
                     </div>
-                    <!-- Inside the booking modal, before the cost calculation section -->
                     <div class="pt-4 border-t border-gray-200">
-                        <!-- Add this loyalty status indicator -->
-                        <div class="flex justify-between items-center mb-2 bg-gray-50 p-2 rounded">
-                            <span class="text-sm font-medium flex items-center">
-                                <i class="fas fa-award text-green-600 mr-1"></i> Ваш уровень: <span class="text-green-600 ml-1">Старт</span>
-                            </span>
-                            <span class="text-sm font-medium">Скидка: 0%</span>
-                        </div>
-                        
-                        <!-- Existing cost calculation -->
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-medium text-gray-700">Стоимость аренды стола:</span>
                             <span class="text-sm font-medium">500 ₽</span>
@@ -650,11 +590,6 @@
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-sm font-medium text-gray-700">Аренда оборудования:</span>
                             <span class="text-sm font-medium">0 ₽</span>
-                        </div>
-                        <!-- Add this loyalty discount section -->
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm font-medium text-gray-700">Скидка по программе лояльности (0%):</span>
-                            <span class="text-sm font-medium text-green-600">-0 ₽</span>
                         </div>
                         <div class="flex justify-between items-center font-medium">
                             <span class="text-gray-700">Итого:</span>
@@ -673,56 +608,8 @@
             </div>
         </div>
     </main>
-
-    <footer class="bg-gray-800 text-white py-8 mt-12">
-        <div class="container mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">О нас</h3>
-                    <p class="text-gray-400">PingPong Club - современный клуб настольного тенниса с профессиональными столами и комфортными условиями для игры.</p>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Контакты</h3>
-                    <ul class="space-y-2 text-gray-400">
-                        <li class="flex items-center">
-                            <i class="fas fa-map-marker-alt mr-2 text-green-500"></i>
-                            г. Москва, ул. Спортивная, д. 123
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-phone-alt mr-2 text-green-500"></i>
-                            +7 (123) 456-78-90
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-envelope mr-2 text-green-500"></i>
-                            info@pingpongclub.com
-                        </li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Навигация</h3>
-                    <ul class="space-y-2 text-gray-400">
-                        <li><a href="index.html" class="hover:text-green-500">Главная</a></li>
-                        <li><a href="profile.html" class="hover:text-green-500">Профиль</a></li>
-                        <li><a href="statistics.html" class="hover:text-green-500">Статистика</a></li>
-                        <li><a href="bookings.html" class="hover:text-green-500">Бронирование</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Подписка</h3>
-                    <p class="text-gray-400 mb-2">Подпишитесь на нашу рассылку, чтобы получать новости о турнирах и акциях</p>
-                    <form class="flex">
-                        <input type="email" placeholder="Ваш email" class="px-3 py-2 bg-gray-700 text-white rounded-l-md focus:outline-none">
-                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-r-md transition duration-300">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </form>
-                </div>
-            </div>
-            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
-                <p>&copy; 2023 PingPong Club. Все права защищены.</p>
-            </div>
-        </div>
-    </footer>
+{% endblock %}
+{% block extrascripts %}
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -915,17 +802,10 @@
                 const hourlyRate = tableType === 'pro' ? 500 : 400;
                 
                 const tableRental = hourlyRate * duration;
+                const total = tableRental + equipmentRental;
                 
-                // Расчет скидки по программе лояльности
-                // В реальном приложении эта информация должна приходить с сервера
-                const loyaltyDiscount = 0; // 0% для уровня Старт
-                const discountAmount = Math.round(tableRental * (loyaltyDiscount / 100));
-                
-                const total = tableRental + equipmentRental - discountAmount;
-                
-                document.querySelector('.pt-4 .mb-2:nth-child(2) .font-medium:last-child').textContent = `${tableRental} ₽`;
-                document.querySelector('.pt-4 .mb-2:nth-child(3) .font-medium:last-child').textContent = `${equipmentRental} ₽`;
-                document.querySelector('.pt-4 .mb-2:nth-child(4) .font-medium:last-child').textContent = `${discountAmount} ₽`;
+                document.querySelector('.pt-4 .mb-2:nth-child(1) .font-medium:last-child').textContent = `${tableRental} ₽`;
+                document.querySelector('.pt-4 .mb-2:nth-child(2) .font-medium:last-child').textContent = `${equipmentRental} ₽`;
                 document.querySelector('.pt-4 .font-medium:last-child').textContent = `${total} ₽`;
             }
             
@@ -963,5 +843,4 @@
             });
         });
     </script>
-</body>
-</html>
+{% endblock %}

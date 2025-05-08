@@ -1,45 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Управление бронированиями - PingPong Club</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body class="bg-gray-100 min-h-screen">
-    <header class="bg-green-600 text-white shadow-md">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center">
-                <i class="fas fa-table-tennis-paddle-ball text-2xl mr-2"></i>
-                <h1 class="text-xl font-bold">PingPong Club</h1>
-            </div>
-            <nav class="hidden md:block">
-                <ul class="flex space-x-6">
-                    <li><a href="index.html" class="hover:text-green-200">Главная</a></li>
-                    <li><a href="admin-users.html" class="hover:text-green-200">Пользователи</a></li>
-                    <li><a href="admin-bookings.html" class="hover:text-green-200 font-medium">Бронирования</a></li>
-                    <li><a href="admin-reports.html" class="hover:text-green-200">Отчеты</a></li>
-                    <li><a href="admin-settings.html" class="hover:text-green-200">Настройки</a></li>
-                    <li><a href="#" id="logout-link" class="hover:text-green-200">Выход</a></li>
-                </ul>
-            </nav>
-            <button id="mobile-menu-button" class="md:hidden text-white">
-                <i class="fas fa-bars text-xl"></i>
-            </button>
-        </div>
-        <div id="mobile-menu" class="hidden md:hidden bg-green-700">
-            <ul class="container mx-auto px-4 py-2">
-                <li class="py-2"><a href="index.html" class="block hover:text-green-200">Главная</a></li>
-                <li class="py-2"><a href="admin-users.html" class="block hover:text-green-200">Пользователи</a></li>
-                <li class="py-2"><a href="admin-bookings.html" class="block hover:text-green-200">Бронирования</a></li>
-                <li class="py-2"><a href="admin-reports.html" class="block hover:text-green-200">Отчеты</a></li>
-                <li class="py-2"><a href="admin-settings.html" class="block hover:text-green-200">Настройки</a></li>
-                <li class="py-2"><a href="#" id="mobile-logout-link" class="block hover:text-green-200">Выход</a></li>
-            </ul>
-        </div>
-    </header>
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
 
     <main class="container mx-auto px-4 py-8">
         <h1 class="text-2xl font-bold mb-6">Управление бронированиями</h1>
@@ -115,13 +76,6 @@
                                     <div class="ml-4">
                                         <div class="text-sm font-medium text-gray-900">Иван Петров</div>
                                         <div class="text-sm text-gray-500">ivan@example.com</div>
-                                        <!-- Add loyalty badge -->
-                                        <div class="flex items-center mt-1">
-                                            <div class="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center mr-1">
-                                                <i class="fas fa-star text-green-600 text-xs"></i>
-                                            </div>
-                                            <span class="text-xs text-gray-500">Старт</span>
-                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -150,13 +104,6 @@
                                     <div class="ml-4">
                                         <div class="text-sm font-medium text-gray-900">Анна Сидорова</div>
                                         <div class="text-sm text-gray-500">anna@example.com</div>
-                                        <!-- Add loyalty badge -->
-                                        <div class="flex items-center mt-1">
-                                            <div class="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center mr-1">
-                                                <i class="fas fa-award text-gray-500 text-xs"></i>
-                                            </div>
-                                            <span class="text-xs text-gray-500">Серебряный</span>
-                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -185,13 +132,6 @@
                                     <div class="ml-4">
                                         <div class="text-sm font-medium text-gray-900">Алексей Смирнов</div>
                                         <div class="text-sm text-gray-500">alex@example.com</div>
-                                        <!-- Add loyalty badge -->
-                                        <div class="flex items-center mt-1">
-                                            <div class="w-4 h-4 rounded-full bg-yellow-100 flex items-center justify-center mr-1">
-                                                <i class="fas fa-medal text-yellow-600 text-xs"></i>
-                                            </div>
-                                            <span class="text-xs text-gray-500">Золотой</span>
-                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -302,7 +242,9 @@
             </div>
         </div>
     </footer>
+{% endblock %}
 
+{% block extrascripts %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Mobile menu toggle
@@ -316,5 +258,4 @@
             }
         });
     </script>
-</body>
-</html>
+{% endblock %}

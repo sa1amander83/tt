@@ -1,46 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Управление пользователями - PingPong Club</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body class="bg-gray-100 min-h-screen">
-    <header class="bg-green-600 text-white shadow-md">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center">
-                <i class="fas fa-table-tennis-paddle-ball text-2xl mr-2"></i>
-                <h1 class="text-xl font-bold">PingPong Club</h1>
-            </div>
-            <nav class="hidden md:block">
-                <ul class="flex space-x-6">
-                    <li><a href="index.html" class="hover:text-green-200">Главная</a></li>
-                    <li><a href="admin-users.html" class="hover:text-green-200 font-medium">Пользователи</a></li>
-                    <li><a href="admin-bookings.html" class="hover:text-green-200">Бронирования</a></li>
-                    <li><a href="admin-reports.html" class="hover:text-green-200">Отчеты</a></li>
-                    <li><a href="admin-settings.html" class="hover:text-green-200">Настройки</a></li>
-                    <li><a href="#" id="logout-link" class="hover:text-green-200">Выход</a></li>
-                </ul>
-            </nav>
-            <button id="mobile-menu-button" class="md:hidden text-white">
-                <i class="fas fa-bars text-xl"></i>
-            </button>
-        </div>
-        <div id="mobile-menu" class="hidden md:hidden bg-green-700">
-            <ul class="container mx-auto px-4 py-2">
-                <li class="py-2"><a href="index.html" class="block hover:text-green-200">Главная</a></li>
-                <li class="py-2"><a href="admin-users.html" class="block hover:text-green-200">Пользователи</a></li>
-                <li class="py-2"><a href="admin-bookings.html" class="block hover:text-green-200">Бронирования</a></li>
-                <li class="py-2"><a href="admin-reports.html" class="block hover:text-green-200">Отчеты</a></li>
-                <li class="py-2"><a href="admin-settings.html" class="block hover:text-green-200">Настройки</a></li>
-                <li class="py-2"><a href="#" id="mobile-logout-link" class="block hover:text-green-200">Выход</a></li>
-            </ul>
-        </div>
-    </header>
-
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
     <main class="container mx-auto px-4 py-8">
         <h1 class="text-2xl font-bold mb-6">Управление пользователями</h1>
 
@@ -123,19 +83,6 @@
                         </select>
                     </div>
                 </div>
-                <div>
-                    <label for="user-loyalty" class="block text-sm font-medium text-gray-700 mb-1">Уровень лояльности</label>
-                    <select id="user-loyalty" name="user-loyalty" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-                        <option value="START">Старт (0%)</option>
-                        <option value="SILVER">Серебряный (5%)</option>
-                        <option value="GOLD">Золотой (10%)</option>
-                        <option value="PLATINUM">Платиновый (15%)</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="user-points" class="block text-sm font-medium text-gray-700 mb-1">Баллы лояльности</label>
-                    <input type="number" id="user-points" name="user-points" min="0" value="0" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-                </div>
                 <div class="flex justify-end">
                     <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
                         Добавить пользователя
@@ -158,7 +105,6 @@
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Телефон</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Роль</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Уровень лояльности</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
                         </tr>
@@ -178,14 +124,6 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">ivan@example.com</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">+7 (123) 456-78-90</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Администратор</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mr-2">
-                                        <i class="fas fa-star text-green-600 text-xs"></i>
-                                    </div>
-                                    <span class="text-sm text-gray-900">Старт (150 баллов)</span>
-                                </div>
-                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активен</span>
                             </td>
@@ -209,14 +147,6 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">+7 (123) 456-78-91</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Менеджер</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2">
-                                        <i class="fas fa-award text-gray-500 text-xs"></i>
-                                    </div>
-                                    <span class="text-sm text-gray-900">Серебряный (2500 баллов)</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активен</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -238,14 +168,6 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">alex@example.com</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">+7 (123) 456-78-92</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Пользователь</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="w-6 h-6 rounded-full bg-yellow-100 flex items-center justify-center mr-2">
-                                        <i class="fas fa-medal text-yellow-600 text-xs"></i>
-                                    </div>
-                                    <span class="text-sm text-gray-900">Золотой (7800 баллов)</span>
-                                </div>
-                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активен</span>
                             </td>
@@ -269,14 +191,6 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">+7 (123) 456-78-93</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Пользователь</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mr-2">
-                                        <i class="fas fa-star text-green-600 text-xs"></i>
-                                    </div>
-                                    <span class="text-sm text-gray-900">Старт (50 баллов)</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Заблокирован</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -298,14 +212,6 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">dmitry@example.com</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">+7 (123) 456-78-94</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Пользователь</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center mr-2">
-                                        <i class="fas fa-crown text-purple-600 text-xs"></i>
-                                    </div>
-                                    <span class="text-sm text-gray-900">Платиновый (12500 баллов)</span>
-                                </div>
-                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Неактивен</span>
                             </td>
@@ -350,7 +256,10 @@
             </div>
         </div>
     </footer>
-
+{% endblock %}
+    
+    
+    {% block extrascripts %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Mobile menu toggle
@@ -364,5 +273,4 @@
             }
         });
     </script>
-</body>
-</html>
+{% endblock %}

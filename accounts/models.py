@@ -1,3 +1,5 @@
+import os
+
 from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -10,37 +12,49 @@ from django.core.validators import validate_email
 from admin_settings.models import LoyaltyProfile
 
 
+
+def user_photo_upload_path(instance, filename):
+    # instance - объект User
+    # filename - исходное имя файла
+    phone = instance.phone or "unknown_phone"
+    # Можно очистить номер телефона от символов, если нужно:
+    phone_clean = phone.replace('+', '').replace(' ', '').replace('-', '')
+    return os.path.join('user_photos', phone_clean, filename)
+
+
+
+
+
 class UserManager(BaseUserManager):
     """ User manager """
 
-    def _create_user(self, phone_number, password=None, **extra_fields):
+    def _create_user(self, phone, password=None, **extra_fields):
         """Creates and returns a new user using a phone number"""
-        if not phone_number:
+        if not phone:
             raise AttributeError("User must set a phone number")
 
-        user = self.model(phone_number=phone_number, **extra_fields)
+        user = self.model(phone=phone, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_user(self, phone_number, password=None, **extra_fields):
+    def create_user(self, phone, password=None, **extra_fields):
         extra_fields.setdefault("is_staff", False)
         extra_fields.setdefault("is_superuser", False)
         extra_fields.setdefault("role", User.Role.USER)
-        return self._create_user(phone_number, password, **extra_fields)
+        return self._create_user(phone, password, **extra_fields)
 
-    def create_staffuser(self, phone_number, password=None, **extra_fields):
+    def create_staffuser(self, phone, password=None, **extra_fields):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", False)
         extra_fields.setdefault("role", User.Role.MANAGER)
-        return self._create_user(phone_number, password, **extra_fields)
+        return self._create_user(phone, password, **extra_fields)
 
-    def create_superuser(self, phone_number, password=None, **extra_fields):
+    def create_superuser(self, phone, password=None, **extra_fields):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("role", User.Role.ADMIN)
-        return self._create_user(phone_number, password, **extra_fields)
-
+        return self._create_user(phone, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
     """ Custom user model with roles """
@@ -50,7 +64,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         MANAGER = 'MANAGER', _('Manager')
         USER = 'USER', _('User')
 
-    phone_number = models.CharField(
+    class Level(models.TextChoices):
+        BEGINNER = 'beginner', 'Начинающий'
+        INTERMEDIATE = 'intermediate', 'Средний'
+        ADVANCED = 'advanced', 'Продвинутый'
+        PROFESSIONAL = 'professional', 'Профессиональный'
+
+    phone = models.CharField(
         _("Phone Number"),
         max_length=15,
         unique=True,
@@ -59,21 +79,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(
         _("Email Address"),
         max_length=255,
+        unique=True,
         blank=True,
         null=True,
         validators=[validate_email],
         help_text="Ex: example@example.com",
     )
-    first_name = models.CharField(
-        _("First Name"),
+    user_name = models.CharField(
+        _("user name"),
         max_length=150,
         blank=True,
     )
-    last_name = models.CharField(
-        _("Last Name"),
-        max_length=150,
-        blank=True,
-    )
+
 
     role = models.CharField(
         _("Role"),
@@ -81,7 +98,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         choices=Role.choices,
         default=Role.USER,
     )
-
+    level = models.CharField(
+        _("Уровень"),
+        max_length=20,
+        choices=Level.choices,
+        default=Level.BEGINNER,
+        help_text="Уровень пользователя"
+    )
     status=models.CharField(_("Статус"), max_length=10, choices=[('active', 'Активен'),
                                                                 ('not_active', 'Не активен'), ('blocked', 'Заблокирован')], default='active')
     user_age=models.PositiveIntegerField(_("Возраст"), blank=True, null=True)
@@ -89,22 +112,21 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(_("Зарегистрирован"), auto_now_add=True)
     last_updated = models.DateTimeField(_("Был в последний раз"), auto_now=True)
     loyalty=models.ForeignKey(LoyaltyProfile, on_delete=models.SET_NULL, blank=True, null=True)
-
+    photo = models.ImageField(
+        upload_to=user_photo_upload_path,
+        blank=True,
+        null=True,
+        verbose_name='Фотография пользователя'
+    )
     objects = UserManager()
 
-    USERNAME_FIELD = "phone_number"
-    REQUIRED_FIELDS = ["first_name", "last_name"]
+    USERNAME_FIELD = "phone"
+    REQUIRED_FIELDS = ["user_name", "email"]
 
     def __str__(self):
-        return f"{self.phone_number} ({self.get_full_name()})"
+        return f"{self.phone} ({self.user_name})"
 
-    def get_full_name(self):
-        full_name = f"{self.last_name} {self.first_name}"
 
-        return full_name.strip()
-
-    def get_short_name(self):
-        return self.first_name
 
     @property
     def is_admin(self):
@@ -119,3 +141,5 @@ class User(AbstractBaseUser, PermissionsMixin):
         if self.role in [self.Role.ADMIN, self.Role.MANAGER]:
             self.is_staff = True
         super().save(*args, **kwargs)
+
+

@@ -133,12 +133,15 @@ AUTH_USER_MODEL = 'accounts.User'
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
-#STATIC_ROOT=os.path.join(BASE_DIR, 'static/')
+STATIC_ROOT=os.path.join(BASE_DIR, 'staticfiles/')
 
-#
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media/') # 'data' is my media folder
 MEDIA_URL = '/media/'
+#
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media') # 'data' is my images folder
 
+LOGIN_URL = '/accounts/signin/'
+LOGIN_REDIRECT_URL = '/profile/'
+LOGOUT_REDIRECT_URL = '/accounts/logout/'
 
 load_dotenv()
 

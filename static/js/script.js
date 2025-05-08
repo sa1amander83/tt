@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // In a real app, you would send this data to a server
             // For demo purposes, we'll store in localStorage
             const userData = {
-                fullname: document.getElementById('fullname').value,
+                fullname: document.getElementById('user_name').value,
                 email: document.getElementById('email').value,
                 phone: document.getElementById('phone').value,
                 password: password, // In a real app, NEVER store passwords in plain text
@@ -79,10 +79,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Load user data
         const userData = JSON.parse(localStorage.getItem('user'));
         if (userData) {
-            document.getElementById('user-name').textContent = userData.fullname;
+            document.getElementById('user_name').textContent = userData.fullname;
             document.getElementById('user-email').textContent = userData.email;
 
-            document.getElementById('fullname').value = userData.fullname;
+            document.getElementById('user_name').value = userData.fullname;
             document.getElementById('email').value = userData.email;
             document.getElementById('phone').value = userData.phone;
         }
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
 
             // Update user data
-            userData.fullname = document.getElementById('fullname').value;
+            userData.fullname = document.getElementById('user_name').value;
             userData.email = document.getElementById('email').value;
             userData.phone = document.getElementById('phone').value;
             userData.level = document.getElementById('level').value;
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('user', JSON.stringify(userData));
 
             // Update displayed name and email
-            document.getElementById('user-name').textContent = userData.fullname;
+            document.getElementById('user_name').textContent = userData.fullname;
             document.getElementById('user-email').textContent = userData.email;
 
             alert('Профиль успешно обновлен');
@@ -170,221 +170,57 @@ function formatDate(dateString) {
 }
 
 
-// Loyalty Program Display Logic
-document.addEventListener("DOMContentLoaded", () => {
-  // This would normally be fetched from the server
-  const mockUserLoyalty = {
-    level: "START", // START, SILVER, GOLD, PLATINUM
-    points: 150,
-    discount: 0,
-  }
 
-  const levelThresholds = {
-    START: 0,
-    SILVER: 1000,
-    GOLD: 5000,
-    PLATINUM: 10000,
-  }
+const profileForm = document.getElementById('profile-form');
+if (profileForm) {
+    // Load user data
+    const userData = JSON.parse(localStorage.getItem('user'));
+    if (userData) {
+        // Update displayed user info in sidebar
+        const userNameElement = document.getElementById('user-name');
+        const userEmailElement = document.getElementById('user-email');
 
-  const levelDiscounts = {
-    START: 0,
-    SILVER: 5,
-    GOLD: 10,
-    PLATINUM: 15,
-  }
+        if (userNameElement) userNameElement.textContent = userData.fullname || '';
+        if (userEmailElement) userEmailElement.textContent = userData.email || '';
 
-  // Update loyalty display on profile page
-  function updateLoyaltyDisplay() {
-    const levelElements = document.querySelectorAll(".current-level")
-    const discountElements = document.querySelectorAll(".current-discount")
-    const pointsElements = document.querySelectorAll(".current-points")
-    const progressBars = document.querySelectorAll(".progress-bar")
-    const pointsToNextElements = document.querySelectorAll(".points-to-next-level")
+        // Fill form fields
+        const fullnameInput = document.getElementById('fullname');
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        const levelSelect = document.getElementById('level');
 
-    // Hide all badges first
-    document.querySelectorAll(".basic-badge, .silver-badge, .gold-badge, .platinum-badge").forEach((badge) => {
-      badge.classList.add("hidden")
-    })
-
-    // Show the appropriate badge
-    let badgeClass = ""
-    switch (mockUserLoyalty.level) {
-      case "PLATINUM":
-        badgeClass = ".platinum-badge"
-        break
-      case "GOLD":
-        badgeClass = ".gold-badge"
-        break
-      case "SILVER":
-        badgeClass = ".silver-badge"
-        break
-      default:
-        badgeClass = ".basic-badge"
+        if (fullnameInput) fullnameInput.value = userData.fullname || '';
+        if (emailInput) emailInput.value = userData.email || '';
+        if (phoneInput) phoneInput.value = userData.phone || '';
+        if (levelSelect) levelSelect.value = userData.level || 'beginner';
     }
 
-    document.querySelectorAll(badgeClass).forEach((badge) => {
-      badge.classList.remove("hidden")
-    })
+    profileForm.addEventListener('submit', function(e) {
+        e.preventDefault();
 
-    // Update text elements
-    let levelName = ""
-    switch (mockUserLoyalty.level) {
-      case "PLATINUM":
-        levelName = "Платиновый"
-        break
-      case "GOLD":
-        levelName = "Золотой"
-        break
-      case "SILVER":
-        levelName = "Серебряный"
-        break
-      default:
-        levelName = "Старт"
-    }
+        // Get form values
+        const fullname = document.getElementById('fullname').value;
+        const email = document.getElementById('email').value;
+        const phone = document.getElementById('phone').value;
+        const level = document.getElementById('level').value;
 
-    levelElements.forEach((el) => {
-      el.textContent = levelName
-    })
+        // Update user data
+        const userData = JSON.parse(localStorage.getItem('user')) || {};
+        userData.fullname = fullname;
+        userData.email = email;
+        userData.phone = phone;
+        userData.level = level;
 
-    discountElements.forEach((el) => {
-      el.textContent = `${levelDiscounts[mockUserLoyalty.level]}%`
-    })
+        localStorage.setItem('user', JSON.stringify(userData));
 
-    pointsElements.forEach((el) => {
-      el.textContent = mockUserLoyalty.points
-    })
+        // Update displayed name and email in sidebar
+        const userNameElement = document.getElementById('user-name');
+        const userEmailElement = document.getElementById('user-email');
+        if (userNameElement) userNameElement.textContent = fullname;
+        if (userEmailElement) userEmailElement.textContent = email;
 
-    // Calculate progress to next level
-    let nextLevel = ""
-    let pointsToNext = 0
+        alert('Профиль успешно обновлен');
+    });
+}
 
-    switch (mockUserLoyalty.level) {
-      case "START":
-        nextLevel = "SILVER"
-        break
-      case "SILVER":
-        nextLevel = "GOLD"
-        break
-      case "GOLD":
-        nextLevel = "PLATINUM"
-        break
-      case "PLATINUM":
-        nextLevel = "PLATINUM" // Already at max
-        break
-    }
 
-    if (nextLevel !== mockUserLoyalty.level) {
-      pointsToNext = levelThresholds[nextLevel] - mockUserLoyalty.points
-
-      // Calculate progress percentage
-      const currentThreshold = levelThresholds[mockUserLoyalty.level]
-      const nextThreshold = levelThresholds[nextLevel]
-      const range = nextThreshold - currentThreshold
-      const progress = mockUserLoyalty.points - currentThreshold
-      const percentage = Math.min(100, Math.max(0, (progress / range) * 100))
-
-      progressBars.forEach((bar) => {
-        bar.style.width = `${percentage}%`
-      })
-    } else {
-      // At max level
-      pointsToNext = 0
-      progressBars.forEach((bar) => {
-        bar.style.width = "100%"
-      })
-    }
-
-    pointsToNextElements.forEach((el) => {
-      el.textContent = pointsToNext
-    })
-
-    // Update level markers
-    document.querySelectorAll(".level-marker").forEach((marker, index) => {
-      const levels = ["START", "SILVER", "GOLD", "PLATINUM"]
-      const level = levels[index]
-
-      // Reset all markers
-      marker.querySelector("div").className = "h-1 bg-gray-300 rounded"
-
-      // Highlight current and previous levels
-      if (levelThresholds[level] <= mockUserLoyalty.points) {
-        marker.querySelector("div").className = "h-1 bg-green-600 rounded"
-      }
-    })
-  }
-
-  // Update booking modal to show loyalty discount
-  function updateBookingModal() {
-    const discountElement = document.querySelector(".pt-4 .mb-2:nth-child(3) .font-medium:last-child")
-    const totalElement = document.querySelector(".pt-4 .font-medium:last-child")
-
-    if (discountElement && totalElement) {
-      const bookingDuration = document.getElementById("booking-duration")
-      const bookingEquipment = document.getElementById("booking-equipment")
-      const tableSelect = document.getElementById("booking-table")
-
-      if (bookingDuration && bookingEquipment && tableSelect) {
-        const duration = Number.parseInt(bookingDuration.value)
-        const equipmentRental = bookingEquipment.checked ? 200 : 0
-        const tableOption = tableSelect.options[tableSelect.selectedIndex]
-        const tableType = tableOption.text.includes("Профессиональный") ? "pro" : "standard"
-        const hourlyRate = tableType === "pro" ? 500 : 400
-        const tableRental = hourlyRate * duration
-
-        // Calculate discount
-        const discount = levelDiscounts[mockUserLoyalty.level]
-        const discountAmount = Math.round((tableRental * discount) / 100)
-        const total = tableRental + equipmentRental - discountAmount
-
-        // Update discount text
-        const discountText = document.querySelector(".pt-4 .mb-2:nth-child(3) .text-sm.font-medium.text-gray-700")
-        if (discountText) {
-          discountText.textContent = `Скидка по программе лояльности (${discount}%):`
-        }
-
-        discountElement.textContent = `-${discountAmount} ₽`
-        totalElement.textContent = `${total} ₽`
-      }
-    }
-  }
-
-  // Call the update functions when the page loads
-  if (document.querySelector(".current-level")) {
-    updateLoyaltyDisplay()
-  }
-
-  // Update booking modal when values change
-  const bookingDuration = document.getElementById("booking-duration")
-  const bookingEquipment = document.getElementById("booking-equipment")
-  const bookingTable = document.getElementById("booking-table")
-
-  if (bookingDuration) {
-    bookingDuration.addEventListener("change", updateBookingModal)
-  }
-
-  if (bookingEquipment) {
-    bookingEquipment.addEventListener("change", updateBookingModal)
-  }
-
-  if (bookingTable) {
-    bookingTable.addEventListener("change", updateBookingModal)
-  }
-
-  // Initial update for booking modal
-  if (document.getElementById("booking-modal")) {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (
-          mutation.attributeName === "class" &&
-          !document.getElementById("booking-modal").classList.contains("hidden")
-        ) {
-          updateBookingModal()
-        }
-      })
-    })
-
-    observer.observe(document.getElementById("booking-modal"), {
-      attributes: true,
-    })
-  }
-})
