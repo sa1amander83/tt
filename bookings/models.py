@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
-class Table(models.Model):
+class Tables(models.Model):
     TABLE_TYPES = (
         ('standard', 'Стандартный'),
         ('pro', 'Профессиональный')
@@ -32,7 +32,7 @@ class Booking(models.Model):
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings', verbose_name="Пользователь")
-    table = models.ForeignKey(Table, on_delete=models.CASCADE, related_name='bookings', verbose_name="Стол")
+    table = models.ForeignKey(Tables, on_delete=models.CASCADE, related_name='bookings', verbose_name="Стол")
     start_time = models.DateTimeField(verbose_name="Время начала")
     end_time = models.DateTimeField(verbose_name="Время окончания")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")

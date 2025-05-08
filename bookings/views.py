@@ -1,6 +1,6 @@
 from django.views.generic import TemplateView
 from django.utils import timezone
-from .models import Table, Booking
+from .models import Tables, Booking
 
 
 class BookingsView(TemplateView):
@@ -9,6 +9,6 @@ class BookingsView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['current_date'] = timezone.now()
-        context['tables'] = Table.objects.all()
+        context['tables'] = Tables.objects.all()
         context['bookings'] = Booking.objects.filter(user=self.request.user).order_by('start_time')
         return context
