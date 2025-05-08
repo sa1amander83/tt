@@ -75,10 +75,10 @@ class SignInForm(forms.Form):
 class SignUpForm(forms.ModelForm):
 
     LEVEL_CHOICES = [
-        ('Начинающий', 'Начинающий'),
-        ('Средний', 'Средний'),
-        ('Продвинутый', 'Продвинутый'),
-        ('Профессиональный', 'Профессиональный'),
+        ('beginner', 'Начинающий'),
+        ('intermediate', 'Средний'),
+        ('advanced', 'Продвинутый'),
+        ('professional', 'Профессиональный'),
     ]
     user_name = forms.CharField(
         label="Имя и фамилия",
@@ -173,6 +173,8 @@ class SignUpForm(forms.ModelForm):
 
 
 class ProfileUpdateForm(forms.ModelForm):
+
+
     phone = forms.CharField(
         label="Телефон",
         validators=[

@@ -1,0 +1,20 @@
+<div class="flex flex-wrap gap-4 mb-6">
+    <div class="flex items-center">
+        <label for="table-filter" class="mr-2 text-sm font-medium text-gray-700">Стол:</label>
+        <select id="table-filter" class="rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring focus:ring-green-500 focus:ring-opacity-50">
+            <option value="all">Все столы</option>
+            {% for table in tables %}
+                <option value="{{ table.id }}">Стол #{{ table.number }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="flex items-center">
+        <label for="status-filter" class="mr-2 text-sm font-medium text-gray-700">Статус:</label>
+        <select id="status-filter" class="rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring focus:ring-green-500 focus:ring-opacity-50">
+            <option value="all">Все</option>
+            <option value="upcoming">Предстоящие</option>
+            <option value="past">Прошедшие</option>
+            <option value="cancelled">Отмененные</option>
+        </select>
+    </div>
+</div>

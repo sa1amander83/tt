@@ -172,7 +172,9 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
             return JsonResponse({
                 'success': True,
                 'user_name': form.instance.user_name,
-                'email': form.instance.email
+                'email': form.instance.email,
+                'phone': form.instance.phone,
+                'level': form.instance.level
             })
         return super().form_valid(form)
 

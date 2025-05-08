@@ -1,8 +1,14 @@
-from django.shortcuts import render
-from django.views.generic import View
+from django.views.generic import TemplateView
+from django.utils import timezone
+from .models import Table, Booking
 
 
-# Create your views here.
-class BookingsView(View):
-    def get(self, request, *args, **kwargs):
-        return render(request, "bookings/bookings.html")
+class BookingsView(TemplateView):
+    template_name = 'bookings/bookings.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['current_date'] = timezone.now()
+        context['tables'] = Table.objects.all()
+        context['bookings'] = Booking.objects.filter(user=self.request.user).order_by('start_time')
+        return context
