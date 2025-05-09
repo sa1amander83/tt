@@ -1,0 +1,24 @@
+<div class="grid grid-cols-8 gap-2 mb-4 min-w-[700px]">
+    <div class="text-center font-medium"></div>
+    {% for day in week_days %}
+    <div class="text-center font-medium">{{ day }}</div>
+    {% endfor %}
+</div>
+
+<div class="week-slots min-w-[700px]">
+    {% for table in tables %}
+    <div class="grid grid-cols-8 gap-2 mb-2">
+        <div class="font-medium">Стол #{{ table.number }}</div>
+        {% for availability in table.week_availability %}
+        <div class="{% if availability.available %}bg-green-100{% else %}bg-red-100{% endif %} rounded p-2 text-sm text-center">
+            {{ availability.booked }}/{{ availability.total }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+
+<div class="mt-8 overflow-x-auto">
+    <h3 class="text-lg font-medium mb-4">Ваши бронирования на эту неделю</h3>
+    {% include 'bookings/bookings_table.html' with bookings=week_bookings %}
+</div>

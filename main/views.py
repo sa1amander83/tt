@@ -17,4 +17,11 @@ def about_view(request):
     return render(request, "main/about.html")
 
 def contacts_view(request):
-    return render(request, "main/contacts.html")
+    user = request.user  # текущий пользователь
+
+    context = {
+        'user': user,
+        # Можно добавить другие данные, если нужно
+    }
+
+    return render(request, "main/contacts.html", context)

@@ -1,0 +1,55 @@
+{% load custom_tags %}
+
+<div id="day-view-container" class="calendar-container overflow-x-auto">
+    <div class="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+        <!-- Заголовки столов -->
+        <div class="flex border-b border-gray-200 bg-gray-50">
+            <div class="w-24 md:w-32 flex-shrink-0 p-3"></div>
+            {% for table in tables %}
+                <div class="flex-1 p-3 text-center font-medium">
+                    Стол #{{ table.number }}<br>
+                    <span class="text-xs text-gray-500">{{ table.table_type }}</span>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Строки с временными слотами -->
+        {% for hour in time_slots %}
+            <div class="flex border-b border-gray-200 last:border-b-0">
+                <!-- Колонка времени -->
+                <div class="w-24 md:w-32 flex-shrink-0 p-3 text-right text-sm text-gray-500">
+                    {{ hour|time:"H:i" }}
+                </div>
+
+                <!-- Ячейки столов -->
+                <div class="flex-1 grid grid-cols-{{ tables|length }} divide-x divide-gray-200">
+                    {% for table in tables %}
+                        {% with schedule|get_item:table.id|get_item:hour as booking %}
+                            <div class="flex items-center justify-center p-2
+                                    {% if booking %}
+                                        bg-red-100 hover:bg-red-200
+                                    {% else %}
+                                        bg-green-100 hover:bg-green-200 cursor-pointer
+                                    {% endif %}"
+                                    {% if not booking %}
+                                 data-time="{{ hour|time:'H:i' }}"
+                                 data-table="{{ table.id }}"
+                                    {% endif %}>
+
+                                    <span class="text-sm">
+                                        {% if booking %}
+                                            <span class="text-red-800">Занято</span>
+                                        {% else %}
+                                            <span class="text-green-800">Свободно</span>
+                                        {% endif %}
+                                    </span>
+                            </div>
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+   
+<div id="user-bookings-container"></div>

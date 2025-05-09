@@ -57,7 +57,16 @@
                 {% endif %}
             </div>
             
-        
+         <div class="space-y-2">
+                <label for="{{ form.user_age.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                    {{ form.user_age.label }}
+                </label>
+                {{ form.user_age }}
+                {% if form.user_age.errors %}
+                    <div class="text-red-500 text-sm">{{ form.user_age.errors }}</div>
+                {% endif %}
+            </div>
+            
              <div class="space-y-2">
                 <label for="{{ form.level.id_for_label }}" class="block text-sm font-medium text-gray-700">
                     {{ form.level.label }}

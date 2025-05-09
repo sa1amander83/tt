@@ -8,508 +8,296 @@
 
         <!-- Календарь и управление -->
         <div class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-8">
-   {% include 'bookings/calendar_controls.html' %}
+            {% include 'bookings/calendar_controls.html' %}
             <!-- Фильтры -->
-         {% include 'bookings/filters.html' %}
+            {% include 'bookings/filters.html' %}
 
             <!-- Представление дня -->
             <div id="day-view-container" class="calendar-container overflow-x-auto">
-                <div class="flex mb-4 min-w-[600px]">
-                    <div class="w-20 md:w-32"></div>
-                    <div class="flex-1 grid grid-cols-5 gap-2">
-                        <div class="text-center font-medium">Стол #1</div>
-                        <div class="text-center font-medium">Стол #2</div>
-                        <div class="text-center font-medium">Стол #3</div>
-                        <div class="text-center font-medium">Стол #4</div>
-                        <div class="text-center font-medium">Стол #5</div>
-                    </div>
-                </div>
-                <div class="day-slots min-w-[600px]">
-                    <!-- Временные слоты -->
-                    <div class="flex h-14 border-t border-gray-200">
-                        <div class="w-20 md:w-32 -mt-3 pr-2 text-right text-sm text-gray-500">9:00</div>
-                        <div class="flex-1 grid grid-cols-5 gap-2">
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="9" data-table="1"></div>
-                            <div class="bg-red-100 rounded p-2 text-sm"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="9" data-table="3"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="9" data-table="4"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="9" data-table="5"></div>
-                        </div>
-                    </div>
-                    <div class="flex h-14 border-t border-gray-200">
-                        <div class="w-20 md:w-32 -mt-3 pr-2 text-right text-sm text-gray-500">10:00</div>
-                        <div class="flex-1 grid grid-cols-5 gap-2">
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="10" data-table="1"></div>
-                            <div class="bg-red-100 rounded p-2 text-sm"></div>
-                            <div class="bg-red-100 rounded p-2 text-sm"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="10" data-table="4"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="10" data-table="5"></div>
-                        </div>
-                    </div>
-                    <div class="flex h-14 border-t border-gray-200">
-                        <div class="w-20 md:w-32 -mt-3 pr-2 text-right text-sm text-gray-500">11:00</div>
-                        <div class="flex-1 grid grid-cols-5 gap-2">
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="11" data-table="1"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="11" data-table="2"></div>
-                            <div class="bg-red-100 rounded p-2 text-sm"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="11" data-table="4"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="11" data-table="5"></div>
-                        </div>
-                    </div>
-                    <div class="flex h-14 border-t border-gray-200">
-                        <div class="w-20 md:w-32 -mt-3 pr-2 text-right text-sm text-gray-500">12:00</div>
-                        <div class="flex-1 grid grid-cols-5 gap-2">
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="12" data-table="1"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="12" data-table="2"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="12" data-table="3"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="12" data-table="4"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="12" data-table="5"></div>
-                        </div>
-                    </div>
-                    <div class="flex h-14 border-t border-gray-200">
-                        <div class="w-20 md:w-32 -mt-3 pr-2 text-right text-sm text-gray-500">13:00</div>
-                        <div class="flex-1 grid grid-cols-5 gap-2">
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="13" data-table="1"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="13" data-table="2"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="13" data-table="3"></div>
-                            <div class="bg-red-100 rounded p-2 text-sm"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="13" data-table="5"></div>
-                        </div>
-                    </div>
-                    <div class="flex h-14 border-t border-gray-200">
-                        <div class="w-20 md:w-32 -mt-3 pr-2 text-right text-sm text-gray-500">14:00</div>
-                        <div class="flex-1 grid grid-cols-5 gap-2">
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="14" data-table="1"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="14" data-table="2"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="14" data-table="3"></div>
-                            <div class="bg-red-100 rounded p-2 text-sm"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="14" data-table="5"></div>
-                        </div>
-                    </div>
-                    <div class="flex h-14 border-t border-gray-200">
-                        <div class="w-20 md:w-32 -mt-3 pr-2 text-right text-sm text-gray-500">15:00</div>
-                        <div class="flex-1 grid grid-cols-5 gap-2">
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="15" data-table="1"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="15" data-table="2"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="15" data-table="3"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="15" data-table="4"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="15" data-table="5"></div>
-                        </div>
-                    </div>
-                    <div class="flex h-14 border-t border-gray-200">
-                        <div class="w-20 md:w-32 -mt-3 pr-2 text-right text-sm text-gray-500">16:00</div>
-                        <div class="flex-1 grid grid-cols-5 gap-2">
-                            <div class="bg-red-100 rounded p-2 text-sm"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="16" data-table="2"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="16" data-table="3"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="16" data-table="4"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="16" data-table="5"></div>
-                        </div>
-                    </div>
-                    <div class="flex h-14 border-t border-gray-200">
-                        <div class="w-20 md:w-32 -mt-3 pr-2 text-right text-sm text-gray-500">17:00</div>
-                        <div class="flex-1 grid grid-cols-5 gap-2">
-                            <div class="bg-red-100 rounded p-2 text-sm"></div>
-                            <div class="bg-red-100 rounded p-2 text-sm"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="17" data-table="3"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="17" data-table="4"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="17" data-table="5"></div>
-                        </div>
-                    </div>
-                    <div class="flex h-14 border-t border-gray-200">
-                        <div class="w-20 md:w-32 -mt-3 pr-2 text-right text-sm text-gray-500">18:00</div>
-                        <div class="flex-1 grid grid-cols-5 gap-2">
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="18" data-table="1"></div>
-                            <div class="bg-red-100 rounded p-2 text-sm"></div>
-                            <div class="bg-red-100 rounded p-2 text-sm"></div>
-                            <div class="bg-red-100 rounded p-2 text-sm"></div>
-                            <div class="bg-red-100 rounded p-2 text-sm"></div>
-                        </div>
-                    </div>
-                    <div class="flex h-14 border-t border-gray-200">
-                        <div class="w-20 md:w-32 -mt-3 pr-2 text-right text-sm text-gray-500">19:00</div>
-                        <div class="flex-1 grid grid-cols-5 gap-2">
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="19" data-table="1"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="19" data-table="2"></div>
-                            <div class="bg-red-100 rounded p-2 text-sm"></div>
-                            <div class="bg-red-100 rounded p-2 text-sm"></div>
-                            <div class="bg-red-100 rounded p-2 text-sm"></div>
-                        </div>
-                    </div>
-                    <div class="flex h-14 border-t border-gray-200">
-                        <div class="w-20 md:w-32 -mt-3 pr-2 text-right text-sm text-gray-500">20:00</div>
-                        <div class="flex-1 grid grid-cols-5 gap-2">
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="20" data-table="1"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="20" data-table="2"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="20" data-table="3"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="20" data-table="4"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="20" data-table="5"></div>
-                        </div>
-                    </div>
-                    <div class="flex h-14 border-t border-gray-200">
-                        <div class="w-20 md:w-32 -mt-3 pr-2 text-right text-sm text-gray-500">21:00</div>
-                        <div class="flex-1 grid grid-cols-5 gap-2">
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="21" data-table="1"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="21" data-table="2"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="21" data-table="3"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="21" data-table="4"></div>
-                            <div class="bg-green-100 rounded p-2 text-sm cursor-pointer hover:bg-green-200" data-time="21" data-table="5"></div>
-                        </div>
-                    </div>
-                </div>
+                               {% include 'bookings/day_view.html' %}
             </div>
 
             <!-- Представление недели -->
             <div id="week-view-container" class="calendar-container hidden overflow-x-auto">
-                <div class="grid grid-cols-8 gap-2 mb-4 min-w-[700px]">
-                    <div class="text-center font-medium"></div>
-                    <div class="text-center font-medium">Пн, 15</div>
-                    <div class="text-center font-medium">Вт, 16</div>
-                    <div class="text-center font-medium">Ср, 17</div>
-                    <div class="text-center font-medium">Чт, 18</div>
-                    <div class="text-center font-medium">Пт, 19</div>
-                    <div class="text-center font-medium">Сб, 20</div>
-                    <div class="text-center font-medium">Вс, 21</div>
-                </div>
-                <div class="week-slots min-w-[700px]">
-                    <!-- Столы и их доступность по дням недели -->
-                    <div class="grid grid-cols-8 gap-2 mb-2">
-                        <div class="font-medium">Стол #1</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">4/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">6/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">5/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">7/8</div>
-                        <div class="bg-red-100 rounded p-2 text-sm text-center">0/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">8/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">8/8</div>
-                    </div>
-                    <div class="grid grid-cols-8 gap-2 mb-2">
-                        <div class="font-medium">Стол #2</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">5/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">4/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">6/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">5/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">3/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">7/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">8/8</div>
-                    </div>
-                    <div class="grid grid-cols-8 gap-2 mb-2">
-                        <div class="font-medium">Стол #3</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">6/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">5/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">4/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">6/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">5/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">6/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">7/8</div>
-                    </div>
-                    <div class="grid grid-cols-8 gap-2 mb-2">
-                        <div class="font-medium">Стол #4</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">7/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">6/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">5/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">4/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">6/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">5/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">6/8</div>
-                    </div>
-                    <div class="grid grid-cols-8 gap-2 mb-2">
-                        <div class="font-medium">Стол #5</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">8/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">7/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">6/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">5/8</div>
-                        <div class="bg-green-100 rounded p-2 text-sm text-center">4/8</div>
-                        <div class="bg-yellow-100 rounded p-2 text-sm text-center"></div>
-                        <div class="bg-yellow-100 rounded p-2 text-sm text-center"></div>
-                    </div>
-                </div>
-                
-                <div class="mt-8 overflow-x-auto">
-                    <h3 class="text-lg font-medium mb-4">Ваши бронирования на эту неделю</h3>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Дата
-                                </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Время
-                                </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Стол
-                                </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Статус
-                                </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Действия
-                                </th>
-                            </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">15.05.2023</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">17:00 - 18:00</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Стол #1</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Подтверждено</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button class="text-red-600 hover:text-red-900 mr-2">Отменить</button>
-                                    <button class="text-blue-600 hover:text-blue-900">Оплатить</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">17.05.2023</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">19:00 - 20:00</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Стол #3</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Подтверждено</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button class="text-red-600 hover:text-red-900 mr-2">Отменить</button>
-                                    <button class="text-blue-600 hover:text-blue-900">Оплатить</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">19.05.2023</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">18:00 - 19:00</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Стол #4</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Ожидает подтверждения</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button class="text-red-600 hover:text-red-900 mr-2">Отменить</button>
-                                    <button class="text-blue-600 hover:text-blue-900">Оплатить</button>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
 
+                {% include 'bookings/week_view.html' %}
+            </div>
             <!-- Представление месяца -->
             <div id="month-view-container" class="calendar-container hidden">
-                <div class="grid grid-cols-7 gap-2 mb-4">
-                    <div class="text-center font-medium">Пн</div>
-                    <div class="text-center font-medium">Вт</div>
-                    <div class="text-center font-medium">Ср</div>
-                    <div class="text-center font-medium">Чт</div>
-                    <div class="text-center font-medium">Пт</div>
-                    <div class="text-center font-medium">Сб</div>
-                    <div class="text-center font-medium">Вс</div>
-                </div>
-                <div class="grid grid-cols-7 gap-2">
-                    <!-- Первая неделя -->
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">30</div>
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">1</div>
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">2</div>
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">3</div>
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">4</div>
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">5</div>
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">6</div>
-                    
-                    <!-- Вторая неделя -->
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">7</div>
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">8</div>
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">9</div>
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">10</div>
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">11</div>
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">12</div>
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">13</div>
-                    
-                    <!-- Третья неделя (текущая) -->
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">14</div>
-                        <div class="text-xs text-gray-500 mt-1">Нет бронирований</div>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">15</div>
-                        <div class="text-xs text-green-600 mt-1">1 бронирование</div>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">16</div>
-                        <div class="text-xs text-gray-500 mt-1">Нет бронирований</div>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">17</div>
-                        <div class="text-xs text-green-600 mt-1">1 бронирование</div>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">18</div>
-                        <div class="text-xs text-gray-500 mt-1">Нет бронирований</div>
-                    </div>
-                    <div class="bg-green-50 border border-green-200 rounded p-2 text-sm hover:bg-green-100 cursor-pointer">
-                        <div class="font-medium text-green-800">19</div>
-                        <div class="text-xs text-green-600 mt-1">1 бронирование</div>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">20</div>
-                        <div class="text-xs text-gray-500 mt-1">Нет бронирований</div>
-                    </div>
-                    
-                    <!-- Четвертая неделя -->
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">21</div>
-                        <div class="text-xs text-gray-500 mt-1">Нет бронирований</div>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">22</div>
-                        <div class="text-xs text-gray-500 mt-1">Нет бронирований</div>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">23</div>
-                        <div class="text-xs text-gray-500 mt-1">Нет бронирований</div>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">24</div>
-                        <div class="text-xs text-gray-500 mt-1">Нет бронирований</div>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">25</div>
-                        <div class="text-xs text-gray-500 mt-1">Нет бронирований</div>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">26</div>
-                        <div class="text-xs text-gray-500 mt-1">Нет бронирований</div>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">27</div>
-                        <div class="text-xs text-gray-500 mt-1">Нет бронирований</div>
-                    </div>
-                    
-                    <!-- Пятая неделя -->
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">28</div>
-                        <div class="text-xs text-gray-500 mt-1">Нет бронирований</div>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">29</div>
-                        <div class="text-xs text-gray-500 mt-1">Нет бронирований</div>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">30</div>
-                        <div class="text-xs text-gray-500 mt-1">Нет бронирований</div>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded p-2 text-sm hover:bg-gray-50 cursor-pointer">
-                        <div class="font-medium">31</div>
-                        <div class="text-xs text-gray-500 mt-1">Нет бронирований</div>
-                    </div>
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">1</div>
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">2</div>
-                    <div class="bg-gray-100 rounded p-2 text-sm text-gray-400">3</div>
-                </div>
-                
-                <div class="mt-8">
-                    <h3 class="text-lg font-medium mb-4">Ваши бронирования на май</h3>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Дата
-                                </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Время
-                                </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Стол
-                                </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Статус
-                                </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Действия
-                                </th>
-                            </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">15.05.2023</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">17:00 - 18:00</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Стол #1</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Подтверждено</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button class="text-red-600 hover:text-red-900 mr-2">Отменить</button>
-                                    <button class="text-blue-600 hover:text-blue-900">Оплатить</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">17.05.2023</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">19:00 - 20:00</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Стол #3</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Подтверждено</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button class="text-red-600 hover:text-red-900 mr-2">Отменить</button>
-                                    <button class="text-blue-600 hover:text-blue-900">Оплатить</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">19.05.2023</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">18:00 - 19:00</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Стол #4</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Ожидает подтверждения</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button class="text-red-600 hover:text-red-900 mr-2">Отменить</button>
-                                    <button class="text-blue-600 hover:text-blue-900">Оплатить</button>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                {% include 'bookings/month_view.html' %}
             </div>
         </div>
 
         <!-- Модальное окно для нового бронирования -->
-           {% include 'bookings/booking_modal.html' %}
+        {% include 'bookings/booking_modal.html' %}
 
     </main>
 {% endblock %}
 {% block extrascripts %}
 
-    <script>
+    
+    
+    
+    
+      <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Инициализация переменных
+            let currentDate = new Date();
+            let currentView = 'day';
+            
+            // Функция для загрузки данных представления через AJAX
+            function loadViewData(view, date) {
+                const dateStr = date.toISOString().split('T')[0];
+                const tableFilter = document.getElementById('table-filter').value;
+                const statusFilter = document.getElementById('status-filter').value;
+                
+                let url = `/bookings/${view}/?date=${dateStr}`;
+                if (tableFilter !== 'all') url += `&table=${tableFilter}`;
+                if (statusFilter !== 'all') url += `&status=${statusFilter}`;
+                
+                fetch(url)
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById(`${view}-view-container`).innerHTML = html;
+                    });
+            }
+            
+            // Функция для загрузки бронирований пользователя
+            function loadUserBookings() {
+                fetch('/bookings/user-bookings/')
+                    .then(response => response.json())
+                    .then(data => {
+                        const container = document.getElementById('user-bookings-container');
+                        if (data.bookings.length > 0) {
+                            let html = `
+                                <table class="min-w-full bg-white">
+                                    <thead>
+                                        <tr>
+                                            <th class="py-2 px-4 border-b">Дата</th>
+                                            <th class="py-2 px-4 border-b">Время</th>
+                                            <th class="py-2 px-4 border-b">Стол</th>
+                                            <th class="py-2 px-4 border-b">Статус</th>
+                                            <th class="py-2 px-4 border-b">Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+                            
+                            data.bookings.forEach(booking => {
+                                html += `
+                                    <tr>
+                                        <td class="py-2 px-4 border-b">${booking.date}</td>
+                                        <td class="py-2 px-4 border-b">${booking.start_time}-${booking.end_time}</td>
+                                        <td class="py-2 px-4 border-b">Стол #${booking.table}</td>
+                                        <td class="py-2 px-4 border-b">${booking.status}</td>
+                                        <td class="py-2 px-4 border-b">
+                                            <button class="text-red-600 hover:text-red-800 mr-2">Отменить</button>
+                                            <button class="text-blue-600 hover:text-blue-800">Оплатить</button>
+                                        </td>
+                                    </tr>`;
+                            });
+                            
+                            html += `</tbody></table>`;
+                            container.innerHTML = html;
+                        } else {
+                            container.innerHTML = '<div class="text-center py-4 text-gray-500">У вас нет активных бронирований</div>';
+                        }
+                    });
+            }
+            
+            // Функция для обновления заголовка календаря
+            function updateCalendarTitle() {
+                const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
+                              'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+                const titleElement = document.getElementById('calendar-title');
+                
+                if (currentView === 'day') {
+                    titleElement.textContent = `${currentDate.getDate()} ${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+                } else if (currentView === 'week') {
+                    const startOfWeek = new Date(currentDate);
+                    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+                    
+                    const endOfWeek = new Date(startOfWeek);
+                    endOfWeek.setDate(startOfWeek.getDate() + 6);
+                    
+                    titleElement.textContent = `${startOfWeek.getDate()}-${endOfWeek.getDate()} ${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+                } else if (currentView === 'month') {
+                    titleElement.textContent = `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+                }
+            }
+            
+            // Функция для переключения представлений
+           function switchView(view) {
+    // Скрыть все представления
+    document.querySelectorAll('.calendar-container').forEach(el => {
+        el.classList.add('hidden');
+    });
+    
+    // Показать выбранное представление
+    const viewContainer = document.getElementById(`${view}-view-container`);
+    if (viewContainer) {
+        viewContainer.classList.remove('hidden');
+    }
+    
+    // Обновить активную кнопку
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-600', 'text-white');
+        btn.classList.add('bg-gray-200', 'text-gray-800');
+    });
+    
+    const activeViewBtn = document.querySelector(`.view-btn[data-view="${view}"]`);
+    if (activeViewBtn) {
+        activeViewBtn.classList.add('bg-blue-600', 'text-white');
+        activeViewBtn.classList.remove('bg-gray-200', 'text-gray-800');
+    }
+    
+    // Установить текущее представление и загрузить данные
+    currentView = view;
+    loadViewData(view, currentDate);
+    updateCalendarTitle();
+}
+            
+            // Обработчики кнопок представлений
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const view = this.getAttribute('data-view');
+                    switchView(view);
+                });
+            });
+            
+            // Обработчики кнопок навигации
+            document.getElementById('prev-btn').addEventListener('click', function() {
+                if (currentView === 'day') {
+                    currentDate.setDate(currentDate.getDate() - 1);
+                } else if (currentView === 'week') {
+                    currentDate.setDate(currentDate.getDate() - 7);
+                } else if (currentView === 'month') {
+                    currentDate.setMonth(currentDate.getMonth() - 1);
+                }
+                loadViewData(currentView, currentDate);
+                updateCalendarTitle();
+            });
+            
+            document.getElementById('next-btn').addEventListener('click', function() {
+                if (currentView === 'day') {
+                    currentDate.setDate(currentDate.getDate() + 1);
+                } else if (currentView === 'week') {
+                    currentDate.setDate(currentDate.getDate() + 7);
+                } else if (currentView === 'month') {
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                }
+                loadViewData(currentView, currentDate);
+                updateCalendarTitle();
+            });
+            
+            document.getElementById('today-btn').addEventListener('click', function() {
+                currentDate = new Date();
+                loadViewData(currentView, currentDate);
+                updateCalendarTitle();
+            });
+            
+            // Обработчики фильтров
+            document.getElementById('table-filter').addEventListener('change', function() {
+                loadViewData(currentView, currentDate);
+            });
+            
+            document.getElementById('status-filter').addEventListener('change', function() {
+                loadViewData(currentView, currentDate);
+            });
+            
+            // Инициализация
+            switchView('day');
+            loadUserBookings();
+            
+            // Обработка модального окна бронирования
+            const bookingModal = document.getElementById('booking-modal');
+            
+            document.getElementById('new-booking-btn').addEventListener('click', function() {
+                bookingModal.classList.remove('hidden');
+            });
+            
+            document.getElementById('close-modal').addEventListener('click', function() {
+                bookingModal.classList.add('hidden');
+            });
+            
+            document.getElementById('cancel-booking').addEventListener('click', function() {
+                bookingModal.classList.add('hidden');
+            });
+            
+            // Обработка формы бронирования
+            document.getElementById('booking-modal').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                
+                fetch('/bookings/create/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        bookingModal.classList.add('hidden');
+                        loadViewData(currentView, currentDate);
+                        loadUserBookings();
+                        alert('Бронирование успешно создано!');
+                    } else {
+                        alert('Ошибка: ' + data.error);
+                    }
+                });
+            });
+        });
+    </script>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
             // Mobile menu toggle
             const mobileMenuButton = document.getElementById('mobile-menu-button');
             const mobileMenu = document.getElementById('mobile-menu');
-            
+
             if (mobileMenuButton && mobileMenu) {
-                mobileMenuButton.addEventListener('click', function() {
+                mobileMenuButton.addEventListener('click', function () {
                     mobileMenu.classList.toggle('hidden');
                 });
             }
-            
+
             // Переключение представлений календаря
             const dayView = document.getElementById('day-view');
             const weekView = document.getElementById('week-view');
             const monthView = document.getElementById('month-view');
-            
+
             const dayViewContainer = document.getElementById('day-view-container');
             const weekViewContainer = document.getElementById('week-view-container');
             const monthViewContainer = document.getElementById('month-view-container');
-            
+
             function setActiveView(view) {
                 // Сбросить все кнопки
                 [dayView, weekView, monthView].forEach(btn => {
                     btn.classList.remove('bg-green-600', 'text-white');
                     btn.classList.add('bg-white', 'text-gray-900', 'border', 'border-gray-200');
                 });
-                
+
                 // Сбросить все контейнеры
                 [dayViewContainer, weekViewContainer, monthViewContainer].forEach(container => {
                     container.classList.add('hidden');
                 });
-                
+
                 // Активировать выбранное представление
                 if (view === 'day') {
                     dayView.classList.remove('bg-white', 'text-gray-900', 'border', 'border-gray-200');
@@ -525,55 +313,55 @@
                     monthViewContainer.classList.remove('hidden');
                 }
             }
-            
-            dayView.addEventListener('click', function() {
+
+            dayView.addEventListener('click', function () {
                 setActiveView('day');
             });
-            
-            weekView.addEventListener('click', function() {
+
+            weekView.addEventListener('click', function () {
                 setActiveView('week');
             });
-            
-            monthView.addEventListener('click', function() {
+
+            monthView.addEventListener('click', function () {
                 setActiveView('month');
             });
-            
+
             // Модальное окно бронирования
             const newBookingBtn = document.getElementById('new-booking-btn');
             const bookingModal = document.getElementById('booking-modal');
             const closeModal = document.getElementById('close-modal');
             const cancelBooking = document.getElementById('cancel-booking');
-            
+
             if (newBookingBtn && bookingModal) {
-                newBookingBtn.addEventListener('click', function() {
+                newBookingBtn.addEventListener('click', function () {
                     bookingModal.classList.remove('hidden');
                 });
             }
-            
+
             if (closeModal && bookingModal) {
-                closeModal.addEventListener('click', function() {
+                closeModal.addEventListener('click', function () {
                     bookingModal.classList.add('hidden');
                 });
             }
-            
+
             if (cancelBooking && bookingModal) {
-                cancelBooking.addEventListener('click', function() {
+                cancelBooking.addEventListener('click', function () {
                     bookingModal.classList.add('hidden');
                 });
             }
-            
+
             // Навигация по календарю
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
             const todayBtn = document.getElementById('today-btn');
             const calendarTitle = document.getElementById('calendar-title');
-            
+
             let currentDate = new Date();
             let currentView = 'day'; // По умолчанию - дневное представление
-            
+
             function updateCalendarTitle() {
                 const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-                
+
                 if (currentView === 'day') {
                     calendarTitle.textContent = `${currentDate.getDate()} ${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
                 } else if (currentView === 'week') {
@@ -581,17 +369,17 @@
                     const startOfWeek = new Date(currentDate);
                     const dayOfWeek = currentDate.getDay() || 7; // Воскресенье = 0, преобразуем в 7
                     startOfWeek.setDate(currentDate.getDate() - dayOfWeek + 1); // Понедельник
-                    
+
                     const endOfWeek = new Date(startOfWeek);
                     endOfWeek.setDate(startOfWeek.getDate() + 6); // Воскресенье
-                    
+
                     calendarTitle.textContent = `${startOfWeek.getDate()} ${months[startOfWeek.getMonth()]} - ${endOfWeek.getDate()} ${months[endOfWeek.getMonth()]} ${currentDate.getFullYear()}`;
                 } else if (currentView === 'month') {
                     calendarTitle.textContent = `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
                 }
             }
-            
-            prevBtn.addEventListener('click', function() {
+
+            prevBtn.addEventListener('click', function () {
                 if (currentView === 'day') {
                     currentDate.setDate(currentDate.getDate() - 1);
                 } else if (currentView === 'week') {
@@ -601,8 +389,8 @@
                 }
                 updateCalendarTitle();
             });
-            
-            nextBtn.addEventListener('click', function() {
+
+            nextBtn.addEventListener('click', function () {
                 if (currentView === 'day') {
                     currentDate.setDate(currentDate.getDate() + 1);
                 } else if (currentView === 'week') {
@@ -612,37 +400,37 @@
                 }
                 updateCalendarTitle();
             });
-            
-            todayBtn.addEventListener('click', function() {
+
+            todayBtn.addEventListener('click', function () {
                 currentDate = new Date();
                 updateCalendarTitle();
             });
-            
+
             // Установка текущего представления и обновление заголовка
             setActiveView('day');
             currentView = 'day';
             updateCalendarTitle();
-            
+
             // Обработчики для изменения представления
-            dayView.addEventListener('click', function() {
+            dayView.addEventListener('click', function () {
                 currentView = 'day';
                 updateCalendarTitle();
             });
-            
-            weekView.addEventListener('click', function() {
+
+            weekView.addEventListener('click', function () {
                 currentView = 'week';
                 updateCalendarTitle();
             });
-            
-            monthView.addEventListener('click', function() {
+
+            monthView.addEventListener('click', function () {
                 currentView = 'month';
                 updateCalendarTitle();
             });
-            
+
             // Обработка выбора даты в месячном представлении
             const dateCells = document.querySelectorAll('#month-view-container .cursor-pointer');
             dateCells.forEach(cell => {
-                cell.addEventListener('click', function() {
+                cell.addEventListener('click', function () {
                     const day = parseInt(this.querySelector('.font-medium').textContent);
                     currentDate.setDate(day);
                     setActiveView('day');
@@ -650,58 +438,58 @@
                     updateCalendarTitle();
                 });
             });
-            
+
             // Расчет стоимости бронирования
             const bookingDuration = document.getElementById('booking-duration');
             const bookingEquipment = document.getElementById('booking-equipment');
-            
+
             function updateBookingCost() {
                 const duration = parseInt(bookingDuration.value);
                 const equipmentRental = bookingEquipment.checked ? 200 : 0;
-                
+
                 // Получаем выбранный стол и его стоимость
                 const tableSelect = document.getElementById('booking-table');
                 const tableOption = tableSelect.options[tableSelect.selectedIndex];
                 const tableType = tableOption.text.includes('Профессиональный') ? 'pro' : 'standard';
-                
+
                 // Разная стоимость для разных типов столов
                 const hourlyRate = tableType === 'pro' ? 500 : 400;
-                
+
                 const tableRental = hourlyRate * duration;
                 const total = tableRental + equipmentRental;
-                
+
                 document.querySelector('.pt-4 .mb-2:nth-child(1) .font-medium:last-child').textContent = `${tableRental} ₽`;
                 document.querySelector('.pt-4 .mb-2:nth-child(2) .font-medium:last-child').textContent = `${equipmentRental} ₽`;
                 document.querySelector('.pt-4 .font-medium:last-child').textContent = `${total} ₽`;
             }
-            
+
             bookingDuration.addEventListener('change', updateBookingCost);
             bookingEquipment.addEventListener('change', updateBookingCost);
-            
+
             // Обработка клика на свободное время
             const freeSlots = document.querySelectorAll('.bg-green-100.cursor-pointer');
             freeSlots.forEach(slot => {
-                slot.addEventListener('click', function() {
+                slot.addEventListener('click', function () {
                     // Получаем данные о времени и столе из атрибутов
                     const time = this.getAttribute('data-time');
                     const table = this.getAttribute('data-table');
-                    
+
                     // Устанавливаем значения в форме бронирования
                     if (time && table) {
                         // Устанавливаем текущую дату
                         const today = new Date();
                         const dateString = today.toISOString().split('T')[0];
                         document.getElementById('booking-date').value = dateString;
-                        
+
                         // Устанавливаем выбранное время
                         document.getElementById('booking-start-time').value = time;
-                        
+
                         // Устанавливаем выбранный стол
                         document.getElementById('booking-table').value = table;
-                        
+
                         // Открываем модальное окно
                         bookingModal.classList.remove('hidden');
-                        
+
                         // Обновляем стоимость
                         updateBookingCost();
                     }
@@ -712,5 +500,5 @@
 
     <script src="{% static 'js/bookings.js' %}"></script>
 
-   
+
 {% endblock %}

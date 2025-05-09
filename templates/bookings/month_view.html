@@ -1,0 +1,24 @@
+<div class="grid grid-cols-7 gap-2 mb-4">
+    {% for day in week_days_short %}
+    <div class="text-center font-medium">{{ day }}</div>
+    {% endfor %}
+</div>
+
+<div class="grid grid-cols-7 gap-2">
+    {% for date in month_dates %}
+    <div class="{% if date.in_month %}bg-white border hover:bg-gray-50{% else %}bg-gray-100 text-gray-400{% endif %} rounded p-2 text-sm cursor-pointer"
+         data-date="{{ date.iso }}">
+        <div class="font-medium">{{ date.day }}</div>
+        {% if date.bookings %}
+        <div class="text-xs text-green-600 mt-1">{{ date.bookings }} бронирований</div>
+        {% elif date.in_month %}
+        <div class="text-xs text-gray-500 mt-1">Нет бронирований</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<div class="mt-8">
+    <h3 class="text-lg font-medium mb-4">Ваши бронирования на {{ current_month }}</h3>
+    {% include 'bookings/bookings_table.html' with bookings=month_bookings %}
+</div>

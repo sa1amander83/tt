@@ -25,7 +25,7 @@
                             <div id="photo-modal"
                                  class="fixed inset-0  flex items-center justify-center z-50 hidden p-4">
                                 <div class="relative max-w-full max-h-full">
-                                    <img id="modal-photo" src="{{ user.photo.url }}" alt="User Photo"
+                                    <img id="modal-photo" src="{% if user.photo %}  {{ user.photo.url }} {% else %}{{ user.photo }} {% endif %} " alt="User Photo"
                                          class="rounded-md shadow-lg object-contain"
                                          style="height: 50vh; max-width: 90vw;"/>
                                 </div>

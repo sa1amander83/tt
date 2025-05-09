@@ -10,7 +10,7 @@ from accounts.models import User
 from django import forms
 from django.contrib.auth import authenticate
 
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
 
 
 class SignInForm(forms.Form):
@@ -106,6 +106,20 @@ class SignUpForm(forms.ModelForm):
         })
     )
 
+    user_age = forms.IntegerField(
+        label="Возраст",
+        required=False,  # если поле необязательное
+        validators=[
+            MinValueValidator(5, message="Возраст должен быть не меньше 5 лет"),
+            MaxValueValidator(99, message="Возраст должен быть не больше 99 лет"),
+        ],
+        widget=forms.NumberInput(attrs={
+            "class": "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500",
+            "placeholder": "18",
+            "maxlength": "2"
+        })
+    )
+
     level = forms.ChoiceField(
         label="Уровень",
         choices=LEVEL_CHOICES,
@@ -138,7 +152,7 @@ class SignUpForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['user_name', 'email', 'phone', 'level']
+        fields = ['user_name', 'email', 'phone', 'level', 'user_age']
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -152,6 +166,8 @@ class SignUpForm(forms.ModelForm):
         if User.objects.filter(phone=phone).exists():
             raise ValidationError("Пользователь с таким номером телефона уже зарегистрирован.")
         return phone
+
+
 
     def clean_password2(self):
         password1 = self.cleaned_data.get('password1')
