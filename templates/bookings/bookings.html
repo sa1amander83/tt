@@ -14,7 +14,7 @@
 
             <!-- Представление дня -->
             <div id="day-view-container" class="calendar-container overflow-x-auto">
-                               {% include 'bookings/day_view.html' %}
+                {% include 'bookings/day_view.html' %}
             </div>
 
             <!-- Представление недели -->
@@ -35,470 +35,799 @@
 {% endblock %}
 {% block extrascripts %}
 
-    
-    
-    
-    
-      <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Инициализация переменных
-            let currentDate = new Date();
-            let currentView = 'day';
-            
-            // Функция для загрузки данных представления через AJAX
-            function loadViewData(view, date) {
-                const dateStr = date.toISOString().split('T')[0];
-                const tableFilter = document.getElementById('table-filter').value;
-                const statusFilter = document.getElementById('status-filter').value;
-                
-                let url = `/bookings/${view}/?date=${dateStr}`;
-                if (tableFilter !== 'all') url += `&table=${tableFilter}`;
-                if (statusFilter !== 'all') url += `&status=${statusFilter}`;
-                
-                fetch(url)
-                    .then(response => response.text())
-                    .then(html => {
-                        document.getElementById(`${view}-view-container`).innerHTML = html;
-                    });
-            }
-            
-            // Функция для загрузки бронирований пользователя
-            function loadUserBookings() {
-                fetch('/bookings/user-bookings/')
-                    .then(response => response.json())
-                    .then(data => {
-                        const container = document.getElementById('user-bookings-container');
-                        if (data.bookings.length > 0) {
-                            let html = `
-                                <table class="min-w-full bg-white">
-                                    <thead>
-                                        <tr>
-                                            <th class="py-2 px-4 border-b">Дата</th>
-                                            <th class="py-2 px-4 border-b">Время</th>
-                                            <th class="py-2 px-4 border-b">Стол</th>
-                                            <th class="py-2 px-4 border-b">Статус</th>
-                                            <th class="py-2 px-4 border-b">Действия</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
-                            
-                            data.bookings.forEach(booking => {
-                                html += `
-                                    <tr>
-                                        <td class="py-2 px-4 border-b">${booking.date}</td>
-                                        <td class="py-2 px-4 border-b">${booking.start_time}-${booking.end_time}</td>
-                                        <td class="py-2 px-4 border-b">Стол #${booking.table}</td>
-                                        <td class="py-2 px-4 border-b">${booking.status}</td>
-                                        <td class="py-2 px-4 border-b">
-                                            <button class="text-red-600 hover:text-red-800 mr-2">Отменить</button>
-                                            <button class="text-blue-600 hover:text-blue-800">Оплатить</button>
-                                        </td>
-                                    </tr>`;
-                            });
-                            
-                            html += `</tbody></table>`;
-                            container.innerHTML = html;
-                        } else {
-                            container.innerHTML = '<div class="text-center py-4 text-gray-500">У вас нет активных бронирований</div>';
-                        }
-                    });
-            }
-            
-            // Функция для обновления заголовка календаря
-            function updateCalendarTitle() {
-                const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
-                              'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-                const titleElement = document.getElementById('calendar-title');
-                
-                if (currentView === 'day') {
-                    titleElement.textContent = `${currentDate.getDate()} ${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-                } else if (currentView === 'week') {
-                    const startOfWeek = new Date(currentDate);
-                    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay() + 1);
-                    
-                    const endOfWeek = new Date(startOfWeek);
-                    endOfWeek.setDate(startOfWeek.getDate() + 6);
-                    
-                    titleElement.textContent = `${startOfWeek.getDate()}-${endOfWeek.getDate()} ${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-                } else if (currentView === 'month') {
-                    titleElement.textContent = `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-                }
-            }
-            
-            // Функция для переключения представлений
-           function switchView(view) {
-    // Скрыть все представления
-    document.querySelectorAll('.calendar-container').forEach(el => {
-        el.classList.add('hidden');
-    });
-    
-    // Показать выбранное представление
-    const viewContainer = document.getElementById(`${view}-view-container`);
-    if (viewContainer) {
-        viewContainer.classList.remove('hidden');
-    }
-    
-    // Обновить активную кнопку
-    document.querySelectorAll('.view-btn').forEach(btn => {
-        btn.classList.remove('bg-blue-600', 'text-white');
-        btn.classList.add('bg-gray-200', 'text-gray-800');
-    });
-    
-    const activeViewBtn = document.querySelector(`.view-btn[data-view="${view}"]`);
-    if (activeViewBtn) {
-        activeViewBtn.classList.add('bg-blue-600', 'text-white');
-        activeViewBtn.classList.remove('bg-gray-200', 'text-gray-800');
-    }
-    
-    // Установить текущее представление и загрузить данные
-    currentView = view;
-    loadViewData(view, currentDate);
-    updateCalendarTitle();
-}
-            
-            // Обработчики кнопок представлений
-            document.querySelectorAll('.view-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const view = this.getAttribute('data-view');
-                    switchView(view);
-                });
-            });
-            
-            // Обработчики кнопок навигации
-            document.getElementById('prev-btn').addEventListener('click', function() {
-                if (currentView === 'day') {
-                    currentDate.setDate(currentDate.getDate() - 1);
-                } else if (currentView === 'week') {
-                    currentDate.setDate(currentDate.getDate() - 7);
-                } else if (currentView === 'month') {
-                    currentDate.setMonth(currentDate.getMonth() - 1);
-                }
-                loadViewData(currentView, currentDate);
-                updateCalendarTitle();
-            });
-            
-            document.getElementById('next-btn').addEventListener('click', function() {
-                if (currentView === 'day') {
-                    currentDate.setDate(currentDate.getDate() + 1);
-                } else if (currentView === 'week') {
-                    currentDate.setDate(currentDate.getDate() + 7);
-                } else if (currentView === 'month') {
-                    currentDate.setMonth(currentDate.getMonth() + 1);
-                }
-                loadViewData(currentView, currentDate);
-                updateCalendarTitle();
-            });
-            
-            document.getElementById('today-btn').addEventListener('click', function() {
-                currentDate = new Date();
-                loadViewData(currentView, currentDate);
-                updateCalendarTitle();
-            });
-            
-            // Обработчики фильтров
-            document.getElementById('table-filter').addEventListener('change', function() {
-                loadViewData(currentView, currentDate);
-            });
-            
-            document.getElementById('status-filter').addEventListener('change', function() {
-                loadViewData(currentView, currentDate);
-            });
-            
-            // Инициализация
-            switchView('day');
-            loadUserBookings();
-            
-            // Обработка модального окна бронирования
-            const bookingModal = document.getElementById('booking-modal');
-            
-            document.getElementById('new-booking-btn').addEventListener('click', function() {
-                bookingModal.classList.remove('hidden');
-            });
-            
-            document.getElementById('close-modal').addEventListener('click', function() {
-                bookingModal.classList.add('hidden');
-            });
-            
-            document.getElementById('cancel-booking').addEventListener('click', function() {
-                bookingModal.classList.add('hidden');
-            });
-            
-            // Обработка формы бронирования
-            document.getElementById('booking-modal').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const formData = new FormData(this);
-                
-                fetch('/bookings/create/', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        bookingModal.classList.add('hidden');
-                        loadViewData(currentView, currentDate);
-                        loadUserBookings();
-                        alert('Бронирование успешно создано!');
-                    } else {
-                        alert('Ошибка: ' + data.error);
-                    }
-                });
-            });
-        });
-    </script>
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Mobile menu toggle
-            const mobileMenuButton = document.getElementById('mobile-menu-button');
-            const mobileMenu = document.getElementById('mobile-menu');
+        document.addEventListener('DOMContentLoaded', async function () {
+            // Конфигурация API
+            const API_ENDPOINTS = {
+                RATES: '/bookings/api/rates/',
+                TABLES: '/bookings/api/tables/',
+                CALENDAR: '/bookings/api/calendar/',
+                BOOKINGS: '/bookings/api/bookings/',
+                CALCULATE: '/bookings/api/calculate/',
+                USER_BOOKINGS: '/bookings/api/user-bookings/',
+                SITE_SETTINGS: '/bookings/api/site-settings/'
+            };
 
-            if (mobileMenuButton && mobileMenu) {
-                mobileMenuButton.addEventListener('click', function () {
-                    mobileMenu.classList.toggle('hidden');
-                });
-            }
+            // Состояние приложения
+            const state = {
+                currentDate: new Date(),
+                currentView: 'day',
+                rates: {},
+                tables: [],
+                bookings: [],
+                pricingPlan: null,
+                equipment: []
+            };
 
-            // Переключение представлений календаря
-            const dayView = document.getElementById('day-view');
-            const weekView = document.getElementById('week-view');
-            const monthView = document.getElementById('month-view');
+            // Кэш элементов DOM
+            const elements = {
+                // Навигация
+                prevBtn: document.getElementById('prev-btn'),
+                nextBtn: document.getElementById('next-btn'),
+                todayBtn: document.getElementById('today-btn'),
+                calendarTitle: document.getElementById('calendar-title'),
 
-            const dayViewContainer = document.getElementById('day-view-container');
-            const weekViewContainer = document.getElementById('week-view-container');
-            const monthViewContainer = document.getElementById('month-view-container');
+                // Представления
+                dayView: document.getElementById('day-view'),
+                weekView: document.getElementById('week-view'),
+                monthView: document.getElementById('month-view'),
+                dayContainer: document.getElementById('day-view-container'),
+                weekContainer: document.getElementById('week-view-container'),
+                monthContainer: document.getElementById('month-view-container'),
 
-            function setActiveView(view) {
-                // Сбросить все кнопки
-                [dayView, weekView, monthView].forEach(btn => {
-                    btn.classList.remove('bg-green-600', 'text-white');
-                    btn.classList.add('bg-white', 'text-gray-900', 'border', 'border-gray-200');
-                });
+                // Фильтры
+                tableFilter: document.getElementById('table-filter'),
+                statusFilter: document.getElementById('status-filter'),
 
-                // Сбросить все контейнеры
-                [dayViewContainer, weekViewContainer, monthViewContainer].forEach(container => {
-                    container.classList.add('hidden');
-                });
+                // Модальное окно
+                modal: document.getElementById('booking-modal'),
+                closeModalBtn: document.getElementById('close-modal'),
+                cancelBookingBtn: document.getElementById('cancel-booking'),
+                bookingForm: document.getElementById('booking-form'),
+                bookingDate: document.getElementById('booking-date'),
+                startTime: document.getElementById('booking-start-time'),
+                duration: document.getElementById('booking-duration'),
+                tableSelect: document.getElementById('booking-table'),
+                equipmentCheckboxes: document.querySelectorAll('.equipment-checkbox'),
+                participants: document.getElementById('participants'),
+                notes: document.getElementById('booking-notes'),
+                costDisplay: {
+                    table: document.getElementById('table-cost'),
+                    equipment: document.getElementById('equipment-cost'),
+                    total: document.getElementById('total-cost')
+                }
+            };
 
-                // Активировать выбранное представление
-                if (view === 'day') {
-                    dayView.classList.remove('bg-white', 'text-gray-900', 'border', 'border-gray-200');
-                    dayView.classList.add('bg-green-600', 'text-white');
-                    dayViewContainer.classList.remove('hidden');
-                } else if (view === 'week') {
-                    weekView.classList.remove('bg-white', 'text-gray-900', 'border', 'border-gray-200');
-                    weekView.classList.add('bg-green-600', 'text-white');
-                    weekViewContainer.classList.remove('hidden');
-                } else if (view === 'month') {
-                    monthView.classList.remove('bg-white', 'text-gray-900', 'border', 'border-gray-200');
-                    monthView.classList.add('bg-green-600', 'text-white');
-                    monthViewContainer.classList.remove('hidden');
+            // Инициализация приложения
+            async function init() {
+                try {
+                    await loadInitialData();
+                    setupEventListeners();
+                    await renderCalendar();
+                    updateUI();
+                } catch (error) {
+                    console.error('Ошибка инициализации:', error);
+                    showError('Не удалось загрузить данные приложения');
                 }
             }
 
-            dayView.addEventListener('click', function () {
-                setActiveView('day');
-            });
+            // Загрузка начальных данных
+            async function loadInitialData() {
+                try {
+                    const [ratesRes, tablesRes, userBookingsRes, siteSettingsRes] = await Promise.all([
+                        fetch(API_ENDPOINTS.RATES),
+                        fetch(API_ENDPOINTS.TABLES),
+                        fetch(API_ENDPOINTS.USER_BOOKINGS),
+                        fetch(API_ENDPOINTS.SITE_SETTINGS),
+                    ]);
 
-            weekView.addEventListener('click', function () {
-                setActiveView('week');
-            });
+                    if (!ratesRes.ok) throw new Error('Ошибка загрузки тарифов');
+                    if (!tablesRes.ok) throw new Error('Ошибка загрузки столов');
+                    if (!siteSettingsRes.ok) throw new Error('Ошибка загрузки настроек сайта');
 
-            monthView.addEventListener('click', function () {
-                setActiveView('month');
-            });
+                    const settingsData = await siteSettingsRes.json();
+                    state.siteSettings = {
+                        opening_time: settingsData.opening_time?.open_time || "9:00",
+                        closing_time: settingsData.closing_time?.close_time || "22:00"
+                    };
 
-            // Модальное окно бронирования
-            const newBookingBtn = document.getElementById('new-booking-btn');
-            const bookingModal = document.getElementById('booking-modal');
-            const closeModal = document.getElementById('close-modal');
-            const cancelBooking = document.getElementById('cancel-booking');
+                    if (!/^\d{1,2}:\d{2}$/.test(state.siteSettings.opening_time)) {
+                        state.siteSettings.opening_time = "9:00";
+                    }
 
-            if (newBookingBtn && bookingModal) {
-                newBookingBtn.addEventListener('click', function () {
-                    bookingModal.classList.remove('hidden');
-                });
+                    if (!/^\d{1,2}:\d{2}$/.test(state.siteSettings.closing_time)) {
+                        state.siteSettings.closing_time = "22:00";
+                    }
+
+                    state.rates = await ratesRes.json();
+                    state.tables = await tablesRes.json();
+                    state.pricingPlan = state.rates.pricing_plan;
+
+                    if (userBookingsRes.ok) {
+                        const userBookingsData = await userBookingsRes.json();
+                        state.bookings = userBookingsData.bookings || [];
+                    }
+
+                } catch (error) {
+                    console.error('Ошибка загрузки данных:', error);
+                    showError('Не удалось загрузить данные приложения');
+
+                    // fallback
+                    state.siteSettings = {
+                        opening_time: "9:00",
+                        closing_time: "22:00"
+                    };
+                }
+
+                initForm();
             }
 
-            if (closeModal && bookingModal) {
-                closeModal.addEventListener('click', function () {
-                    bookingModal.classList.add('hidden');
-                });
+
+            // Инициализация формы
+            function initForm() {
+                // Заполнение выбора столов
+                if (elements.tableSelect && state.tables.length) {
+                    elements.tableSelect.innerHTML = state.tables.map(table =>
+                        `<option value="${table.id}" 
+                    data-type="${table.type}" 
+                    data-capacity="${table.capacity}">
+                    Стол #${table.number} (${table.type})
+                </option>`
+                    ).join('');
+                }
+
+                // Установка текущей даты
+                if (elements.bookingDate) {
+                    elements.bookingDate.valueAsDate = new Date();
+                }
+
+                // Инициализация временных слотов
+                initTimeSlots();
+
+                // Первоначальный расчет стоимости
+                updateBookingCost();
             }
 
-            if (cancelBooking && bookingModal) {
-                cancelBooking.addEventListener('click', function () {
-                    bookingModal.classList.add('hidden');
+            // Инициализация временных слотов
+            function initTimeSlots() {
+                if (!elements.startTime) return;
+
+                elements.startTime.innerHTML = '';
+
+                // Парсим время из формата "HH:MM"
+                const parseTime = (timeStr, defaultHour) => {
+                    if (!timeStr) return defaultHour;
+                    const [hours, minutes] = timeStr.split(':').map(Number);
+                    return !isNaN(hours) ? hours : defaultHour;
+                };
+
+                let startHour = parseTime(state.siteSettings.opening_time, 9);
+                let endHour = parseTime(state.siteSettings.closing_time, 22);
+
+                // Проверяем, что время открытия раньше времени закрытия
+                if (startHour >= endHour) {
+                    console.warn('Время открытия должно быть раньше времени закрытия. Используются значения по умолчанию.');
+                    startHour = 9;
+                    endHour = 22;
+                }
+
+                for (let hour = startHour; hour < endHour; hour++) {
+                    const option = document.createElement('option');
+                    option.value = hour;
+                    option.textContent = `${hour.toString().padStart(2, '0')}:00`;
+                    elements.startTime.appendChild(option);
+                }
+            }
+
+            // Настройка обработчиков событий
+            function setupEventListeners() {
+                // Навигация по календарю
+                elements.prevBtn?.addEventListener('click', () => navigate(-1));
+                elements.nextBtn?.addEventListener('click', () => navigate(1));
+                elements.todayBtn?.addEventListener('click', goToToday);
+
+                // Переключение представлений
+                elements.dayView?.addEventListener('click', () => switchView('day'));
+                elements.weekView?.addEventListener('click', () => switchView('week'));
+                elements.monthView?.addEventListener('click', () => switchView('month'));
+
+                // Фильтры
+                elements.tableFilter?.addEventListener('change', renderCalendar);
+                elements.statusFilter?.addEventListener('change', renderCalendar);
+
+                // Модальное окно
+                elements.closeModalBtn?.addEventListener('click', closeModal);
+                elements.cancelBookingBtn?.addEventListener('click', closeModal);
+                elements.bookingForm?.addEventListener('submit', handleBookingSubmit);
+
+                // Изменение параметров брони
+                elements.duration?.addEventListener('change', updateBookingCost);
+                elements.tableSelect?.addEventListener('change', updateBookingCost);
+                elements.participants?.addEventListener('change', updateBookingCost);
+                elements.equipmentCheckboxes?.forEach(checkbox => {
+                    checkbox.addEventListener('change', updateBookingCost);
                 });
+
+                // Обработка кликов по слотам
+                document.addEventListener('click', handleSlotClick);
+            }
+
+            // Обработка кликов по слотам бронирования
+            function handleSlotClick(event) {
+                const slot = event.target.closest('.booking-slot-available');
+                if (!slot) return;
+
+                const date = slot.dataset.date;
+                const time = slot.dataset.time;
+                const tableId = slot.dataset.table;
+                const slotId = slot.dataset.slotId;
+
+                if (!date || !time || !tableId || !slotId) {
+                    console.error('Недостаточно данных для бронирования:', {date, time, tableId, slotId});
+                    return;
+                }
+
+                openBookingModal(date, time, tableId, slotId);
+            }
+
+            // Открытие модального окна бронирования
+            function openBookingModal(date, time, tableId, slotId) {
+                // Установка даты
+                elements.bookingDate.value = date;
+
+                // Установка времени
+                const hour = time.split(':')[0];
+                if (elements.startTime) {
+                    elements.startTime.value = hour;
+                }
+
+                // Установка стола
+                elements.tableSelect.value = tableId;
+
+                // Сохраняем ID слота в форме
+                if (elements.bookingForm) {
+                    elements.bookingForm.dataset.slotId = slotId;
+                }
+
+                // Показать модальное окно
+                elements.modal.classList.remove('hidden');
+
+                // Обновить стоимость
+                updateBookingCost();
+            }
+
+            // Закрытие модального окна
+            function closeModal() {
+                elements.modal.classList.add('hidden');
+            }
+
+            // Обновление стоимости бронирования
+            async function updateBookingCost() {
+                try {
+                    const tableId = elements.tableSelect?.value;
+                    if (!tableId) {
+                        resetCostDisplay();
+                        return;
+                    }
+
+                    const formData = {
+                        table_id: parseInt(tableId),
+                        duration: parseInt(elements.duration?.value) || 1,
+                        equipment: Array.from(elements.equipmentCheckboxes)
+                            .filter(cb => cb.checked)
+                            .map(cb => parseInt(cb.value)),
+                        participants: parseInt(elements.participants?.value) || 2
+                    };
+                    console.log('formData:', formData);
+                    const response = await fetch(API_ENDPOINTS.CALCULATE, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCSRFToken()
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.message || 'Ошибка расчета стоимости');
+                    }
+
+                    const costData = await response.json();
+                    updateCostDisplay(costData);
+                } catch (error) {
+                    console.error('Ошибка расчета стоимости:', error);
+                    showError(error.message);
+                }
+            }
+
+            // Обновление отображения стоимости
+            function updateCostDisplay(cost) {
+                if (elements.costDisplay.table) {
+                    elements.costDisplay.table.textContent = `${cost.table_cost} ₽`;
+                }
+                if (elements.costDisplay.equipment) {
+                    elements.costDisplay.equipment.textContent = `${cost.equipment_cost} ₽`;
+                }
+                if (elements.costDisplay.total) {
+                    elements.costDisplay.total.textContent = `${cost.total_cost} ₽`;
+                }
+            }
+
+            // Обработка отправки формы бронирования
+            async function handleBookingSubmit(event) {
+                event.preventDefault();
+
+                try {
+                    const formData = {
+                        date: elements.bookingDate.value,
+                        start_time: elements.startTime.value,
+                        duration: elements.duration.value,
+                        table_id: elements.tableSelect.value,
+                        equipment: Array.from(elements.equipmentCheckboxes)
+                            .filter(cb => cb.checked)
+                            .map(cb => ({id: cb.value, quantity: 1})),
+                        participants: elements.participants.value,
+                        notes: elements.notes.value,
+                        slot_id: elements.bookingForm.dataset.slotId
+                    };
+
+                    const response = await fetch(API_ENDPOINTS.BOOKINGS, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCSRFToken()
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json().catch(() => ({}));
+                        throw new Error(error.message || 'Ошибка сервера');
+                    }
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        alert('Бронирование успешно создано!');
+                        closeModal();
+                        await renderCalendar();
+                        await loadUserBookings();
+                    } else {
+                        throw new Error(result.error || 'Неизвестная ошибка');
+                    }
+
+                } catch (error) {
+                    console.error('Ошибка бронирования:', error);
+                    showError(error.message);
+                }
+            }
+
+            // Загрузка бронирований пользователя
+            async function loadUserBookings() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.USER_BOOKINGS);
+                    if (!response.ok) throw new Error('Ошибка загрузки бронирований');
+
+                    const data = await response.json();
+                    state.bookings = data.bookings || [];
+                    renderUserBookings();
+                } catch (error) {
+                    console.error('Ошибка загрузки бронирований:', error);
+                }
+            }
+
+            // Отображение бронирований пользователя
+            function renderUserBookings() {
+                const container = document.getElementById('user-bookings-container');
+                if (!container) return;
+
+                if (state.bookings.length) {
+                    container.innerHTML = `
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr>
+                                <th class="py-2 px-4 border-b">Дата</th>
+                                <th class="py-2 px-4 border-b">Время</th>
+                                <th class="py-2 px-4 border-b">Стол</th>
+                                <th class="py-2 px-4 border-b">Статус</th>
+                                <th class="py-2 px-4 border-b">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${state.bookings.map(booking => `
+                                <tr>
+                                    <td class="py-2 px-4 border-b">${booking.date}</td>
+                                    <td class="py-2 px-4 border-b">${booking.start_time}-${booking.end_time}</td>
+                                    <td class="py-2 px-4 border-b">Стол #${booking.table_number} (${booking.table_type})</td>
+                                    <td class="py-2 px-4 border-b">${booking.status}</td>
+                                    <td class="py-2 px-4 border-b">
+                                        ${booking.can_cancel ?
+                        `<button class="cancel-booking text-red-600 hover:text-red-800 mr-2" 
+                                                data-id="${booking.id}">Отменить</button>` :
+                        ''}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+                    // Добавляем обработчики для кнопок отмены
+                    document.querySelectorAll('.cancel-booking').forEach(button => {
+                        button.addEventListener('click', async () => {
+                            const bookingId = button.dataset.id;
+                            try {
+                                const response = await fetch(`/bookings/cancel/${bookingId}/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRFToken': getCSRFToken(),
+                                        'Content-Type': 'application/json'
+                                    }
+                                });
+
+                                const result = await response.json();
+                                if (result.success) {
+                                    await loadUserBookings();
+                                    await renderCalendar();
+                                } else {
+                                    throw new Error(result.error || 'Ошибка отмены бронирования');
+                                }
+                            } catch (error) {
+                                console.error('Ошибка отмены бронирования:', error);
+                                showError(error.message);
+                            }
+                        });
+                    });
+                } else {
+                    container.innerHTML = '<div class="text-center py-4 text-gray-500">У вас нет активных бронирований</div>';
+                }
             }
 
             // Навигация по календарю
-            const prevBtn = document.getElementById('prev-btn');
-            const nextBtn = document.getElementById('next-btn');
-            const todayBtn = document.getElementById('today-btn');
-            const calendarTitle = document.getElementById('calendar-title');
+            function navigate(direction) {
+                const newDate = new Date(state.currentDate);
 
-            let currentDate = new Date();
-            let currentView = 'day'; // По умолчанию - дневное представление
+                switch (state.currentView) {
+                    case 'day':
+                        newDate.setDate(newDate.getDate() + direction);
+                        break;
+                    case 'week':
+                        newDate.setDate(newDate.getDate() + (7 * direction));
+                        break;
+                    case 'month':
+                        newDate.setMonth(newDate.getMonth() + direction);
+                        break;
+                }
 
+                state.currentDate = newDate;
+                renderCalendar();
+                updateUI();
+            }
+
+            // Переход на сегодня
+            function goToToday() {
+                state.currentDate = new Date();
+                renderCalendar();
+                updateUI();
+            }
+
+            // Переключение представления
+            function switchView(view) {
+                if (['day', 'week', 'month'].includes(view)) {
+                    state.currentView = view;
+                    renderCalendar();
+                    updateUI();
+                }
+            }
+
+            // Обновление интерфейса
+            function updateUI() {
+                updateCalendarTitle();
+                updateActiveView();
+            }
+
+            // Обновление заголовка календаря
             function updateCalendarTitle() {
-                const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+                const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+                const date = state.currentDate;
 
-                if (currentView === 'day') {
-                    calendarTitle.textContent = `${currentDate.getDate()} ${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-                } else if (currentView === 'week') {
-                    // Получаем начало и конец недели
-                    const startOfWeek = new Date(currentDate);
-                    const dayOfWeek = currentDate.getDay() || 7; // Воскресенье = 0, преобразуем в 7
-                    startOfWeek.setDate(currentDate.getDate() - dayOfWeek + 1); // Понедельник
+                let title = '';
 
-                    const endOfWeek = new Date(startOfWeek);
-                    endOfWeek.setDate(startOfWeek.getDate() + 6); // Воскресенье
+                switch (state.currentView) {
+                    case 'day':
+                        title = `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+                        break;
+                    case 'week':
+                        const weekStart = new Date(date);
+                        weekStart.setDate(date.getDate() - date.getDay());
 
-                    calendarTitle.textContent = `${startOfWeek.getDate()} ${months[startOfWeek.getMonth()]} - ${endOfWeek.getDate()} ${months[endOfWeek.getMonth()]} ${currentDate.getFullYear()}`;
-                } else if (currentView === 'month') {
-                    calendarTitle.textContent = `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+                        const weekEnd = new Date(weekStart);
+                        weekEnd.setDate(weekStart.getDate() + 6);
+
+                        title = `${weekStart.getDate()}-${weekEnd.getDate()} ${months[weekEnd.getMonth()]} ${weekEnd.getFullYear()}`;
+                        break;
+                    case 'month':
+                        title = `${months[date.getMonth()]} ${date.getFullYear()}`;
+                        break;
+                }
+
+                if (elements.calendarTitle) {
+                    elements.calendarTitle.textContent = title;
                 }
             }
 
-            prevBtn.addEventListener('click', function () {
-                if (currentView === 'day') {
-                    currentDate.setDate(currentDate.getDate() - 1);
-                } else if (currentView === 'week') {
-                    currentDate.setDate(currentDate.getDate() - 7);
-                } else if (currentView === 'month') {
-                    currentDate.setMonth(currentDate.getMonth() - 1);
+            // Обновление активного представления
+            function updateActiveView() {
+                if (elements.dayView) {
+                    elements.dayView.classList.toggle('bg-green-600', state.currentView === 'day');
+                    elements.dayView.classList.toggle('text-white', state.currentView === 'day');
                 }
-                updateCalendarTitle();
-            });
-
-            nextBtn.addEventListener('click', function () {
-                if (currentView === 'day') {
-                    currentDate.setDate(currentDate.getDate() + 1);
-                } else if (currentView === 'week') {
-                    currentDate.setDate(currentDate.getDate() + 7);
-                } else if (currentView === 'month') {
-                    currentDate.setMonth(currentDate.getMonth() + 1);
+                if (elements.weekView) {
+                    elements.weekView.classList.toggle('bg-green-600', state.currentView === 'week');
+                    elements.weekView.classList.toggle('text-white', state.currentView === 'week');
                 }
-                updateCalendarTitle();
-            });
+                if (elements.monthView) {
+                    elements.monthView.classList.toggle('bg-green-600', state.currentView === 'month');
+                    elements.monthView.classList.toggle('text-white', state.currentView === 'month');
+                }
 
-            todayBtn.addEventListener('click', function () {
-                currentDate = new Date();
-                updateCalendarTitle();
-            });
-
-            // Установка текущего представления и обновление заголовка
-            setActiveView('day');
-            currentView = 'day';
-            updateCalendarTitle();
-
-            // Обработчики для изменения представления
-            dayView.addEventListener('click', function () {
-                currentView = 'day';
-                updateCalendarTitle();
-            });
-
-            weekView.addEventListener('click', function () {
-                currentView = 'week';
-                updateCalendarTitle();
-            });
-
-            monthView.addEventListener('click', function () {
-                currentView = 'month';
-                updateCalendarTitle();
-            });
-
-            // Обработка выбора даты в месячном представлении
-            const dateCells = document.querySelectorAll('#month-view-container .cursor-pointer');
-            dateCells.forEach(cell => {
-                cell.addEventListener('click', function () {
-                    const day = parseInt(this.querySelector('.font-medium').textContent);
-                    currentDate.setDate(day);
-                    setActiveView('day');
-                    currentView = 'day';
-                    updateCalendarTitle();
-                });
-            });
-
-            // Расчет стоимости бронирования
-            const bookingDuration = document.getElementById('booking-duration');
-            const bookingEquipment = document.getElementById('booking-equipment');
-
-            function updateBookingCost() {
-                const duration = parseInt(bookingDuration.value);
-                const equipmentRental = bookingEquipment.checked ? 200 : 0;
-
-                // Получаем выбранный стол и его стоимость
-                const tableSelect = document.getElementById('booking-table');
-                const tableOption = tableSelect.options[tableSelect.selectedIndex];
-                const tableType = tableOption.text.includes('Профессиональный') ? 'pro' : 'standard';
-
-                // Разная стоимость для разных типов столов
-                const hourlyRate = tableType === 'pro' ? 500 : 400;
-
-                const tableRental = hourlyRate * duration;
-                const total = tableRental + equipmentRental;
-
-                document.querySelector('.pt-4 .mb-2:nth-child(1) .font-medium:last-child').textContent = `${tableRental} ₽`;
-                document.querySelector('.pt-4 .mb-2:nth-child(2) .font-medium:last-child').textContent = `${equipmentRental} ₽`;
-                document.querySelector('.pt-4 .font-medium:last-child').textContent = `${total} ₽`;
+                if (elements.dayContainer) {
+                    elements.dayContainer.classList.toggle('hidden', state.currentView !== 'day');
+                }
+                if (elements.weekContainer) {
+                    elements.weekContainer.classList.toggle('hidden', state.currentView !== 'week');
+                }
+                if (elements.monthContainer) {
+                    elements.monthContainer.classList.toggle('hidden', state.currentView !== 'month');
+                }
             }
 
-            bookingDuration.addEventListener('change', updateBookingCost);
-            bookingEquipment.addEventListener('change', updateBookingCost);
+            // Рендеринг календаря
+            async function renderCalendar() {
+                try {
+                    const dateStr = state.currentDate.toISOString().split('T')[0];
+                    const params = new URLSearchParams({
+                        date: dateStr,
+                        view: state.currentView,
+                        table: elements.tableFilter?.value || 'all',
+                        status: elements.statusFilter?.value || 'all'
+                    });
 
-            // Обработка клика на свободное время
-            const freeSlots = document.querySelectorAll('.bg-green-100.cursor-pointer');
-            freeSlots.forEach(slot => {
-                slot.addEventListener('click', function () {
-                    // Получаем данные о времени и столе из атрибутов
-                    const time = this.getAttribute('data-time');
-                    const table = this.getAttribute('data-table');
+                    const response = await fetch(`${API_ENDPOINTS.CALENDAR}?${params}`);
 
-                    // Устанавливаем значения в форме бронирования
-                    if (time && table) {
-                        // Устанавливаем текущую дату
-                        const today = new Date();
-                        const dateString = today.toISOString().split('T')[0];
-                        document.getElementById('booking-date').value = dateString;
-
-                        // Устанавливаем выбранное время
-                        document.getElementById('booking-start-time').value = time;
-
-                        // Устанавливаем выбранный стол
-                        document.getElementById('booking-table').value = table;
-
-                        // Открываем модальное окно
-                        bookingModal.classList.remove('hidden');
-
-                        // Обновляем стоимость
-                        updateBookingCost();
+                    if (!response.ok) {
+                        throw new Error('Ошибка загрузки календаря');
                     }
+
+                    const data = await response.json();
+                    renderView(data);
+                } catch (error) {
+                    console.error('Ошибка рендеринга календаря:', error);
+                    showError('Не удалось загрузить данные календаря');
+                }
+            }
+
+            // Рендеринг конкретного представления
+            function renderView(data) {
+                const container = elements[`${state.currentView}Container`];
+                if (!container) return;
+
+                switch (state.currentView) {
+                    case 'day':
+                        container.innerHTML = generateDayView(data);
+                        break;
+                    case 'week':
+                        container.innerHTML = generateWeekView(data);
+                        break;
+                    case 'month':
+                        container.innerHTML = generateMonthView(data);
+                        break;
+                }
+            }
+
+            // Генерация дневного представления
+            function generateDayView(data) {
+                if (!data.tables?.length || !data.time_slots?.length) {
+                    return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
+                }
+
+                let html = `
+            <div class="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+                <div class="flex border-b border-gray-200 bg-gray-50">
+                    <div class="w-24 md:w-32 flex-shrink-0 p-3"></div>
+                    ${data.tables.map(table => `
+                        <div class="flex-1 p-3 text-center font-medium">
+                            Стол #${table.number}<br>
+                            <span class="text-xs text-gray-500">${table.type}</span>
+                        </div>
+                    `).join('')}
+                </div>
+        `;
+
+                data.time_slots.forEach(slot => {
+                    html += `
+                <div class="flex border-b border-gray-200 last:border-b-0">
+                    <div class="w-24 md:w-32 flex-shrink-0 p-3 text-right text-sm text-gray-500">
+                        ${slot}
+                    </div>
+                    <div class="flex-1 grid grid-cols-${data.tables.length} divide-x divide-gray-200">
+            `;
+
+                    data.tables.forEach(table => {
+                        const slotKey = `${table.id}-${slot.split(':')[0]}`;
+                        const booking = data.schedule[slotKey];
+                        const isAvailable = booking?.status === 'available';
+
+                        html += `
+                    <div class="flex items-center justify-center p-2 min-h-12
+                        ${isAvailable ?
+                            'bg-green-100 hover:bg-green-200 cursor-pointer booking-slot-available' :
+                            'bg-red-100 hover:bg-red-200'}
+                        "
+                        data-date="${data.date}"
+                        data-time="${slot}"
+                        data-table="${table.id}"
+                        data-slot-id="${booking?.slot_id || ''}">
+                        <span class="text-sm ${isAvailable ? 'text-green-800' : 'text-red-800'}">
+                            ${isAvailable ? 'Свободно' : booking?.status || 'Занято'}
+                        </span>
+                    </div>
+                `;
+                    });
+
+                    html += `
+                    </div>
+                </div>
+            `;
                 });
-            });
+
+                html += '</div>';
+                return html;
+            }
+
+            // Генерация недельного представления
+            function generateWeekView(data) {
+                if (!data.days_of_week?.length || !data.tables?.length) {
+                    return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
+                }
+
+                let html = `
+            <div class="overflow-x-auto">
+                <table class="min-w-full border-collapse">
+                    <thead>
+                        <tr>
+                            <th class="p-2 border-b">Стол / День</th>
+                            ${data.days_of_week.map(day => `
+                                <th class="p-2 border-b">${new Date(day).getDate()}</th>
+                            `).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+                data.tables.forEach(table => {
+                    html += `
+                <tr>
+                    <td class="p-2 border-b">
+                        Стол #${table.number}<br>
+                        <span class="text-xs text-gray-500">${table.type}</span>
+                    </td>
+            `;
+
+                    data.days_of_week.forEach(day => {
+                        const dayBookings = data.week_schedule[`${table.id}-${day}`] || [];
+                        html += `<td class="p-2 border-b">`;
+
+                        if (dayBookings.length > 0) {
+                            dayBookings.forEach(booking => {
+                                html += `
+                            <div class="mb-1 p-1 text-sm rounded 
+                                ${booking.status === 'available' ? 'bg-green-100' : 'bg-red-100'}">
+                                ${booking.start}-${booking.end}
+                            </div>
+                        `;
+                            });
+                        } else {
+                            html += '<div class="text-sm text-gray-400">Нет броней</div>';
+                        }
+
+                        html += `</td>`;
+                    });
+
+                    html += `</tr>`;
+                });
+
+                html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+                return html;
+            }
+
+            // Генерация месячного представления
+            function generateMonthView(data) {
+                if (!data.weeks?.length || !data.tables?.length) {
+                    return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
+                }
+
+                let html = `
+            <div class="overflow-x-auto">
+                <table class="min-w-full border-collapse">
+                    <thead>
+                        <tr>
+                            <th class="p-2 border-b">Стол / Неделя</th>
+                            ${data.weeks[0].map(day => `
+                                <th class="p-2 border-b text-center">${day.getDate()}</th>
+                            `).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+                data.tables.forEach(table => {
+                    html += `
+                <tr>
+                    <td class="p-2 border-b">
+                        Стол #${table.number}<br>
+                        <span class="text-xs text-gray-500">${table.type}</span>
+                    </td>
+            `;
+
+                    data.weeks[0].forEach(day => {
+                        const booking = data.month_schedule[`${table.id}-${day.toISOString().split('T')[0]}`];
+                        html += `<td class="p-2 border-b">`;
+
+                        if (booking) {
+                            html += `
+                        <div class="mb-1 p-1 text-sm rounded 
+                            ${booking.status === 'available' ? 'bg-green-100' : 'bg-red-100'}">
+                            ${booking.start_time}-${booking.end_time}
+                        </div>
+                    `;
+                        } else {
+                            html += '<div class="text-sm text-gray-400">-</div>';
+                        }
+
+                        html += `</td>`;
+                    });
+
+                    html += `</tr>`;
+                });
+
+                html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+                return html;
+            }
+
+            // Получение CSRF токена
+            function getCSRFToken() {
+                const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+                return csrfInput ? csrfInput.value : '';
+            }
+
+            // Показать ошибку
+            function showError(message) {
+                alert(`Ошибка: ${message}`);
+            }
+
+            // Запуск приложения
+            init();
         });
     </script>
 
-    <script src="{% static 'js/bookings.js' %}"></script>
+
 
 
 {% endblock %}

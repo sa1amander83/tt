@@ -1,13 +1,13 @@
 from django.forms import ModelForm
 from django import forms
 
-from admin_settings.models import Table
+from admin_settings.models import Tables
 from events.models import Event, EventMember
 
 
 class EventForm(ModelForm):
     table = forms.ModelChoiceField(
-        queryset=Table.objects.all(),
+        queryset=Tables.objects.all(),
         widget=forms.Select(attrs={'class': 'form-control'}),
         required=True
     )
@@ -76,7 +76,7 @@ class AddMemberForm(forms.ModelForm):
 
 class TableSettingsForm(forms.ModelForm):
     class Meta:
-        model = Table
+        model = Tables
         fields = ['number', 'table_description', 'price_per_hour', 'price_per_half_hour','is_active']
         labels = {
             'number': 'Номер стола',

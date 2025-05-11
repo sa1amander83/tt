@@ -5,32 +5,25 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d4c01c07-d34d-4800-9c93-29a8be58a0c7" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/bookings/templatetags/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bookings/templatetags/custom_tags.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/events/forms.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/bookings/bookings_action.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/bookings/bookings_table.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/bookings/day_view.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/bookings/month_view.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/bookings/week_view.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/admin_settings/context_processors.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/easycode/codebase-v2.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/easycode/codebase-v2.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/accounts/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/forms.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/accounts/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/admin_settings/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/admin_settings/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bookings/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/bookings/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bookings/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/bookings/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bookings/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/bookings/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/events/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/events/forms.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/events/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/events/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/events/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/events/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/events/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/events/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/accounts/profile.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/accounts/profile.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/accounts/register.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/accounts/register.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/js/bookings.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/js/bookings.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/admin/admin-settings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/admin-settings.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/bookings/booking_modal.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/bookings/booking_modal.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/bookings/bookings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/bookings/bookings.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/main/contacts.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/main/contacts.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/bookings/day_view.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/bookings/day_view.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tt/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/tt/forms.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,21 +42,24 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "sa1amander83"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;sa1amander83&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/sa1amander83/tt.git",
-    "accountId": "0b8de348-beb1-4a81-957e-8b26ccef7f78"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/sa1amander83/tt.git&quot;,
+    &quot;accountId&quot;: &quot;0b8de348-beb1-4a81-957e-8b26ccef7f78&quot;
   }
-}]]></component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 4
-}]]></component>
+}</component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/templates/admin/admin-settings.html" root0="FORCE_HIGHLIGHTING" root1="SKIP_INSPECTION" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
   <component name="ProjectId" id="2wj3BYFd7CqJcGknKkJflJaRwLY" />
   <component name="ProjectLevelVcsManager">
     <ConfirmationsSetting value="2" id="Add" />
@@ -169,32 +165,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1746541020401</updated>
-      <workItem from="1746541021780" duration="79000000" />
+      <workItem from="1746541021780" duration="103356000" />
+      <workItem from="1746902876416" duration="21477000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/accounts/views.py</url>
-          <line>29</line>
-          <option name="timeStamp" value="25" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/bookings/views.py</url>
-          <line>91</line>
-          <option name="timeStamp" value="27" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/bookings/views.py</url>
-          <line>19</line>
-          <option name="timeStamp" value="29" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>

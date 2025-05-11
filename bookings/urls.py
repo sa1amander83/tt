@@ -14,4 +14,14 @@ urlpatterns = [
     path('update/<int:pk>/', views.UpdateBookingView.as_view(), name='update_booking'),
 
     path('cancel/<int:booking_id>/', views.cancel_booking, name='cancel_booking'),
+
+    path('api/rates/', views.booking_rates_api, name='api_rates'),
+    path('api/tables/', views.tables_api, name='api_tables'),
+    path('api/calendar/', views.calendar_api, name='api_calendar'),
+    path('api/user-bookings/', views.get_user_bookings, name='api_user_bookings'),
+    path('api/calculate/', views.calculate_booking_api, name='api_calculate'),
+    path('api/create/', views.create_booking_api, name='api_create'),
+
+    path('api/site-settings/', views.get_site_settings, name='site-settings'),
+
 ]

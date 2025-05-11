@@ -29,20 +29,19 @@
                                     {% if booking %}
                                         bg-red-100 hover:bg-red-200
                                     {% else %}
-                                        bg-green-100 hover:bg-green-200 cursor-pointer
+                                        bg-green-100 hover:bg-green-200 cursor-pointer booking-slot-available
                                     {% endif %}"
                                     {% if not booking %}
                                  data-time="{{ hour|time:'H:i' }}"
                                  data-table="{{ table.id }}"
                                     {% endif %}>
-
-                                    <span class="text-sm">
-                                        {% if booking %}
-                                            <span class="text-red-800">Занято</span>
-                                        {% else %}
-                                            <span class="text-green-800">Свободно</span>
-                                        {% endif %}
-                                    </span>
+                                <span class="text-sm">
+                                    {% if booking %}
+                                        <span class="text-red-800">Занято</span>
+                                    {% else %}
+                                        <span class="text-green-800">Свободно</span>
+                                    {% endif %}
+                                </span>
                             </div>
                         {% endwith %}
                     {% endfor %}
@@ -51,5 +50,5 @@
         {% endfor %}
     </div>
 </div>
-   
+
 <div id="user-bookings-container"></div>

@@ -7,7 +7,7 @@ from accounts.models import User
 from yookassa import  Payment
 import logging
 
-from bookings.models import Tables, Booking
+from bookings.models import Table, TimeSlot, Booking
 
 logger = logging.getLogger(__name__)
 
@@ -188,7 +188,7 @@ class UserEventStats(EventAbstract):
     """ User event stats """
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="event_stats")
-    table = models.ForeignKey(Tables, on_delete=models.CASCADE, related_name="event_stats")
+    table = models.ForeignKey(Table, on_delete=models.CASCADE, related_name="event_stats")
     total_time = models.FloatField(default=0)
     total_cost = models.FloatField(default=0)
     total_events = models.IntegerField(default=0)
