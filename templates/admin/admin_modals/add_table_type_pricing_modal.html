@@ -1,0 +1,163 @@
+<!-- Modal for adding table type pricing -->
+<div id="addTableTypePricingModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <!-- Modal backdrop -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" id="addTableTypePricingBackdrop"></div>
+    
+    <!-- Modal content -->
+    <div class="relative bg-white rounded-lg shadow-xl max-w-2xl w-full mx-auto z-10">
+      <!-- Modal header -->
+      <div class="bg-green-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
+        <h3 class="text-xl font-semibold">Добавить цену для типа стола</h3>
+        <button type="button" class="text-white hover:text-gray-200" id="closeTableTypePricingModal">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Modal body -->
+      <div class="p-6">
+        <form id="addTableTypePricingForm">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label for="tableType" class="block text-sm font-medium text-gray-700 mb-1">Тип стола*</label>
+              <select id="tableType" name="table_type" required 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                <option value="">Выберите тип стола</option>
+                <option value="1">Стандартный</option>
+                <option value="2">Профессиональный</option>
+                <option value="3">Детский</option>
+              </select>
+            </div>
+            <div>
+              <label for="pricingPlan" class="block text-sm font-medium text-gray-700 mb-1">Тарифный план*</label>
+              <select id="pricingPlan" name="pricing_plan" required 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                <option value="">Выберите тарифный план</option>
+                <option value="1">Стандартный</option>
+                <option value="2">Выходного дня</option>
+                <option value="3">Утренний</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label for="hourRate" class="block text-sm font-medium text-gray-700 mb-1">Цена за час (стандарт)*</label>
+              <div class="relative">
+                <input type="number" id="hourRate" name="hour_rate" required min="0" 
+                  class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="400">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                  <span class="text-gray-500">₽</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label for="hourRateGroup" class="block text-sm font-medium text-gray-700 mb-1">Цена за час (группа)*</label>
+              <div class="relative">
+                <input type="number" id="hourRateGroup" name="hour_rate_group" required min="0" 
+                  class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="600">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                  <span class="text-gray-500">₽</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label for="minDuration" class="block text-sm font-medium text-gray-700 mb-1">Минимальная длительность (часы)*</label>
+              <input type="number" id="minDuration" name="min_duration" required min="1" max="24" value="1" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+            </div>
+            <div>
+              <label for="maxDuration" class="block text-sm font-medium text-gray-700 mb-1">Максимальная длительность (часы)*</label>
+              <input type="number" id="maxDuration" name="max_duration" required min="1" max="24" value="3" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+            </div>
+          </div>
+
+          <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-yellow-700">
+                  Убедитесь, что выбранная комбинация типа стола и тарифного плана еще не существует в системе.
+                </p>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Modal footer -->
+      <div class="bg-gray-50 px-6 py-4 rounded-b-lg flex justify-end space-x-3">
+        <button type="button" id="cancelTableTypePricing" 
+          class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">
+          Отмена
+        </button>
+        <button type="button" id="saveTableTypePricing" 
+          class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+          Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Open modal
+  function openTableTypePricingModal() {
+    document.getElementById('addTableTypePricingModal').classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+  }
+  
+  // Close modal
+  function closeTableTypePricingModal() {
+    document.getElementById('addTableTypePricingModal').classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+  }
+  
+  // Event listeners
+  document.getElementById('closeTableTypePricingModal').addEventListener('click', closeTableTypePricingModal);
+  document.getElementById('cancelTableTypePricing').addEventListener('click', closeTableTypePricingModal);
+  document.getElementById('addTableTypePricingBackdrop').addEventListener('click', closeTableTypePricingModal);
+  
+  // Save table type pricing
+  document.getElementById('saveTableTypePricing').addEventListener('click', function() {
+    const form = document.getElementById('addTableTypePricingForm');
+    if (form.checkValidity()) {
+      // Collect form data
+      const formData = new FormData(form);
+      const tableTypePricingData = {
+        table_type: formData.get('table_type'),
+        pricing_plan: formData.get('pricing_plan'),
+        hour_rate: formData.get('hour_rate'),
+        hour_rate_group: formData.get('hour_rate_group'),
+        min_duration: formData.get('min_duration'),
+        max_duration: formData.get('max_duration')
+      };
+      
+      console.log('Saving table type pricing:', tableTypePricingData);
+      // Here you would send the data to your backend API
+      
+      // Close the modal
+      closeTableTypePricingModal();
+      
+      // Show success message
+      alert('Цена для типа стола успешно добавлена!');
+      
+      // Reset form
+      form.reset();
+    } else {
+      form.reportValidity();
+    }
+  });
+</script>

@@ -1,0 +1,70 @@
+<div id="tab-memberships" class="tab-content">
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold">Управление абонементами</h2>
+            <button onclick="document.getElementById('add-membership-modal').classList.remove('hidden')" 
+                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                <i class="fas fa-plus mr-2"></i> Добавить абонемент
+            </button>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Описание</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Длительность</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Стоимость</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for membership in membership_types %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ membership.name }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">{{ membership.description|truncatechars:50 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ membership.duration_days }} дней</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ membership.price }} ₽</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if membership.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {% if membership.is_active %}Активен{% else %}Неактивен{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="openEditMembershipModal({{ membership.id }})" class="text-green-600 hover:text-green-900 mr-3">Редактировать</button>
+                            <form action="{% url 'membership_type_delete' membership.id %}" method="post" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-red-600 hover:text-red-900">Удалить</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Модальное окно добавления абонемента -->
+    <div id="add-membership-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+        <div class="relative top-20 mx-auto p-5 border w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Добавить новый абонемент</h3>
+                <form method="post" action="{% url 'admin_settings:membership_type_create' %}">
+                    {% csrf_token %}
+                    {{ membership_form.as_p }}
+                    <div class="flex justify-end mt-4">
+                        <button type="button" onclick="document.getElementById('add-membership-modal').classList.add('hidden')" 
+                                class="mr-2 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                            Отмена
+                        </button>
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                            Сохранить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

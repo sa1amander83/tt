@@ -1,0 +1,293 @@
+<!-- Modal for adding special offer -->
+<div id="addSpecialOfferModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <!-- Modal backdrop with transition -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out" id="addSpecialOfferBackdrop"></div>
+    
+    <!-- Modal container with slide-in animation -->
+    <div class="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-auto z-10 transform transition-all duration-300 ease-out scale-95 opacity-0"
+         id="specialOfferModalContent">
+      <!-- Modal header with gradient -->
+      <div class="bg-gradient-to-r from-purple-600 to-purple-500 text-white px-6 py-5 rounded-t-xl flex justify-between items-center">
+        <h3 class="text-xl font-semibold tracking-tight">Добавить специальное предложение</h3>
+        <button type="button" class="text-white hover:text-purple-200 transition-colors duration-200" id="closeSpecialOfferModal">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Modal body with scroll -->
+      <div class="p-6 max-h-[70vh] overflow-y-auto">
+        <form id="addSpecialOfferForm" class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label for="offerName" class="block text-sm font-medium text-gray-700">Название предложения*</label>
+              <input type="text" id="offerName" name="name" required 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                placeholder="Например: Счастливые часы">
+            </div>
+            <div class="space-y-2">
+              <label for="discountPercent" class="block text-sm font-medium text-gray-700">Скидка (%)*</label>
+              <div class="relative">
+                <input type="number" id="discountPercent" name="discount_percent" required min="1" max="100" 
+                  class="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                  placeholder="15">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                  <span class="text-gray-500">%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label for="offerDescription" class="block text-sm font-medium text-gray-700">Описание предложения</label>
+            <textarea id="offerDescription" name="description" rows="3" 
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+              placeholder="Подробное описание специального предложения"></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label for="validFrom" class="block text-sm font-medium text-gray-700">Действует с*</label>
+              <div class="relative">
+                <input type="date" id="validFrom" name="valid_from" required 
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label for="validTo" class="block text-sm font-medium text-gray-700">Действует до*</label>
+              <div class="relative">
+                <input type="date" id="validTo" name="valid_to" required 
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+            <input type="checkbox" id="isActive" name="is_active" checked 
+              class="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 transition duration-150">
+            <label for="isActive" class="text-sm font-medium text-gray-700">
+              Активное предложение
+            </label>
+          </div>
+
+          <div class="border-t border-gray-200 pt-6">
+            <h4 class="text-lg font-medium text-gray-800 mb-4 flex items-center">
+              <svg class="w-5 h-5 text-purple-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              Временные ограничения
+            </h4>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div class="space-y-2">
+                <label for="timeFrom" class="block text-sm font-medium text-gray-700">Время начала</label>
+                <div class="relative">
+                  <input type="time" id="timeFrom" name="time_from" 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="space-y-2">
+                <label for="timeTo" class="block text-sm font-medium text-gray-700">Время окончания</label>
+                <div class="relative">
+                  <input type="time" id="timeTo" name="time_to" 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-3">Дни недели</label>
+              <div class="grid grid-cols-7 gap-2">
+                {% for day in days_of_week %}
+                <div class="flex flex-col items-center">
+                  <input type="checkbox" id="{{ day.id }}" name="weekdays" value="{{ day.value }}" checked 
+                    class="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 transition duration-150">
+                  <label for="{{ day.id }}" class="mt-1 text-xs font-medium text-gray-700">{{ day.label }}</label>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <div class="border-t border-gray-200 pt-6">
+            <h4 class="text-lg font-medium text-gray-800 mb-4 flex items-center">
+              <svg class="w-5 h-5 text-purple-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+              </svg>
+              Применение к столам
+            </h4>
+            
+            <div class="mb-6">
+              <div class="flex items-center mb-4 p-3 bg-gray-50 rounded-lg">
+                <input type="checkbox" id="applyToAll" name="apply_to_all" 
+                  class="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 transition duration-150">
+                <label for="applyToAll" class="ml-3 text-sm font-medium text-gray-700">
+                  Применять ко всем столам
+                </label>
+              </div>
+              
+              <div id="tableSelection" class="pl-6 border-l-2 border-purple-200 transition-all duration-300">
+                <label class="block text-sm font-medium text-gray-700 mb-3">Выберите столы</label>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {% for table in tables %}
+                  <div class="flex items-center">
+                    <input type="checkbox" id="table{{ table.id }}" name="tables" value="{{ table.id }}" 
+                      class="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 transition duration-150">
+                    <label for="table{{ table.id }}" class="ml-2 text-sm text-gray-700">Стол #{{ table.number }}</label>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Modal footer -->
+      <div class="bg-gray-50 px-6 py-4 rounded-b-xl flex justify-end space-x-3">
+        <button type="button" id="cancelSpecialOffer" 
+          class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200">
+          Отмена
+        </button>
+        <button type="button" id="saveSpecialOffer" 
+          class="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200">
+          Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Enhanced modal open with animation
+  function openSpecialOfferModal() {
+    const modal = document.getElementById('addSpecialOfferModal');
+    const backdrop = document.getElementById('addSpecialOfferBackdrop');
+    const content = document.getElementById('specialOfferModalContent');
+    
+    modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+    
+    // Trigger reflow for animation
+    void modal.offsetWidth;
+    
+    backdrop.classList.add('opacity-100');
+    content.classList.add('opacity-100', 'scale-100');
+  }
+  
+  // Enhanced modal close with animation
+  function closeSpecialOfferModal() {
+    const modal = document.getElementById('addSpecialOfferModal');
+    const backdrop = document.getElementById('addSpecialOfferBackdrop');
+    const content = document.getElementById('specialOfferModalContent');
+    
+    backdrop.classList.remove('opacity-100');
+    content.classList.remove('opacity-100', 'scale-100');
+    
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+    }, 300);
+  }
+  
+  // Initialize modal state
+  document.addEventListener('DOMContentLoaded', () => {
+    const backdrop = document.getElementById('addSpecialOfferBackdrop');
+    const content = document.getElementById('specialOfferModalContent');
+    backdrop.classList.add('opacity-0');
+    content.classList.add('opacity-0', 'scale-95');
+  });
+  
+  // Event listeners
+  document.getElementById('closeSpecialOfferModal').addEventListener('click', closeSpecialOfferModal);
+  document.getElementById('cancelSpecialOffer').addEventListener('click', closeSpecialOfferModal);
+  document.getElementById('addSpecialOfferBackdrop').addEventListener('click', closeSpecialOfferModal);
+  
+  // Toggle table selection based on apply to all checkbox
+  document.getElementById('applyToAll').addEventListener('change', function() {
+    const tableSelection = document.getElementById('tableSelection');
+    if (this.checked) {
+      tableSelection.classList.add('opacity-50', 'pointer-events-none');
+    } else {
+      tableSelection.classList.remove('opacity-50', 'pointer-events-none');
+    }
+  });
+  
+  // Save special offer with loading state
+  document.getElementById('saveSpecialOffer').addEventListener('click', function() {
+    const form = document.getElementById('addSpecialOfferForm');
+    const saveBtn = this;
+    
+    if (form.checkValidity()) {
+      // Show loading state
+      saveBtn.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Сохранение...
+      `;
+      saveBtn.disabled = true;
+      
+      // Simulate API call
+      setTimeout(() => {
+        // Reset button state
+        saveBtn.innerHTML = 'Сохранить';
+        saveBtn.disabled = false;
+        
+        // Close modal and show success
+        closeSpecialOfferModal();
+        
+        // Show success notification
+        showNotification('Специальное предложение успешно создано!', 'success');
+      }, 1500);
+    } else {
+      form.reportValidity();
+    }
+  });
+  
+  // Notification function
+  function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium transform translate-x-full opacity-0 transition-all duration-300 ${
+      type === 'success' ? 'bg-green-500' : 'bg-red-500'
+    }`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    // Trigger animation
+    setTimeout(() => {
+      notification.classList.remove('translate-x-full', 'opacity-0');
+      notification.classList.add('translate-x-0', 'opacity-100');
+    }, 50);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+      notification.classList.remove('translate-x-0', 'opacity-100');
+      notification.classList.add('translate-x-full', 'opacity-0');
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
+</script>

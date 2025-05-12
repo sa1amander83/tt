@@ -2,7 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 
-User = get_user_model()
+
 
 
 class TableType(models.Model):
@@ -131,7 +131,7 @@ class TimeSlot(models.Model):
         """Длительность слота в часах"""
         return (self.end_time - self.start_time).total_seconds() / 3600
 
-
+User='accounts.User'
 class Booking(models.Model):
     """Модель бронирования"""
     STATUS_CHOICES = (

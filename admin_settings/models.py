@@ -1,9 +1,14 @@
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from decimal import Decimal
 
-# core/models/singleton.py
 from django.db import models
+
+from bookings.models import Table
+
+
 
 class SingletonModel(models.Model):
     class Meta:
@@ -19,7 +24,6 @@ class SingletonModel(models.Model):
     @classmethod
     def load(cls):
         return cls.objects.first() or cls.objects.create()
-
 
 
 
@@ -262,3 +266,105 @@ class FooterSettings(SingletonModel):
 
     def __str__(self):
         return "Настройки подвала"
+
+
+class ClubSettings(models.Model):
+    """Общие настройки клуба"""
+    club_name = models.CharField(max_length=100, default="PingPong Club", verbose_name="Название клуба")
+    club_email = models.EmailField(default="info@pingpongclub.com", verbose_name="Email клуба")
+    club_phone = models.CharField(max_length=20, default="+7 (123) 456-78-90", verbose_name="Телефон клуба")
+    club_address = models.TextField(default="г. Москва, ул. Спортивная, д. 123", verbose_name="Адрес клуба")
+    club_description = models.TextField(blank=True, verbose_name="Описание клуба")
+    currency = models.CharField(max_length=3, default="RUB", verbose_name="Валюта")
+    timezone = models.CharField(max_length=50, default="Europe/Moscow", verbose_name="Часовой пояс")
+    date_format = models.CharField(max_length=20, default="DD.MM.YYYY", verbose_name="Формат даты")
+    time_format = models.CharField(max_length=10, default="24", verbose_name="Формат времени")
+
+    # Настройки уведомлений
+    notify_bookings = models.BooleanField(default=True, verbose_name="Уведомления о бронированиях")
+    notify_cancellations = models.BooleanField(default=True, verbose_name="Уведомления об отменах")
+    notify_payments = models.BooleanField(default=True, verbose_name="Уведомления о платежах")
+    notify_registrations = models.BooleanField(default=True, verbose_name="Уведомления о регистрациях")
+
+    # Настройки резервного копирования
+    auto_backup = models.BooleanField(default=True, verbose_name="Автоматическое резервное копирование")
+    backup_frequency = models.CharField(max_length=10, default="daily", verbose_name="Частота копирования")
+    backup_time = models.TimeField(default="03:00", verbose_name="Время копирования")
+    backup_retention = models.PositiveIntegerField(default=30, verbose_name="Хранить копий (дней)")
+
+    class Meta:
+        verbose_name = "Настройки клуба"
+        verbose_name_plural = "Настройки клуба"
+
+    def __str__(self):
+        return "Настройки клуба"
+
+
+class MembershipType(models.Model):
+    """Типы абонементов"""
+    name = models.CharField(max_length=100, verbose_name="Название")
+    description = models.TextField(blank=True, verbose_name="Описание")
+    duration_days = models.PositiveIntegerField(default=30, verbose_name="Длительность (дней)")
+    price = models.PositiveIntegerField(verbose_name="Стоимость")
+    is_active = models.BooleanField(default=True, verbose_name="Активен")
+    includes_booking = models.BooleanField(default=True, verbose_name="Включает бронирование")
+    includes_discount = models.BooleanField(default=False, verbose_name="Включает скидки")
+    includes_tournaments = models.BooleanField(default=False, verbose_name="Включает турниры")
+    includes_training = models.BooleanField(default=False, verbose_name="Включает тренировки")
+
+    class Meta:
+        verbose_name = "Тип абонемента"
+        verbose_name_plural = "Типы абонементов"
+
+    def __str__(self):
+        return self.name
+
+
+class SpecialOffer(models.Model):
+    """Специальные предложения и скидки"""
+    name = models.CharField(max_length=100, verbose_name="Название")
+    description = models.TextField(blank=True, verbose_name="Описание")
+    discount_percent = models.PositiveIntegerField(verbose_name="Скидка (%)")
+    is_active = models.BooleanField(default=True, verbose_name="Активно")
+    valid_from = models.DateField(verbose_name="Действует с")
+    valid_to = models.DateField(verbose_name="Действует до")
+    apply_to_all = models.BooleanField(default=False, verbose_name="Применять ко всем столам")
+    tables = models.ManyToManyField(Table, blank=True, verbose_name="Применять к столам")
+    time_from = models.TimeField(blank=True, null=True, verbose_name="Время начала")
+    time_to = models.TimeField(blank=True, null=True, verbose_name="Время окончания")
+    weekdays = models.CharField(max_length=20, blank=True, default="1,2,3,4,5,6,7",
+                                verbose_name="Дни недели (1-Пн,7-Вс)")
+
+    class Meta:
+        verbose_name = "Специальное предложение"
+        verbose_name_plural = "Специальные предложения"
+
+    def __str__(self):
+        return f"{self.name} ({self.discount_percent}%)"
+
+
+class Holiday(models.Model):
+    """Выходные и праздничные дни"""
+    HOLIDAY_STATUS = (
+        ('closed', 'Закрыто'),
+        ('shortened', 'Сокращенный день'),
+        ('special', 'Особый режим'),
+    )
+
+    date = models.DateField(verbose_name="Дата")
+    description = models.CharField(max_length=200, verbose_name="Описание")
+    status = models.CharField(max_length=10, choices=HOLIDAY_STATUS, verbose_name="Статус")
+    open_time = models.TimeField(blank=True, null=True, verbose_name="Время открытия")
+    close_time = models.TimeField(blank=True, null=True, verbose_name="Время закрытия")
+
+    class Meta:
+        verbose_name = "Праздничный день"
+        verbose_name_plural = "Праздничные дни"
+        ordering = ['date']
+
+    def __str__(self):
+        return f"{self.date}: {self.description}"
+
+    def clean(self):
+        if self.status in ['shortened', 'special'] and not (self.open_time and self.close_time):
+            raise ValidationError("Для сокращенного/особого режима нужно указать время работы")

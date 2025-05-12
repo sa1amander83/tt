@@ -5,25 +5,28 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d4c01c07-d34d-4800-9c93-29a8be58a0c7" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/admin_settings/context_processors.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/easycode/codebase-v2.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/easycode/codebase-v2.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/admin_settings/forms.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/js/admin-settings.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/admin_modals/add_pricing_plan_modal.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/admin_modals/add_special_offer_modal.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/admin_modals/add_table_type_pricing_modal.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/settings_templates/general_settings.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/settings_templates/memberships_settings.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/settings_templates/pricing_settings.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/settings_templates/schedule_settings.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/settings_templates/tables_settings.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accounts/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/admin_settings/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/admin_settings/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_settings/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/admin_settings/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_settings/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/admin_settings/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bookings/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/bookings/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bookings/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/bookings/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bookings/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/bookings/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/events/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/events/forms.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/events/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/events/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/events/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/events/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/js/bookings.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/js/bookings.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/admin/admin-settings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/admin-settings.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/bookings/booking_modal.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/bookings/booking_modal.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/bookings/bookings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/bookings/bookings.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/bookings/day_view.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/bookings/day_view.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/bookings/bookings.rar" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/tt/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/tt/forms.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tt/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/tt/settings.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,9 +36,9 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
+        <option value="Python Script" />
         <option value="JavaScript File" />
         <option value="HTML File" />
-        <option value="Python Script" />
       </list>
     </option>
   </component>
@@ -166,7 +169,7 @@
       <option name="presentableId" value="Default" />
       <updated>1746541020401</updated>
       <workItem from="1746541021780" duration="103356000" />
-      <workItem from="1746902876416" duration="21477000" />
+      <workItem from="1746902876416" duration="30024000" />
     </task>
     <servers />
   </component>
