@@ -5,28 +5,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d4c01c07-d34d-4800-9c93-29a8be58a0c7" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/admin_settings/forms.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/js/admin-settings.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/admin/admin_modals/add_pricing_plan_modal.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/admin/admin_modals/add_special_offer_modal.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/admin/admin_modals/add_table_type_pricing_modal.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/admin/settings_templates/general_settings.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/admin/settings_templates/memberships_settings.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/admin/settings_templates/pricing_settings.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/admin/settings_templates/schedule_settings.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/admin/settings_templates/tables_settings.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/js/admin-modals/other.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/js/admin-modals/special_offers.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/js/admin-modals/table_pricing.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/js/ru.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/accounts/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/admin_settings/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/admin_settings/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/admin_settings/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/admin_settings/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/admin_settings/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/admin_settings/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bookings/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/bookings/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/js/admin-settings.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/js/admin_settings.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/admin/admin-settings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/admin-settings.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/admin/admin_modals/add_pricing_plan_modal.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/admin_modals/add_pricing_plan_modal.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/admin/admin_modals/add_special_offer_modal.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/admin_modals/add_special_offer_modal.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/admin/admin_modals/add_table_type_pricing_modal.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/admin_modals/add_table_type_pricing_modal.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/admin/settings_templates/general_settings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/settings_templates/general_settings.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/admin/settings_templates/memberships_settings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/settings_templates/memberships_settings.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/admin/settings_templates/pricing_settings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/settings_templates/pricing_settings.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/admin/settings_templates/schedule_settings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/settings_templates/schedule_settings.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/admin/settings_templates/tables_settings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/settings_templates/tables_settings.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/bookings/bookings.rar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tt/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/tt/forms.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tt/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/tt/settings.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,8 +31,8 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Python Script" />
-        <option value="JavaScript File" />
         <option value="HTML File" />
+        <option value="JavaScript File" />
       </list>
     </option>
   </component>
@@ -92,7 +86,7 @@
     "com.codeium.enabled": "true",
     "django.template.preview.state": "SHOW_EDITOR",
     "git-widget-placeholder": "main",
-    "last_opened_file_path": "C:/Users/admin/PycharmProjects/tt/templates/accounts",
+    "last_opened_file_path": "C:/Users/admin/PycharmProjects/tt/static/js",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -103,11 +97,11 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\admin\PycharmProjects\tt\static\js" />
       <recent name="C:\Users\admin\PycharmProjects\tt\templates\accounts" />
       <recent name="C:\Users\admin\PycharmProjects\tt\templates\bookings" />
       <recent name="C:\Users\admin\PycharmProjects\tt\templates\admin" />
       <recent name="C:\Users\admin\PycharmProjects\tt\templates\main" />
-      <recent name="C:\Users\admin\PycharmProjects\tt\main" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\admin\PycharmProjects\tt\bookings" />
@@ -169,7 +163,7 @@
       <option name="presentableId" value="Default" />
       <updated>1746541020401</updated>
       <workItem from="1746541021780" duration="103356000" />
-      <workItem from="1746902876416" duration="30024000" />
+      <workItem from="1746902876416" duration="40619000" />
     </task>
     <servers />
   </component>
