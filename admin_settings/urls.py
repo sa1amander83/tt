@@ -31,7 +31,7 @@ urlpatterns = [
 
     # Общие настройки
     path('general/update/', ClubSettingsUpdateView.as_view(), name='club_settings_update'),
-    path('shedule/updateworkinghours/', UpdateWorkingHoursView.as_view(), name='update_working_hours'),
+    path('schedule/update-working-hours/', UpdateWorkingHoursView.as_view(), name='update_working_hours'),
     path('general/update/', ClubSettingsUpdateView.as_view(), name='club_settings_update'),
-    path('general/update/', ClubSettingsUpdateView.as_view(), name='club_settings_update'),
+    # path('schedule/', ScheduleSettingsView.as_view(), name='schedule'),
 ]

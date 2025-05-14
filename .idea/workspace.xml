@@ -8,31 +8,12 @@
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/tt.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/tt.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/accounts/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/accounts/forms.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/admin_settings/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/admin_settings/forms.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/admin_settings/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/admin_settings/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_settings/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/admin_settings/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/admin_settings/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/admin_settings/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/events/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/events/forms.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/js/admin_settings.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/js/admin_settings.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/accounts/login.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/accounts/login.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/accounts/profile.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/accounts/profile.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/accounts/recover.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/accounts/recover.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/accounts/register.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/accounts/register.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/admin/admin-bookings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/admin-bookings.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/admin/admin-reports.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/admin-reports.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/admin/admin-settings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/admin-settings.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/admin/admin-users-detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/admin-users-detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/admin/admin-users.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/admin-users.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/admin/admin_modals/add_pricing_plan_modal.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/admin_modals/add_pricing_plan_modal.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/admin/admin_modals/add_special_offer_modal.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/admin_modals/add_special_offer_modal.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/admin/admin_modals/add_table_type_pricing_modal.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/admin_modals/add_table_type_pricing_modal.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/admin/settings_templates/schedule_settings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/settings_templates/schedule_settings.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/admin/settings_templates/tables_settings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/admin/settings_templates/tables_settings.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/bookings/booking_modal.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/bookings/booking_modal.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/bookings/filters.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/bookings/filters.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/main/contacts.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/main/contacts.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tt/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/tt/forms.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,9 +23,9 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Python Script" />
         <option value="HTML File" />
         <option value="JavaScript File" />
+        <option value="Python Script" />
       </list>
     </option>
   </component>
@@ -77,36 +58,36 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
-    &quot;Django Server.tt.executor&quot;: &quot;Run&quot;,
-    &quot;JavaScript Debug.admin-users.html.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ChatTagsLlmMigration&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.CodyAccountHistoryMigration&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.CodyAccountsIdsRefresh&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.CodyAssignOrphanedChatsToActiveAccount&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.CodyConvertUrlToCodebaseName&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.CodyHistoryLlmMigration&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.CodyMigrateChatHistory-v2&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.CodyProjectSettingsMigration&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.DeprecatedChatLlmMigration&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.OpenDjangoStructureViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ToggleCodyToolWindowAfterMigration&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;com.codeium.enabled&quot;: &quot;true&quot;,
-    &quot;django.template.preview.state&quot;: &quot;SHOW_EDITOR&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/admin/PycharmProjects/tt/static/js&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "Django Server.tt.executor": "Run",
+    "JavaScript Debug.admin-users.html.executor": "Run",
+    "RunOnceActivity.ChatTagsLlmMigration": "true",
+    "RunOnceActivity.CodyAccountHistoryMigration": "true",
+    "RunOnceActivity.CodyAccountsIdsRefresh": "true",
+    "RunOnceActivity.CodyAssignOrphanedChatsToActiveAccount": "true",
+    "RunOnceActivity.CodyConvertUrlToCodebaseName": "true",
+    "RunOnceActivity.CodyHistoryLlmMigration": "true",
+    "RunOnceActivity.CodyMigrateChatHistory-v2": "true",
+    "RunOnceActivity.CodyProjectSettingsMigration": "true",
+    "RunOnceActivity.DeprecatedChatLlmMigration": "true",
+    "RunOnceActivity.OpenDjangoStructureViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.ToggleCodyToolWindowAfterMigration": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "com.codeium.enabled": "true",
+    "django.template.preview.state": "SHOW_EDITOR",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "C:/Users/admin/PycharmProjects/tt/static/js",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\admin\PycharmProjects\tt\static\js" />
@@ -161,8 +142,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-410509235cf1-JavaScript-PY-242.20224.428" />
-        <option value="bundled-python-sdk-80e8e15d2b92-39cff9de6eef-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-242.20224.428" />
+        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-PY-242.23339.19" />
+        <option value="bundled-python-sdk-0029f7779945-399fe30bd8c1-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-242.23339.19" />
       </set>
     </attachedChunks>
   </component>
@@ -176,10 +157,27 @@
       <updated>1746541020401</updated>
       <workItem from="1746541021780" duration="103356000" />
       <workItem from="1746902876416" duration="40619000" />
+      <workItem from="1747240663498" duration="11229000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/admin_settings/views.py</url>
+          <line>262</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/admin_settings/views.py</url>
+          <line>92</line>
+          <option name="timeStamp" value="7" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

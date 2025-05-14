@@ -1,33 +1,35 @@
 <!-- templates/admin/schedule_settings.html -->
-{% extends 'admin/base.html' %}
 
-{% block content %}
-<div class="bg-white rounded-lg shadow-md p-6">
+<div class="!bg-white rounded-lg shadow-md p-6">
     <h2 class="text-xl font-semibold mb-6">Настройки расписания</h2>
-    
+
     <!-- Часы работы -->
     <div class="mb-8">
         <h3 class="text-lg font-medium mb-4">Регулярные часы работы</h3>
-        <form method="post">
+        <form method="post" action="{% url 'admin_settings:update_working_hours' %}">
             {% csrf_token %}
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
+                <table class="min-w-full divide-y divide-gray-200 bg-white">
                     <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">День недели</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Работает</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Открытие</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Закрытие</th>
-                        </tr>
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">День недели</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Работает</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Открытие</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Закрытие</th>
+                    </tr>
                     </thead>
+
+
                     <tbody class="bg-white divide-y divide-gray-200">
-                        {% for day, form in working_hours_forms %}
+                    {% for day, form in working_hours_forms %}
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 {{ day.get_day_display }}
+
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 {{ form.is_open }}
+
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 {{ form.open_time }}
@@ -36,7 +38,7 @@
                                 {{ form.close_time }}
                             </td>
                         </tr>
-                        {% endfor %}
+                    {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -47,13 +49,13 @@
             </div>
         </form>
     </div>
-    
+
     <!-- Праздничные дни -->
     <div class="border-t pt-6">
         <h3 class="text-lg font-medium mb-4">Праздничные дни</h3>
-        
+
         <!-- Форма добавления праздника -->
-        <form method="post" class="mb-6">
+        <form method="post" class="mb-7" action="{% url 'admin_settings:holiday_create' %}">
             {% csrf_token %}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
@@ -85,21 +87,21 @@
                 </button>
             </div>
         </form>
-        
+
         <!-- Список праздников -->
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Дата</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Описание</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Часы работы</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Действия</th>
-                    </tr>
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Дата</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Описание</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Часы работы</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Действия</th>
+                </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    {% for holiday in holidays %}
+                {% for holiday in holidays %}
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {{ holiday.date|date:"d.m.Y" }}
@@ -125,13 +127,13 @@
                             <a href="#" class="text-red-600 hover:text-red-900">Удалить</a>
                         </td>
                     </tr>
-                    {% empty %}
+                {% empty %}
                     <tr>
                         <td colspan="5" class="px-6 py-4 text-sm text-gray-500 text-center">
                             Нет добавленных праздничных дней
                         </td>
                     </tr>
-                    {% endfor %}
+                {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -139,21 +141,20 @@
 </div>
 
 <script>
-function toggleHolidayHours(select) {
-    const hoursFields = document.getElementById('holiday-hours');
-    if (select.value === 'closed') {
-        hoursFields.classList.add('hidden');
-    } else {
-        hoursFields.classList.remove('hidden');
+    function toggleHolidayHours(select) {
+        const hoursFields = document.getElementById('holiday-hours');
+        if (select.value === 'closed') {
+            hoursFields.classList.add('hidden');
+        } else {
+            hoursFields.classList.remove('hidden');
+        }
     }
-}
 
-// Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', function() {
-    const statusSelect = document.querySelector('select[name="status"]');
-    if (statusSelect) {
-        toggleHolidayHours(statusSelect);
-    }
-});
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', function () {
+        const statusSelect = document.querySelector('select[name="status"]');
+        if (statusSelect) {
+            toggleHolidayHours(statusSelect);
+        }
+    });
 </script>
-{% endblock %}

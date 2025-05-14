@@ -287,10 +287,19 @@ class ClubSettingsForm(forms.ModelForm):
         }
 
 class WorkingHoursForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.pop('day', None)
+
     class Meta:
         model = WorkingDay
         fields = ['is_open', 'open_time', 'close_time']
+
         widgets = {
+
+            'day': forms.Select(attrs={
+                'class': 'w-full rounded-md border-2 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
+            }),
             'is_open': forms.CheckboxInput(attrs={
                 'class': 'rounded border-2 border-gray-300 text-indigo-600 focus:ring-indigo-500'
             }),
@@ -303,6 +312,13 @@ class WorkingHoursForm(forms.ModelForm):
                 'class': 'w-full rounded-md border-2 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
             }),
         }
+
+    # def save(self, commit=True):
+    #     instance = super().save(commit=False)
+    #     instance.day = self.cleaned_data['day']  # Устанавливаем day из скрытого поля
+    #     if commit:
+    #         instance.save()
+    #     return instance
 
 class HolidayForm(forms.ModelForm):
     class Meta:

@@ -367,6 +367,9 @@ class WorkingDay(models.Model):
     def __str__(self):
         return f"{self.get_day_display()}: {self.open_time} - {self.close_time}"
 
+    @property
+    def get_day_name(self):
+        return dict(self.DAYS_OF_WEEK).get(self.day, '')
 
 class Holiday(models.Model):
     HOLIDAY_STATUS = (
