@@ -13,14 +13,14 @@ class BookingForm(forms.ModelForm):
             'timeslot': forms.HiddenInput(),
             'notes': forms.Textarea(attrs={
                 'rows': 3,
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500'
+                'class': 'w-full px-3 py-2 border border-2 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500'
             }),
             'participants': forms.Select(
                 choices=[(2, '2 участника'), (4, '4 участника')],
-                attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500'}
+                attrs={'class': 'w-full px-3 py-2 border border-2 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500'}
             ),
             'equipment_rental': forms.CheckboxInput(attrs={
-                'class': 'h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded'
+                'class': 'h-4 w-4 text-green-600 focus:ring-green-500 border-2 border-gray-300 rounded'
             }),
         }
 

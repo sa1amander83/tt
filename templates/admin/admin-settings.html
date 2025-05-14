@@ -10,25 +10,25 @@
             <div class="border-b border-gray-200">
                 <nav class="-mb-px flex space-x-8">
                     <a href="{% url 'admin_settings:club_settings' 'tables' %}"
-                       class="{% if active_tab == 'tables' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                       class="{% if active_tab == 'tables' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                         Столы
                     </a>
                     <a href="{% url 'admin_settings:club_settings' 'pricing' %}"
-                       class="{% if active_tab == 'pricing' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                       class="{% if active_tab == 'pricing' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                         Цены
                     </a>
 
                   <a href="{% url 'admin_settings:club_settings' 'memberships' %}"
-                       class="{% if active_tab == 'memberships' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                       class="{% if active_tab == 'memberships' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                     Абонементы
                     </a>
 
                     <a href="{% url 'admin_settings:club_settings' 'schedule' %}"
-                       class="{% if active_tab == 'schedule' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                       class="{% if active_tab == 'schedule' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                         Расписание
                     </a>
                     <a href="{% url 'admin_settings:club_settings' 'general' %}"
-                       class="{% if active_tab == 'general' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                       class="{% if active_tab == 'general' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                         Общие
                     </a>
                 </nav>

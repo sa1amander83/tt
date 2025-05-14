@@ -19,11 +19,11 @@ class TableSettingsForm(forms.ModelForm):
             'is_active': 'Активен'
         }
         widgets = {
-            'number': forms.NumberInput(attrs={'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'}),
-            'table_description': forms.Textarea(attrs={'rows': 3, 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'}),
-            'price_per_hour': forms.NumberInput(attrs={'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'}),
-            'price_per_half_hour': forms.NumberInput(attrs={'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'}),
+            'number': forms.NumberInput(attrs={'class': 'mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'}),
+            'table_description': forms.Textarea(attrs={'rows': 3, 'class': 'mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'}),
+            'price_per_hour': forms.NumberInput(attrs={'class': 'mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'}),
+            'price_per_half_hour': forms.NumberInput(attrs={'class': 'mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'rounded border-2 border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'}),
         }
 
     def clean(self):

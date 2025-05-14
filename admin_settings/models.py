@@ -29,20 +29,20 @@ class SingletonModel(models.Model):
 
 
 # Create your models here.
-class Subscription(models.Model):
-    name = models.CharField(max_length=100, verbose_name="Название")
-    description = models.TextField(verbose_name="Описание")
-    price = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Цена")
-    duration = models.PositiveIntegerField(verbose_name="Длительность (дней)")
-    is_active = models.BooleanField(default=True, verbose_name="Активен")
-    number_of_events = models.PositiveIntegerField(verbose_name='количество посещений', default=4)
-
-    class Meta:
-        verbose_name = "Абонемент"
-        verbose_name_plural = "Абонементы"
-
-    def __str__(self):
-        return self.name
+# class Subscription(models.Model):
+#     name = models.CharField(max_length=100, verbose_name="Название")
+#     description = models.TextField(verbose_name="Описание")
+#     price = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Цена")
+#     duration = models.PositiveIntegerField(verbose_name="Длительность (дней)")
+#     is_active = models.BooleanField(default=True, verbose_name="Активен")
+#     number_of_events = models.PositiveIntegerField(verbose_name='количество посещений', default=4)
+#
+#     class Meta:
+#         verbose_name = "Абонемент"
+#         verbose_name_plural = "Абонементы"
+#
+#     def __str__(self):
+#         return self.name
 
 
 from django.db import models
@@ -343,17 +343,41 @@ class SpecialOffer(models.Model):
         return f"{self.name} ({self.discount_percent}%)"
 
 
+class WorkingDay(models.Model):
+    DAYS_OF_WEEK = (
+        (0, 'Понедельник'),
+        (1, 'Вторник'),
+        (2, 'Среда'),
+        (3, 'Четверг'),
+        (4, 'Пятница'),
+        (5, 'Суббота'),
+        (6, 'Воскресенье'),
+    )
+
+    day = models.PositiveSmallIntegerField(choices=DAYS_OF_WEEK, unique=True)
+    open_time = models.TimeField(default='09:00')
+    close_time = models.TimeField(default='22:00')
+    is_open = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Рабочий день"
+        verbose_name_plural = "Рабочие дни"
+        ordering = ['day']
+
+    def __str__(self):
+        return f"{self.get_day_display()}: {self.open_time} - {self.close_time}"
+
+
 class Holiday(models.Model):
-    """Выходные и праздничные дни"""
     HOLIDAY_STATUS = (
         ('closed', 'Закрыто'),
         ('shortened', 'Сокращенный день'),
-        ('special', 'Особый режим'),
+        ('normal', 'Обычный режим'),
     )
 
-    date = models.DateField(verbose_name="Дата")
+    date = models.DateField(unique=True, verbose_name="Дата")
     description = models.CharField(max_length=200, verbose_name="Описание")
-    status = models.CharField(max_length=10, choices=HOLIDAY_STATUS, verbose_name="Статус")
+    status = models.CharField(max_length=10, choices=HOLIDAY_STATUS, default='closed', verbose_name="Статус")
     open_time = models.TimeField(blank=True, null=True, verbose_name="Время открытия")
     close_time = models.TimeField(blank=True, null=True, verbose_name="Время закрытия")
 
@@ -366,5 +390,5 @@ class Holiday(models.Model):
         return f"{self.date}: {self.description}"
 
     def clean(self):
-        if self.status in ['shortened', 'special'] and not (self.open_time and self.close_time):
-            raise ValidationError("Для сокращенного/особого режима нужно указать время работы")
+        if self.status in ['shortened', 'normal'] and not (self.open_time and self.close_time):
+            raise ValidationError("Для сокращенного/обычного режима нужно указать время работы")

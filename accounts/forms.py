@@ -18,7 +18,7 @@ class SignInForm(forms.Form):
         label="Email",
         required=False,
         widget=forms.EmailInput(attrs={
-            "class": "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500",
+            "class": "w-full px-3 py-2 border border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500",
             "id": "loginEmailField",
             "placeholder": "example@example.com"
         })
@@ -33,7 +33,7 @@ class SignInForm(forms.Form):
             )
         ],
         widget=forms.TextInput(attrs={
-            "class": "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500",
+            "class": "w-full px-3 py-2 border border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500",
             "id": "loginPhoneField",
             "placeholder": "9XXXXXXXXX",
             "maxlength": "10"
@@ -42,7 +42,7 @@ class SignInForm(forms.Form):
     password = forms.CharField(
         label="Пароль",
         widget=forms.PasswordInput(attrs={
-            "class": "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            "class": "w-full px-3 py-2 border border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
         })
     )
     login_method = forms.CharField(widget=forms.HiddenInput())
@@ -83,12 +83,12 @@ class SignUpForm(forms.ModelForm):
     user_name = forms.CharField(
         label="Имя и фамилия",
         widget=forms.TextInput(attrs={
-            "class": "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+            "class": "w-full px-3 py-2 border border-2 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
         })
     )
     email = forms.EmailField(
         widget=forms.EmailInput(attrs={
-            "class": "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+            "class": "w-full px-3 py-2 border border-2 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
         })
     )
     phone = forms.CharField(
@@ -100,7 +100,7 @@ class SignUpForm(forms.ModelForm):
             )
         ],
         widget=forms.TextInput(attrs={
-            "class": "flex-1 px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-green-500 focus:border-green-500",
+            "class": "flex-1 px-3 py-2 border border-2 border-gray-300 rounded-r-md focus:outline-none focus:ring-green-500 focus:border-green-500",
             "placeholder": "9XXXXXXXXX",
             "maxlength": "10"
         })
@@ -114,7 +114,7 @@ class SignUpForm(forms.ModelForm):
             MaxValueValidator(99, message="Возраст должен быть не больше 99 лет"),
         ],
         widget=forms.NumberInput(attrs={
-            "class": "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500",
+            "class": "w-full px-3 py-2 border border-2 border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500",
             "placeholder": "18",
             "maxlength": "2"
         })
@@ -125,7 +125,7 @@ class SignUpForm(forms.ModelForm):
         choices=LEVEL_CHOICES,
         initial='beginner',
         widget=forms.Select(attrs={
-            "class": "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+            "class": "w-full px-3 py-2 border border-2 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
         })
     )
 
@@ -133,20 +133,20 @@ class SignUpForm(forms.ModelForm):
     password1 = forms.CharField(
         label="Пароль",
         widget=forms.PasswordInput(attrs={
-            "class": "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+            "class": "w-full px-3 py-2 border border-2 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
         }),
         validators=[validate_password]
     )
     password2 = forms.CharField(
         label="Подтверждение пароля",
         widget=forms.PasswordInput(attrs={
-            "class": "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+            "class": "w-full px-3 py-2 border border-2 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
         })
     )
     terms = forms.BooleanField(
         required=True,
         widget=forms.CheckboxInput(attrs={
-            "class": "h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mt-1"
+            "class": "h-4 w-4 text-green-600 focus:ring-green-500 border-2 border-gray-300 rounded mt-1"
         })
     )
 
@@ -200,7 +200,7 @@ class ProfileUpdateForm(forms.ModelForm):
             )
         ],
         widget=forms.TextInput(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500',
+            'class': 'w-full px-3 py-2 border border-2 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500',
             'placeholder': '+79991234567',
             'data-field': 'phone'  # Добавляем data-атрибут для JS
         })
@@ -215,7 +215,7 @@ class ProfileUpdateForm(forms.ModelForm):
             ('professional', 'Профессиональный'),
         ],
         widget=forms.Select(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500',
+            'class': 'w-full px-3 py-2 border border-2 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500',
             'data-field': 'level'
         })
     )
@@ -225,12 +225,12 @@ class ProfileUpdateForm(forms.ModelForm):
         fields = ['user_name', 'email', 'phone', 'level']
         widgets = {
             'user_name': forms.TextInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500',
+                'class': 'w-full px-3 py-2 border border-2 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500',
                 'placeholder': 'Иван Иванов',
                 'data-field': 'user_name'
             }),
             'email': forms.EmailInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500',
+                'class': 'w-full px-3 py-2 border border-2 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500',
                 'placeholder': 'example@example.com',
                 'data-field': 'email'
             }),
@@ -256,13 +256,13 @@ class CustomPasswordChangeForm(PasswordChangeForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['old_password'].widget.attrs.update({
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500'
+            'class': 'w-full px-3 py-2 border border-2 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500'
         })
         self.fields['new_password1'].widget.attrs.update({
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500'
+            'class': 'w-full px-3 py-2 border border-2 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500'
         })
         self.fields['new_password2'].widget.attrs.update({
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500'
+            'class': 'w-full px-3 py-2 border border-2 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500'
         })
 
 from django.core.validators import FileExtensionValidator

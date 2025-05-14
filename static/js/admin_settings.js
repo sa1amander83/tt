@@ -22,11 +22,11 @@
                     // Remove active class from all buttons
                     tabButtons.forEach(btn => {
                         btn.classList.remove('border-green-500', 'text-green-600');
-                        btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                        btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-2 border-gray-300');
                     });
 
                     // Add active class to clicked button
-                    this.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                    this.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-2 border-gray-300');
                     this.classList.add('border-green-500', 'text-green-600');
 
                     // Hide all tab contents
