@@ -22,7 +22,9 @@ function closeSpecialOfferModal() {
 
 /**
  * Открытие модального окна для редактирования Special Offer
- */
+ **/
+
+
 function openEditSpecialOfferModal(offerId) {
   // Загружаем данные предложения (заглушка - в реальном коде будет AJAX запрос)
   const offerData = {
@@ -37,7 +39,7 @@ function openEditSpecialOfferModal(offerId) {
   };
 
   // Заполняем форму данными
-  const form = document.getElementById('addSpecialOfferForm');
+  const form = document.getElementById('SpecialOfferForm');
   form.reset();
 
   document.getElementById('offerName').value = offerData.name;
@@ -74,7 +76,7 @@ function openEditPricingPlanModal(planId) {
   };
 
   // Заполняем форму данными
-  const form = document.getElementById('addPricingPlanForm');
+  const form = document.getElementById('PricingPlanForm');
   form.reset();
 
   document.getElementById('planName').value = planData.name;
@@ -110,7 +112,7 @@ function openEditTableTypePricingModal(pricingId) {
   };
 
   // Заполняем форму данными
-  const form = document.getElementById('addTableTypePricingForm');
+  const form = document.getElementById('TableTypePricingForm');
   form.reset();
 
   document.getElementById('tableType').value = pricingData.table_type;

@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveSpecialOfferButton = document.getElementById('saveSpecialOffer');
   if (saveSpecialOfferButton) {
     saveSpecialOfferButton.addEventListener('click', function () {
-      const form = document.getElementById('addSpecialOfferForm');
+      const form = document.getElementById('SpecialOfferForm');
       const saveBtn = this;
 
       if (form.checkValidity()) {
