@@ -32,9 +32,14 @@ class ClubSettingsView(LoginRequiredMixin, View):
         }
 
         if active_tab == 'tables':
+
+
             context.update({
                 'tables': Table.objects.all(),
                 'table_form': TableForm(),
+                 'table_type_form': TableTypeForm(),  # Добавьте эту строку
+                'table_types': TableType.objects.all(),
+
             })
 
         elif active_tab == 'memberships':
