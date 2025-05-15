@@ -80,3 +80,17 @@
     </div>
   </div>
 </div>
+
+
+<div id="editPricingPlanModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 opacity-0" id="editPricingPlanBackdrop"></div>
+    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-300 ease-out translate-y-10 opacity-0" id="editPricingPlanModalContent">
+      <!-- Содержимое модального окна -->
+      <form id="editPricingPlanForm">
+        {% csrf_token %}
+        <!-- Поля формы -->
+      </form>
+    </div>
+  </div>
+</div>

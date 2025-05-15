@@ -1,4 +1,4 @@
-tt/settings.py
+
 .venv
 .env
 migrations
@@ -9,3 +9,4 @@ staticfiles
 media
 .idea
 .idea/
+__pycache__/
