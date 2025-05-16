@@ -95,6 +95,7 @@ class ClubSettingsView(LoginRequiredMixin, View):
 
         elif active_tab == 'pricing':
             context.update({
+                'table_types':TableType.objects.all(),
                 'pricing_plans': PricingPlan.objects.all(),
                 'pricing_plan_form': PricingPlanForm(),
                 'table_type_pricings': TableTypePricing.objects.all(),
@@ -276,9 +277,7 @@ class TableTypePricingView(LoginRequiredMixin, UserPassesTestMixin, View):
                 'hour_rate_group': pricing.hour_rate_group,
                 'min_duration': pricing.min_duration,
                 'max_duration': pricing.max_duration,
-                'is_active': pricing.is_active,
-                'created_at': pricing.created_at.isoformat(),
-                'updated_at': pricing.updated_at.isoformat()
+
             }
 
             return JsonResponse(data)
