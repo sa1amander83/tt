@@ -187,21 +187,12 @@ class PricingPlanCreateView(LoginRequiredMixin, IsAdminMixin, View):
 
 
 class PricingPlanView(LoginRequiredMixin, UserPassesTestMixin, View):
-    """View для работы с конкретным тарифным планом"""
-
     def test_func(self):
-        """Проверка, что пользователь является администратором"""
         return self.request.user.is_staff
 
     def get(self, request, pk, *args, **kwargs):
-        """Получение данных тарифного плана"""
         try:
             pricing_plan = get_object_or_404(PricingPlan, pk=pk)
-
-            # Вариант с сериализатором
-            # data = PricingPlanSerializer(pricing_plan).data
-
-            # Вариант без сериализатора
             data = {
                 'id': pricing_plan.id,
                 'name': pricing_plan.name,
@@ -209,31 +200,13 @@ class PricingPlanView(LoginRequiredMixin, UserPassesTestMixin, View):
                 'valid_from': pricing_plan.valid_from.isoformat(),
                 'valid_to': pricing_plan.valid_to.isoformat() if pricing_plan.valid_to else None,
                 'is_default': pricing_plan.is_default,
-                'created_at': pricing_plan.created_at.isoformat(),
-                'updated_at': pricing_plan.updated_at.isoformat(),
-                'table_types_pricing': [
-                    {
-                        'table_type_id': tp.table_type.id,
-                        'table_type_name': tp.table_type.name,
-                        'hour_rate': tp.hour_rate,
-                        'hour_rate_group': tp.hour_rate_group
-                    }
-                    for tp in pricing_plan.tabletypepricing_set.all()
-                ]
             }
-
             return JsonResponse(data)
-
         except Exception as e:
             return JsonResponse(
-                {
-                    'status': 'error',
-                    'message': 'Failed to get pricing plan details',
-                    'error': str(e)
-                },
+                {'status': 'error', 'message': str(e)},
                 status=500
             )
-
 
 class PricingPlanUpdateView(LoginRequiredMixin, IsAdminMixin, View):
     def post(self, request, pk, *args, **kwargs):
@@ -244,11 +217,15 @@ class PricingPlanUpdateView(LoginRequiredMixin, IsAdminMixin, View):
             form.save()
             return JsonResponse({'status': 'success'})
 
+        # Возвращаем ошибки валидации
         return JsonResponse(
-            {'status': 'error', 'message': 'Проверьте введенные данные', 'errors': form.errors},
+            {
+                'status': 'error',
+                'message': 'Validation error',
+                'errors': dict(form.errors.items())
+            },
             status=400
         )
-
 
 class PricingPlanDeleteView(LoginRequiredMixin, IsAdminMixin, View):
     def post(self, request, pk, *args, **kwargs):

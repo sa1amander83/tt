@@ -71,126 +71,167 @@ function openEditSpecialOfferModal(offerId) {
 /**
  * Открытие модального окна для редактирования Pricing Plan
  */
+// ==============================================
+// Функции для модального окна Pricing Plan
+// ==============================================
+
+/**
+ * Открытие модального окна для редактирования Pricing Plan
+ */
 async function openEditPricingPlanModal(planId) {
   try {
     const modal = document.getElementById('addPricingPlanModal');
     const form = document.getElementById('pricingPlanForm');
 
-    // Проверяем, что элементы существуют
     if (!modal || !form) {
-      throw new Error('Modal or form element not found');
+      throw new Error('Modal or form not found');
     }
 
-    // Показываем модальное окно сразу
+    // Показываем модальное окно с индикатором загрузки
     modal.classList.remove('hidden');
     document.body.classList.add('overflow-hidden');
 
-    // Добавляем индикатор загрузки внутрь формы
-    const loadingIndicator = document.createElement('div');
-    loadingIndicator.className = 'text-center py-4';
-    loadingIndicator.innerHTML = `
-      <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-      <p class="mt-2 text-gray-600">Загрузка данных...</p>
-    `;
+    // Добавляем индикатор загрузки
+    const loader = document.createElement('div');
+    loader.className = 'absolute inset-0 flex items-center justify-center bg-white bg-opacity-80';
+    loader.innerHTML = '<div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>';
+    form.appendChild(loader);
 
-    // Сохраняем оригинальное содержимое формы
-    const originalContent = form.innerHTML;
+    // Получаем CSRF токен
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-    // Заменяем содержимое формы индикатором загрузки
-    form.innerHTML = '';
-    form.appendChild(loadingIndicator);
+    // Загружаем данные тарифного плана
+    const response = await fetch(`/settings/pricing-plans/${planId}/`, {
+      headers: {
+        'X-CSRFToken': csrfToken
+      }
+    });
 
-    // Загружаем данные тарифного плана с сервера
-    const response = await fetch(`/settings/pricing-plans/${planId}/`);
     if (!response.ok) {
-      throw new Error('Не удалось загрузить данные тарифа');
+      throw new Error('Failed to load pricing plan');
     }
+
     const planData = await response.json();
 
-    // Восстанавливаем оригинальное содержимое формы
-    form.innerHTML = originalContent;
+    // Убираем индикатор загрузки
+    form.removeChild(loader);
 
     // Заполняем форму данными
     form.querySelector('[name="name"]').value = planData.name || '';
     form.querySelector('[name="valid_from"]').value = planData.valid_from || '';
     form.querySelector('[name="valid_to"]').value = planData.valid_to || '';
-    form.querySelector('[name="is_default"]').checked = Boolean(planData.is_default);
-    form.dataset.planId = planId;
+    form.querySelector('[name="is_default"]').checked = planData.is_default || false;
 
-    // Меняем заголовок для режима редактирования
-    const modalTitle = modal.querySelector('h3');
-    if (modalTitle) {
-      modalTitle.textContent = 'Редактировать тарифный план';
+    // Добавляем ID плана в форму
+    if (!form.dataset.planId) {
+      form.dataset.planId = planId;
     }
+
+    // Меняем заголовок
+    const title = modal.querySelector('h3');
+    if (title) {
+      title.textContent = 'Редактировать тарифный план';
+    }
+
+    // Анимация появления
+    setTimeout(() => {
+      const backdrop = document.getElementById('pricingPlanBackdrop');
+      const content = document.getElementById('pricingPlanModalContent');
+      if (backdrop) backdrop.classList.add('opacity-100');
+      if (content) content.classList.add('opacity-100', 'translate-y-0');
+    }, 10);
 
   } catch (error) {
-    console.error('Ошибка загрузки тарифного плана:', error);
-
-    // Закрываем модальное окно при ошибке
-    const modal = document.getElementById('addPricingPlanModal');
-    if (modal) {
-      modal.classList.add('hidden');
-      document.body.classList.remove('overflow-hidden');
-    }
-
+    console.error('Error loading pricing plan:', error);
+    closeModal('addPricingPlanModal');
     showNotification(`Ошибка: ${error.message}`, 'error');
   }
 }
+
 /**
- * Обновление тарифного плана
+ * Сохранение тарифного плана (работает и для создания и для редактирования)
  */
-async function updatePricingPlan() {
+async function savePricingPlan() {
   const form = document.getElementById('pricingPlanForm');
   const planId = form.dataset.planId;
-  const saveBtn = form.querySelector('button[type="submit"]');
+  const isEditMode = !!planId;
+  const saveBtn =document.getElementById('save_price_plan_button');
 
-  if (form.checkValidity()) {
-    try {
-      // Показать состояние загрузки
-      saveBtn.innerHTML = `
-        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        Сохранение...
-      `;
-      saveBtn.disabled = true;
+  try {
+    // Показать состояние загрузки
+    saveBtn.innerHTML = `
+      <span class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" role="status"></span>
+      Сохранение...
+    `;
+    saveBtn.disabled = true;
 
-      // Подготовка данных формы
-      const formData = new FormData(form);
-      formData.append('is_default', form.querySelector('[name="is_default"]').checked ? 'true' : 'false');
+    // Подготовка данных
+    const formData = new FormData(form);
+    formData.append('is_default', form.querySelector('[name="is_default"]').checked ? 'true' : 'false');
 
-      // Отправка данных на сервер
-      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-      const response = await fetch(`/settings/pricing-plans/${planId}/update/`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'X-CSRFToken': csrfToken,
-        }
-      });
+    // Определяем URL и метод
+    const url = isEditMode
+      ? `/settings/pricing-plans/${planId}/update/`
+      : '/settings/pricing-plans/create/';
+    const method = 'POST';
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Ошибка сервера');
+    // Получаем CSRF токен
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // Отправляем запрос
+    const response = await fetch(url, {
+      method: method,
+      body: formData,
+      headers: {
+        'X-CSRFToken': csrfToken
       }
+    });
 
-      showNotification('Тарифный план успешно обновлен!', 'success');
-      closeModal('addPricingPlanModal');
+    const data = await response.json();
 
-      // Обновляем страницу через 1.5 секунды
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
-
-    } catch (error) {
-      console.error('Ошибка обновления тарифа:', error);
-      showNotification(`Ошибка: ${error.message}`, 'error');
-    } finally {
-      saveBtn.innerHTML = 'Сохранить';
-      saveBtn.disabled = false;
+    if (!response.ok) {
+      throw new Error(data.message || 'Ошибка сервера');
     }
-  } else {
-    form.reportValidity();
+
+    showNotification(
+      isEditMode
+        ? 'Тарифный план успешно обновлен!'
+        : 'Тарифный план успешно создан!',
+      'success'
+    );
+
+    closeModal('addPricingPlanModal');
+
+    // Обновляем страницу через 1 секунду
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+
+  } catch (error) {
+    console.error('Error saving pricing plan:', error);
+    showNotification(`Ошибка: ${error.message}`, 'error');
+  } finally {
+    saveBtn.innerHTML = 'Сохранить';
+    saveBtn.disabled = false;
   }
 }
+
+// Инициализация обработчиков
+document.addEventListener('DOMContentLoaded', function() {
+  // Обработчик для кнопок редактирования в таблице
+  document.querySelectorAll('[onclick^="openEditPricingPlanModal"]').forEach(btn => {
+    const match = btn.getAttribute('onclick').match(/openEditPricingPlanModal\((\d+)\)/);
+    if (match) {
+      btn.addEventListener('click', () => openEditPricingPlanModal(match[1]));
+    }
+  });
+
+  // Обработчик для кнопки сохранения
+  const saveBtn = document.querySelector('#pricingPlanForm button[type="submit"]');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', savePricingPlan);
+  }
+});
 
 // ==============================================
 // Функции для модального окна Table Type Pricing
