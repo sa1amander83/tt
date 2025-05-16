@@ -244,6 +244,7 @@ async function openEditTableTypePricingModal(pricingId) {
   try {
     // Показываем индикатор загрузки
     const modal = document.getElementById('addTableTypePricingModal');
+
     modal.querySelector('.modal-content').innerHTML = `
       <div class="flex justify-center items-center h-64">
         <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>

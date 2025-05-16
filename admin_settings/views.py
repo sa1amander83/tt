@@ -98,7 +98,7 @@ class ClubSettingsView(LoginRequiredMixin, View):
                 'table_types':TableType.objects.all(),
                 'pricing_plans': PricingPlan.objects.all(),
                 'pricing_plan_form': PricingPlanForm(),
-                'table_type_pricings': TableTypePricing.objects.all(),
+                'table_type_pricing': TableTypePricing.objects.all(),
                 'table_type_pricing_form': TableTypePricingForm(),
                 'special_offers': SpecialOffer.objects.all(),
                 'special_offer_form': SpecialOfferForm(),
@@ -243,12 +243,20 @@ class PricingPlanDeleteView(LoginRequiredMixin, IsAdminMixin, View):
 class TableTypePricingCreateView(LoginRequiredMixin, IsAdminMixin, View):
     def post(self, request, *args, **kwargs):
         form = TableTypePricingForm(request.POST)
+
         if form.is_valid():
             form.save()
-            messages.success(request, "Цена для типа стола успешно добавлена")
-        else:
-            messages.error(request, "Ошибка при добавлении цены")
-        return redirect('admin_settings:club_settings', active_tab='pricing')
+            return JsonResponse({'status': 'success'})
+
+        # Возвращаем ошибки валидации
+        return JsonResponse(
+            {
+                'status': 'error',
+                'message': 'Validation error',
+                'errors': dict(form.errors.items())
+            },
+            status=400
+        )
 
 
 class TableTypePricingView(LoginRequiredMixin, UserPassesTestMixin, View):
