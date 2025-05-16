@@ -22,7 +22,9 @@ function closeSpecialOfferModal() {
 
 /**
  * Открытие модального окна для редактирования Special Offer
- */
+ **/
+
+
 function openEditSpecialOfferModal(offerId) {
   // Загружаем данные предложения (заглушка - в реальном коде будет AJAX запрос)
   const offerData = {
@@ -37,7 +39,7 @@ function openEditSpecialOfferModal(offerId) {
   };
 
   // Заполняем форму данными
-  const form = document.getElementById('addSpecialOfferForm');
+  const form = document.getElementById('SpecialOfferForm');
   form.reset();
 
   document.getElementById('offerName').value = offerData.name;
@@ -62,33 +64,174 @@ function openEditSpecialOfferModal(offerId) {
 /**
  * Открытие модального окна для редактирования Pricing Plan
  */
-function openEditPricingPlanModal(planId) {
-  // Загружаем данные тарифного плана (заглушка)
-  const planData = {
-    id: planId,
-    name: `Тариф ${planId}`,
-    description: `Описание тарифа ${planId}`,
-    valid_from: '2023-01-01',
-    valid_to: '2023-12-31',
-    is_default: planId === 1
-  };
+// ==============================================
+// Функции для модального окна Pricing Plan
+// ==============================================
 
-  // Заполняем форму данными
-  const form = document.getElementById('addPricingPlanForm');
-  form.reset();
+/**
+ * Открытие модального окна для редактирования Pricing Plan
+ */
+// ==============================================
+// Функции для модального окна Pricing Plan
+// ==============================================
 
-  document.getElementById('planName').value = planData.name;
-  document.getElementById('planDescription').value = planData.description;
-  document.getElementById('validFrom').value = planData.valid_from;
-  document.getElementById('validTo').value = planData.valid_to;
-  document.getElementById('isDefault').checked = planData.is_default;
+/**
+ * Открытие модального окна для редактирования Pricing Plan
+ */
+async function openEditPricingPlanModal(planId) {
+  try {
+    const modal = document.getElementById('addPricingPlanModal');
+    const form = document.getElementById('pricingPlanForm');
 
-  // Показываем модальное окно
-  openModal('addPricingPlanModal');
+    if (!modal || !form) {
+      throw new Error('Modal or form not found');
+    }
 
-  // Меняем заголовок для режима редактирования
-  document.querySelector('#addPricingPlanModal h3').textContent = 'Редактировать тарифный план';
+    // Показываем модальное окно с индикатором загрузки
+    modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+
+    // Добавляем индикатор загрузки
+    const loader = document.createElement('div');
+    loader.className = 'absolute inset-0 flex items-center justify-center bg-white bg-opacity-80';
+    loader.innerHTML = '<div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>';
+    form.appendChild(loader);
+
+    // Получаем CSRF токен
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // Загружаем данные тарифного плана
+    const response = await fetch(`/settings/pricing-plans/${planId}/`, {
+      headers: {
+        'X-CSRFToken': csrfToken
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to load pricing plan');
+    }
+
+    const planData = await response.json();
+
+    // Убираем индикатор загрузки
+    form.removeChild(loader);
+
+    // Заполняем форму данными
+    form.querySelector('[name="name"]').value = planData.name || '';
+    form.querySelector('[name="valid_from"]').value = planData.valid_from || '';
+    form.querySelector('[name="valid_to"]').value = planData.valid_to || '';
+    form.querySelector('[name="is_default"]').checked = planData.is_default || false;
+
+    // Добавляем ID плана в форму
+    if (!form.dataset.planId) {
+      form.dataset.planId = planId;
+    }
+
+    // Меняем заголовок
+    const title = modal.querySelector('h3');
+    if (title) {
+      title.textContent = 'Редактировать тарифный план';
+    }
+
+    // Анимация появления
+    setTimeout(() => {
+      const backdrop = document.getElementById('pricingPlanBackdrop');
+      const content = document.getElementById('pricingPlanModalContent');
+      if (backdrop) backdrop.classList.add('opacity-100');
+      if (content) content.classList.add('opacity-100', 'translate-y-0');
+    }, 10);
+
+  } catch (error) {
+    console.error('Error loading pricing plan:', error);
+    closeModal('addPricingPlanModal');
+    showNotification(`Ошибка: ${error.message}`, 'error');
+  }
 }
+
+/**
+ * Сохранение тарифного плана (работает и для создания и для редактирования)
+ */
+async function savePricingPlan() {
+  const form = document.getElementById('pricingPlanForm');
+  const planId = form.dataset.planId;
+  const isEditMode = !!planId;
+  const saveBtn =document.getElementById('save_price_plan_button');
+
+  try {
+    // Показать состояние загрузки
+    saveBtn.innerHTML = `
+      <span class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" role="status"></span>
+      Сохранение...
+    `;
+    saveBtn.disabled = true;
+
+    // Подготовка данных
+    const formData = new FormData(form);
+    formData.append('is_default', form.querySelector('[name="is_default"]').checked ? 'true' : 'false');
+
+    // Определяем URL и метод
+    const url = isEditMode
+      ? `/settings/pricing-plans/${planId}/update/`
+      : '/settings/pricing-plans/create/';
+    const method = 'POST';
+
+    // Получаем CSRF токен
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // Отправляем запрос
+    const response = await fetch(url, {
+      method: method,
+      body: formData,
+      headers: {
+        'X-CSRFToken': csrfToken
+      }
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Ошибка сервера');
+    }
+
+    showNotification(
+      isEditMode
+        ? 'Тарифный план успешно обновлен!'
+        : 'Тарифный план успешно создан!',
+      'success'
+    );
+
+    closeModal('addPricingPlanModal');
+
+    // Обновляем страницу через 1 секунду
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+
+  } catch (error) {
+    console.error('Error saving pricing plan:', error);
+    showNotification(`Ошибка: ${error.message}`, 'error');
+  } finally {
+    saveBtn.innerHTML = 'Сохранить';
+    saveBtn.disabled = false;
+  }
+}
+
+// Инициализация обработчиков
+document.addEventListener('DOMContentLoaded', function() {
+  // Обработчик для кнопок редактирования в таблице
+  document.querySelectorAll('[onclick^="openEditPricingPlanModal"]').forEach(btn => {
+    const match = btn.getAttribute('onclick').match(/openEditPricingPlanModal\((\d+)\)/);
+    if (match) {
+      btn.addEventListener('click', () => openEditPricingPlanModal(match[1]));
+    }
+  });
+
+  // Обработчик для кнопки сохранения
+  const saveBtn = document.querySelector('#pricingPlanForm button[type="submit"]');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', savePricingPlan);
+  }
+});
 
 // ==============================================
 // Функции для модального окна Table Type Pricing
@@ -97,34 +240,114 @@ function openEditPricingPlanModal(planId) {
 /**
  * Открытие модального окна для редактирования Table Type Pricing
  */
-function openEditTableTypePricingModal(pricingId) {
-  // Загружаем данные ценообразования (заглушка)
-  const pricingData = {
-    id: pricingId,
-    table_type: pricingId % 3 + 1,
-    pricing_plan: pricingId % 2 + 1,
-    hour_rate: 400 + (pricingId * 50),
-    hour_rate_group: 600 + (pricingId * 50),
-    min_duration: 1,
-    max_duration: 3
-  };
+async function openEditTableTypePricingModal(pricingId) {
+  try {
+    // Показываем индикатор загрузки
+    const modal = document.getElementById('addTableTypePricingModal');
 
-  // Заполняем форму данными
-  const form = document.getElementById('addTableTypePricingForm');
-  form.reset();
+    modal.querySelector('.modal-content').innerHTML = `
+      <div class="flex justify-center items-center h-64">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    `;
+    openModal('addTableTypePricingModal');
 
-  document.getElementById('tableType').value = pricingData.table_type;
-  document.getElementById('pricingPlan').value = pricingData.pricing_plan;
-  document.getElementById('hourRate').value = pricingData.hour_rate;
-  document.getElementById('hourRateGroup').value = pricingData.hour_rate_group;
-  document.getElementById('minDuration').value = pricingData.min_duration;
-  document.getElementById('maxDuration').value = pricingData.max_duration;
+    // Загружаем данные ценообразования с сервера
+    const response = await fetch(`/settings/table-type-pricings/${pricingId}/`);
+    if (!response.ok) {
+      throw new Error('Не удалось загрузить данные ценообразования');
+    }
+    const pricingData = await response.json();
 
-  // Показываем модальное окно
-  openModal('addTableTypePricingModal');
+    // Заполняем форму данными
+    const form = document.getElementById('tableTypePricingForm');
+    form.reset();
 
-  // Меняем заголовок для режима редактирования
-  document.querySelector('#addTableTypePricingModal h3').textContent = 'Редактировать цены';
+    form.querySelector('[name="table_type"]').value = pricingData.table_type.id;
+    form.querySelector('[name="pricing_plan"]').value = pricingData.pricing_plan.id;
+    form.querySelector('[name="hour_rate"]').value = pricingData.hour_rate;
+    form.querySelector('[name="hour_rate_group"]').value = pricingData.hour_rate_group;
+    form.querySelector('[name="min_duration"]').value = pricingData.min_duration;
+    form.querySelector('[name="max_duration"]').value = pricingData.max_duration;
+    form.dataset.pricingId = pricingId;
+
+    // Восстанавливаем содержимое модального окна
+    modal.querySelector('.modal-content').innerHTML = `
+      <!-- Ваш HTML-код модального окна -->
+      <div class="modal-header">
+        <h3>Редактировать цены</h3>
+        <button onclick="closeModal('addTableTypePricingModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="tableTypePricingForm">
+          <!-- Поля формы -->
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button onclick="updateTableTypePricing()">Сохранить</button>
+      </div>
+    `;
+
+  } catch (error) {
+    console.error('Ошибка загрузки ценообразования:', error);
+    closeModal('addTableTypePricingModal');
+    showNotification(`Ошибка: ${error.message}`, 'error');
+  }
+}
+
+/**
+ * Обновление ценообразования для типа стола
+ */
+async function updateTableTypePricing() {
+  const form = document.getElementById('tableTypePricingForm');
+  const pricingId = form.dataset.pricingId;
+  const saveBtn = form.querySelector('button[type="submit"]');
+
+  if (form.checkValidity()) {
+    try {
+      // Показать состояние загрузки
+      saveBtn.innerHTML = `
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        Сохранение...
+      `;
+      saveBtn.disabled = true;
+
+      // Подготовка данных формы
+      const formData = new FormData(form);
+
+      // Отправка данных на сервер
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      const response = await fetch(`/settings/table-type-pricings/${pricingId}/update/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRFToken': csrfToken,
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Ошибка сервера');
+      }
+
+      showNotification('Цены успешно обновлены!', 'success');
+      closeModal('addTableTypePricingModal');
+
+      // Обновляем страницу через 1.5 секунды
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+
+    } catch (error) {
+      console.error('Ошибка обновления цен:', error);
+      showNotification(`Ошибка: ${error.message}`, 'error');
+    } finally {
+      saveBtn.innerHTML = 'Сохранить';
+      saveBtn.disabled = false;
+    }
+  } else {
+    form.reportValidity();
+  }
 }
 
 // ==============================================
@@ -134,33 +357,136 @@ function openEditTableTypePricingModal(pricingId) {
 /**
  * Открытие модального окна для редактирования Membership
  */
-function openEditMembershipModal(membershipId) {
-  // Загружаем данные абонемента (заглушка)
-  const membershipData = {
-    id: membershipId,
-    name: `Абонемент ${membershipId}`,
-    description: `Описание абонемента ${membershipId}`,
-    duration_days: 30 * membershipId,
-    price: 1000 * membershipId,
-    is_active: true
-  };
+async function openEditMembershipModal(membershipId) {
+  try {
+    // Показываем индикатор загрузки
+    const modal = document.getElementById('addMembershipModal');
+    modal.querySelector('.modal-content').innerHTML = `
+      <div class="flex justify-center items-center h-64">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    `;
+    openModal('addMembershipModal');
 
-  // Находим форму (предполагаем, что она аналогична форме добавления)
-  const form = document.getElementById('add-membership-modal').querySelector('form');
-  form.reset();
+    // Загружаем данные абонемента с сервера
+    const response = await fetch(`/settings/memberships/${membershipId}/`);
+    if (!response.ok) {
+      throw new Error('Не удалось загрузить данные абонемента');
+    }
+    const membershipData = await response.json();
 
-  // Заполняем поля (имена полей должны соответствовать вашей форме)
-  form.querySelector('[name="name"]').value = membershipData.name;
-  form.querySelector('[name="description"]').value = membershipData.description;
-  form.querySelector('[name="duration_days"]').value = membershipData.duration_days;
-  form.querySelector('[name="price"]').value = membershipData.price;
-  form.querySelector('[name="is_active"]').checked = membershipData.is_active;
+    // Заполняем форму данными
+    const form = document.getElementById('membershipForm');
+    form.reset();
 
-  // Показываем модальное окно
-  document.getElementById('add-membership-modal').classList.remove('hidden');
+    form.querySelector('[name="name"]').value = membershipData.name;
+    form.querySelector('[name="description"]').value = membershipData.description;
+    form.querySelector('[name="duration_days"]').value = membershipData.duration_days;
+    form.querySelector('[name="price"]').value = membershipData.price;
+    form.querySelector('[name="is_active"]').checked = membershipData.is_active;
+    form.dataset.membershipId = membershipId;
 
-  // Меняем заголовок для режима редактирования
-  document.querySelector('#add-membership-modal h3').textContent = 'Редактировать абонемент';
+    // Восстанавливаем содержимое модального окна
+    modal.querySelector('.modal-content').innerHTML = `
+      <!-- Ваш HTML-код модального окна -->
+      <div class="modal-header">
+        <h3>Редактировать абонемент</h3>
+        <button onclick="closeModal('addMembershipModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="membershipForm">
+          <!-- Поля формы -->
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button onclick="updateMembership()">Сохранить</button>
+      </div>
+    `;
+
+  } catch (error) {
+    console.error('Ошибка загрузки абонемента:', error);
+    closeModal('addMembershipModal');
+    showNotification(`Ошибка: ${error.message}`, 'error');
+  }
+}
+
+/**
+ * Обновление абонемента
+ */
+async function updateMembership() {
+  const form = document.getElementById('membershipForm');
+  const membershipId = form.dataset.membershipId;
+  const saveBtn = form.querySelector('button[type="submit"]');
+
+  if (form.checkValidity()) {
+    try {
+      // Показать состояние загрузки
+      saveBtn.innerHTML = `
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        Сохранение...
+      `;
+      saveBtn.disabled = true;
+
+      // Подготовка данных формы
+      const formData = new FormData(form);
+
+      // Отправка данных на сервер
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      const response = await fetch(`/settings/memberships/${membershipId}/update/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRFToken': csrfToken,
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Ошибка сервера');
+      }
+
+      showNotification('Абонемент успешно обновлен!', 'success');
+      closeModal('addMembershipModal');
+
+      // Обновляем страницу через 1.5 секунды
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+
+    } catch (error) {
+      console.error('Ошибка обновления абонемента:', error);
+      showNotification(`Ошибка: ${error.message}`, 'error');
+    } finally {
+      saveBtn.innerHTML = 'Сохранить';
+      saveBtn.disabled = false;
+    }
+  } else {
+    form.reportValidity();
+  }
+}
+
+// Вспомогательные функции
+function openModal(modalId) {
+  document.getElementById(modalId).classList.remove('hidden');
+  document.body.classList.add('overflow-hidden');
+}
+
+function closeModal(modalId) {
+  document.getElementById(modalId).classList.add('hidden');
+  document.body.classList.remove('overflow-hidden');
+}
+
+function showNotification(message, type) {
+  const notification = document.createElement('div');
+  notification.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded shadow-lg text-white ${
+    type === 'success' ? 'bg-green-500' : 'bg-red-500'
+  }`;
+  notification.textContent = message;
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    notification.remove();
+  }, 3000);
 }
 
 // ==============================================
@@ -170,22 +496,6 @@ function openEditMembershipModal(membershipId) {
 /**
  * Универсальная функция открытия модального окна
  */
-function openModal(modalId) {
-  const modal = document.getElementById(modalId);
-  const backdrop = document.getElementById(`${modalId.replace('add', '').replace('Modal', '')}Backdrop`);
-  const content = document.getElementById(`${modalId.replace('add', '').replace('Modal', '')}ModalContent`);
-
-  if (!modal) return;
-
-  modal.classList.remove('hidden');
-  document.body.classList.add('overflow-hidden');
-
-  // Анимация открытия
-  setTimeout(() => {
-    if (backdrop) backdrop.classList.add('opacity-100');
-    if (content) content.classList.add('opacity-100', 'scale-100');
-  }, 10);
-}
 
 // Инициализация всех обработчиков при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {

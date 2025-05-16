@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.contrib import messages
@@ -90,6 +91,20 @@ class ClubSettingsView(LoginRequiredMixin, View):
                 'holiday_form': HolidayForm(),
             })
 
+
+
+        elif active_tab == 'pricing':
+            context.update({
+                'table_types':TableType.objects.all(),
+                'pricing_plans': PricingPlan.objects.all(),
+                'pricing_plan_form': PricingPlanForm(),
+                'table_type_pricing': TableTypePricing.objects.all(),
+                'table_type_pricing_form': TableTypePricingForm(),
+                'special_offers': SpecialOffer.objects.all(),
+                'special_offer_form': SpecialOfferForm(),
+            })
+
+
         return context
 
     def post(self, request, *args, **kwargs):
@@ -164,22 +179,151 @@ class PricingPlanCreateView(LoginRequiredMixin, IsAdminMixin, View):
         form = PricingPlanForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, "Тарифный план успешно добавлен")
+            return JsonResponse({'status': 'success'})
         else:
-            messages.error(request, "Ошибка при добавлении тарифного плана")
-        return redirect('admin_settings:club_settings', active_tab='pricing')
+            return JsonResponse(
+                {'status': 'error', 'message': 'Проверьте введенные данные'},
+                status=400
+            )
 
+
+class PricingPlanView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get(self, request, pk, *args, **kwargs):
+        try:
+            pricing_plan = get_object_or_404(PricingPlan, pk=pk)
+            data = {
+                'id': pricing_plan.id,
+                'name': pricing_plan.name,
+                'description': pricing_plan.description,
+                'valid_from': pricing_plan.valid_from.isoformat(),
+                'valid_to': pricing_plan.valid_to.isoformat() if pricing_plan.valid_to else None,
+                'is_default': pricing_plan.is_default,
+            }
+            return JsonResponse(data)
+        except Exception as e:
+            return JsonResponse(
+                {'status': 'error', 'message': str(e)},
+                status=500
+            )
+
+class PricingPlanUpdateView(LoginRequiredMixin, IsAdminMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        pricing_plan = get_object_or_404(PricingPlan, pk=pk)
+        form = PricingPlanForm(request.POST, instance=pricing_plan)
+
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'status': 'success'})
+
+        # Возвращаем ошибки валидации
+        return JsonResponse(
+            {
+                'status': 'error',
+                'message': 'Validation error',
+                'errors': dict(form.errors.items())
+            },
+            status=400
+        )
+
+class PricingPlanDeleteView(LoginRequiredMixin, IsAdminMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        pricing_plan = get_object_or_404(PricingPlan, pk=pk)
+
+        try:
+            pricing_plan.delete()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse(
+                {'status': 'error', 'message': str(e)},
+                status=400)
 
 class TableTypePricingCreateView(LoginRequiredMixin, IsAdminMixin, View):
     def post(self, request, *args, **kwargs):
         form = TableTypePricingForm(request.POST)
+
         if form.is_valid():
             form.save()
-            messages.success(request, "Цена для типа стола успешно добавлена")
-        else:
-            messages.error(request, "Ошибка при добавлении цены")
-        return redirect('admin_settings:club_settings', active_tab='pricing')
+            return JsonResponse({'status': 'success'})
 
+        # Возвращаем ошибки валидации
+        return JsonResponse(
+            {
+                'status': 'error',
+                'message': 'Validation error',
+                'errors': dict(form.errors.items())
+            },
+            status=400
+        )
+
+
+class TableTypePricingView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """View для работы с ценами по типам столов"""
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get(self, request, pk, *args, **kwargs):
+        """Получение данных о ценообразовании для типа стола"""
+        try:
+            pricing = get_object_or_404(TableTypePricing, pk=pk)
+
+            data = {
+                'id': pricing.id,
+                'table_type': {
+                    'id': pricing.table_type.id,
+                    'name': pricing.table_type.name,
+                    'description': pricing.table_type.description
+                },
+                'pricing_plan': {
+                    'id': pricing.pricing_plan.id,
+                    'name': pricing.pricing_plan.name
+                },
+                'hour_rate': pricing.hour_rate,
+                'hour_rate_group': pricing.hour_rate_group,
+                'min_duration': pricing.min_duration,
+                'max_duration': pricing.max_duration,
+
+            }
+
+            return JsonResponse(data)
+
+        except Exception as e:
+            return JsonResponse(
+                {
+                    'status': 'error',
+                    'message': 'Failed to get table type pricing details',
+                    'error': str(e)
+                },
+                status=500)
+class TableTypePricingUpdateView(LoginRequiredMixin, IsAdminMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        table_type_pricing = get_object_or_404(TableTypePricing, pk=pk)
+        form = TableTypePricingForm(request.POST, instance=table_type_pricing)
+
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'status': 'success'})
+
+        return JsonResponse(
+            {'status': 'error', 'message': 'Проверьте введенные данные', 'errors': form.errors},
+            status=400
+        )
+
+
+class TableTypePricingDeleteView(LoginRequiredMixin, IsAdminMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        table_type_pricing = get_object_or_404(TableTypePricing, pk=pk)
+
+        try:
+            table_type_pricing.delete()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse(
+                {'status': 'error', 'message': str(e)},
+                status=400)
 
 class SpecialOfferCreateView(LoginRequiredMixin, IsAdminMixin, View):
     def post(self, request, *args, **kwargs):
@@ -192,6 +336,74 @@ class SpecialOfferCreateView(LoginRequiredMixin, IsAdminMixin, View):
         return redirect('admin_settings:club_settings', active_tab='pricing')
 
 
+class SpecialOfferView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """View для работы со специальными предложениями"""
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get(self, request, pk, *args, **kwargs):
+        """Получение данных специального предложения"""
+        try:
+            offer = get_object_or_404(SpecialOffer, pk=pk)
+
+            data = {
+                'id': offer.id,
+                'name': offer.name,
+                'description': offer.description,
+                'discount_percent': offer.discount_percent,
+                'valid_from': offer.valid_from.isoformat(),
+                'valid_to': offer.valid_to.isoformat() if offer.valid_to else None,
+                'is_active': offer.is_active,
+                'apply_to_all': offer.apply_to_all,
+                'tables': [
+                    {
+                        'id': table.id,
+                        'name': table.name
+                    }
+                    for table in offer.tables.all()
+                ] if not offer.apply_to_all else [],
+                'created_at': offer.created_at.isoformat(),
+                'updated_at': offer.updated_at.isoformat()
+            }
+
+            return JsonResponse(data)
+
+        except Exception as e:
+            return JsonResponse(
+                {
+                    'status': 'error',
+                    'message': 'Failed to get special offer details',
+                    'error': str(e)
+                },
+                status=500
+            )
+class SpecialOfferUpdateView(LoginRequiredMixin, IsAdminMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        special_offer = get_object_or_404(SpecialOffer, pk=pk)
+        form = SpecialOfferForm(request.POST, instance=special_offer)
+
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'status': 'success'})
+
+        return JsonResponse(
+            {'status': 'error', 'message': 'Проверьте введенные данные', 'errors': form.errors},
+            status=400
+        )
+
+
+class SpecialOfferDeleteView(LoginRequiredMixin, IsAdminMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        special_offer = get_object_or_404(SpecialOffer, pk=pk)
+
+        try:
+            special_offer.delete()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse(
+                {'status': 'error', 'message': str(e)},
+                status=400)
 # Абонементы
 class MembershipTypeCreateView(LoginRequiredMixin, IsAdminMixin, View):
     def post(self, request, *args, **kwargs):
@@ -233,6 +445,20 @@ class ClubSettingsUpdateView(LoginRequiredMixin, IsAdminMixin, View):
             messages.error(request, "Ошибка при обновлении настроек")
         return redirect('admin_settings:club_settings', active_tab='general')
 
+
+class PricingPlanDetailView(LoginRequiredMixin, IsAdminMixin, View):
+    def get(self, request, pk, *args, **kwargs):
+        pricing_plan = get_object_or_404(PricingPlan, pk=pk)
+
+        data = {
+            'id': pricing_plan.id,
+            'name': pricing_plan.name,
+            'is_default': pricing_plan.is_default,
+            'valid_from': pricing_plan.valid_from.strftime('%Y-%m-%d'),
+            'valid_to': pricing_plan.valid_to.strftime('%Y-%m-%d') if pricing_plan.valid_to else None,
+        }
+
+        return JsonResponse(data)
 
 class UpdateWorkingHoursView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
