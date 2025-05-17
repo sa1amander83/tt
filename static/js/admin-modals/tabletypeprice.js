@@ -59,7 +59,13 @@ function openAddSpecialOfferModal() {
     if (backdrop) backdrop.classList.add('opacity-100');
     if (content) content.classList.add('opacity-100', 'scale-100', 'translate-y-0');
   }, 10);
+
+
+
 }
+
+
+
 
 function openAddTableTypePricingModal() {
   const modal = document.getElementById('addTableTypePricingModal');

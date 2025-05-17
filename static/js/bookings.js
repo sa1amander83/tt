@@ -233,11 +233,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const today = new Date();
             const dateString = today.toISOString().split('T')[0];
 
-            // Заполняем форму
+            /** Заполняем форму
             document.getElementById('booking-date')?.value = dateString;
             document.getElementById('booking-start-time')?.value = time;
             document.getElementById('booking-table')?.value = table;
-
+            **/
             // Показываем модальное окно
             showModal();
 

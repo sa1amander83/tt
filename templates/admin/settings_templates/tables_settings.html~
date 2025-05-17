@@ -8,7 +8,7 @@
 
             </div>
         </div>
-        <div class="overflow-x-auto ">
+    <div class="overflow-x-auto ">
             <button onclick="document.getElementById('add-table-type-modal').classList.remove('hidden')"
                     class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 md:py-2 md:px-4 rounded-md transition duration-300 text-sm md:text-base">
                 <i class="fas fa-plus mr-1 md:mr-2"></i> Тип стола
@@ -57,9 +57,10 @@
         </div>
 
 
+
         <div></div>
 
-        <div class="overflow-x-auto">
+  <div class="overflow-x-auto">
             <button onclick="document.getElementById('add-table-modal').classList.remove('hidden')"
                     class="bg-green-600 hover:bg-green-700 text-white font-medium py-1.5 px-3 md:py-2 md:px-4 rounded-md transition duration-300 text-sm md:text-base">
                 <i class="fas fa-plus mr-1 md:mr-2"></i> Добавить стол

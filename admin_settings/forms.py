@@ -313,35 +313,4 @@ class WorkingHoursForm(forms.ModelForm):
             }),
         }
 
-    # def save(self, commit=True):
-    #     instance = super().save(commit=False)
-    #     instance.day = self.cleaned_data['day']  # Устанавливаем day из скрытого поля
-    #     if commit:
-    #         instance.save()
-    #     return instance
 
-class HolidayForm(forms.ModelForm):
-    class Meta:
-        model = Holiday
-        fields = ['date', 'description', 'status', 'open_time', 'close_time']
-        widgets = {
-            'date': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'w-full rounded-md border-2 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
-            }),
-            'description': forms.TextInput(attrs={
-                'class': 'w-full rounded-md border-2 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
-            }),
-            'status': forms.Select(attrs={
-                'class': 'w-full rounded-md border-2 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500',
-                'onchange': 'toggleHolidayHours(this)'
-            }),
-            'open_time': forms.TimeInput(attrs={
-                'type': 'time',
-                'class': 'w-full rounded-md border-2 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 holiday-hours'
-            }),
-            'close_time': forms.TimeInput(attrs={
-                'type': 'time',
-                'class': 'w-full rounded-md border-2 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 holiday-hours'
-            }),
-        }

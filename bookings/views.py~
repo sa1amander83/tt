@@ -537,6 +537,7 @@ def day_calendar_api(request, selected_date, tables, status_filter):
 def calculate_booking_api(request):
     try:
         # Логирование входящего запроса
+        print("Raw request body:", request.body)
 
         try:
             data = json.loads(request.body)

@@ -7,7 +7,7 @@
  */
 function closeSpecialOfferModal() {
   const modal = document.getElementById('addSpecialOfferModal');
-  const backdrop = document.getElementById('addSpecialOfferBackdrop');
+  const backdrop = document.getElementById('specialOfferBackdrop');
   const content = document.getElementById('specialOfferModalContent');
 
   // Анимация закрытия
@@ -24,7 +24,7 @@ function closeSpecialOfferModal() {
  * Открытие модального окна для редактирования Special Offer
  **/
 
-
+/**
 function openEditSpecialOfferModal(offerId) {
   // Загружаем данные предложения (заглушка - в реальном коде будет AJAX запрос)
   const offerData = {
@@ -56,7 +56,7 @@ function openEditSpecialOfferModal(offerId) {
   // Меняем заголовок для режима редактирования
   document.querySelector('#addSpecialOfferModal h3').textContent = 'Редактировать предложение';
 }
-
+**/
 // ==============================================
 // Функции для модального окна Pricing Plan
 // ==============================================
@@ -298,6 +298,12 @@ async function openEditTableTypePricingModal(pricingId) {
 /**
  * Обновление ценообразования для типа стола
  */
+
+
+
+
+
+
 async function updateTableTypePricing() {
   const form = document.getElementById('tableTypePricingForm');
   const pricingId = form.dataset.pricingId;
@@ -502,7 +508,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Обработчики для Special Offer Modal
   document.getElementById('closeSpecialOfferModal')?.addEventListener('click', closeSpecialOfferModal);
   document.getElementById('cancelSpecialOffer')?.addEventListener('click', closeSpecialOfferModal);
-  document.getElementById('addSpecialOfferBackdrop')?.addEventListener('click', closeSpecialOfferModal);
+  document.getElementById('specialOfferBackdrop')?.addEventListener('click', closeSpecialOfferModal);
 
   // Можно добавить аналогичные обработчики для других модальных окон
   // или использовать универсальный подход из initModals()
