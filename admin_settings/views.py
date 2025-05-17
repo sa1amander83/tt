@@ -102,6 +102,18 @@ class ClubSettingsView(LoginRequiredMixin, View):
                 'table_type_pricing_form': TableTypePricingForm(),
                 'special_offers': SpecialOffer.objects.all(),
                 'special_offer_form': SpecialOfferForm(),
+                'tables': Table.objects.all(),
+                'days_of_week': [
+                    {'value': '1', 'label': 'Пн'},
+                    {'value': '2', 'label': 'Вт'},
+                    {'value': '3', 'label': 'Ср'},
+                    {'value': '4', 'label': 'Чт'},
+                    {'value': '5', 'label': 'Пт'},
+                    {'value': '6', 'label': 'Сб'},
+                    {'value': '7', 'label': 'Вс'}
+                ],
+                'default_weekdays': ['1', '2', '3', '4', '5', '6', '7']
+
             })
 
 
@@ -319,7 +331,7 @@ class TableTypePricingDeleteView(LoginRequiredMixin, IsAdminMixin, View):
 
         try:
             table_type_pricing.delete()
-            return JsonResponse({'status': 'success'})
+            return JsonResponse({'status': 'success', 'message': 'Успешно удалено'})
         except Exception as e:
             return JsonResponse(
                 {'status': 'error', 'message': str(e)},
@@ -330,10 +342,12 @@ class SpecialOfferCreateView(LoginRequiredMixin, IsAdminMixin, View):
         form = SpecialOfferForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, "Специальное предложение успешно добавлено")
-        else:
-            messages.error(request, "Ошибка при добавлении предложения")
-        return redirect('admin_settings:club_settings', active_tab='pricing')
+            return JsonResponse({'status': 'success'})
+
+        return JsonResponse(
+            {'status': 'error', 'message': 'Проверьте введенные данные', 'errors': form.errors},
+            status=400
+        )
 
 
 class SpecialOfferView(LoginRequiredMixin, UserPassesTestMixin, View):
@@ -356,6 +370,8 @@ class SpecialOfferView(LoginRequiredMixin, UserPassesTestMixin, View):
                 'valid_to': offer.valid_to.isoformat() if offer.valid_to else None,
                 'is_active': offer.is_active,
                 'apply_to_all': offer.apply_to_all,
+                'time_from': offer.time_from.strftime('%H:%M'),
+                'time_to': offer.time_to.strftime('%H:%M'),
                 'tables': [
                     {
                         'id': table.id,
@@ -363,8 +379,7 @@ class SpecialOfferView(LoginRequiredMixin, UserPassesTestMixin, View):
                     }
                     for table in offer.tables.all()
                 ] if not offer.apply_to_all else [],
-                'created_at': offer.created_at.isoformat(),
-                'updated_at': offer.updated_at.isoformat()
+
             }
 
             return JsonResponse(data)
@@ -378,20 +393,35 @@ class SpecialOfferView(LoginRequiredMixin, UserPassesTestMixin, View):
                 },
                 status=500
             )
+
+
 class SpecialOfferUpdateView(LoginRequiredMixin, IsAdminMixin, View):
     def post(self, request, pk, *args, **kwargs):
         special_offer = get_object_or_404(SpecialOffer, pk=pk)
         form = SpecialOfferForm(request.POST, instance=special_offer)
 
         if form.is_valid():
-            form.save()
-            return JsonResponse({'status': 'success'})
+            offer = form.save(commit=False)
 
-        return JsonResponse(
-            {'status': 'error', 'message': 'Проверьте введенные данные', 'errors': form.errors},
-            status=400
-        )
+            # Сохраняем M2M поля
+            offer.save()  # Сначала сохраняем основную модель
+            form.save_m2m()  # Затем сохраняем связи many-to-many
 
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Предложение успешно обновлено'
+            })
+
+        # Подробные ошибки валидации
+        errors = {}
+        for field in form.errors:
+            errors[field] = form.errors[field]
+
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Проверьте введенные данные',
+            'errors': errors
+        }, status=400)
 
 class SpecialOfferDeleteView(LoginRequiredMixin, IsAdminMixin, View):
     def post(self, request, pk, *args, **kwargs):
@@ -486,62 +516,3 @@ class UpdateWorkingHoursView(LoginRequiredMixin, View):
         return redirect('admin_settings:club_settings', active_tab='schedule')
 from datetime import time
 
-
-
-# class ScheduleSettingsView(View):
-#     template_name = 'admin/schedule_settings.html'
-#
-#     def get_working_days(self):
-#         """Получаем или создаем все дни недели"""
-#         working_days = list(WorkingDay.objects.all().order_by('day'))
-#
-#         if len(working_days) < 7:
-#             existing_days = {day.day for day in working_days}
-#             default_hours = {
-#                 0: (time(9, 0), time(22, 0), True),  # Понедельник
-#                 1: (time(9, 0), time(22, 0), True),  # Вторник
-#                 2: (time(9, 0), time(22, 0), True),  # Среда
-#                 3: (time(9, 0), time(22, 0), True),  # Четверг
-#                 4: (time(9, 0), time(23, 0), True),  # Пятница
-#                 5: (time(10, 0), time(23, 0), True),  # Суббота
-#                 6: (time(10, 0), time(22, 0), True),  # Воскресенье
-#             }
-#
-#             for day_num in range(7):
-#                 if day_num not in existing_days:
-#                     open_time, close_time, is_open = default_hours[day_num]
-#                     WorkingDay.objects.create(
-#                         day=day_num,
-#                         open_time=open_time,
-#                         close_time=close_time,
-#                         is_open=is_open
-#                     )
-#             # Обновляем список после создания
-#             working_days = list(WorkingDay.objects.all().order_by('day'))
-#
-#         return working_days
-#
-#
-#
-#     def post(self, request):
-#         # Обработка рабочих часов
-#         working_days = self.get_working_days()
-#         for day in working_days:
-#             form = WorkingHoursForm(
-#                 request.POST,
-#                 instance=day,
-#                 prefix=f'day_{day.day}'
-#             )
-#             if form.is_valid():
-#                 form.save()
-#
-#         # Обработка праздничных дней
-#         holiday_form = HolidayForm(request.POST)
-#         if holiday_form.is_valid():
-#             holiday_form.save()
-#             messages.success(request, "Праздничный день добавлен")
-#         else:
-#             for error in holiday_form.errors.values():
-#                 messages.error(request, error)
-#
-#         return redirect('admin_settings:schedule')

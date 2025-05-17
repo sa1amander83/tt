@@ -110,6 +110,141 @@ async function saveTableTypePricing() {
         form.reportValidity();
     }
 }
+
+
+
+
+// ==============================================
+// Функции для работы с Table Type Pricing
+// ==============================================
+
+/**
+ * Сохранение цен для типа стола
+ */
+
+
+/**
+ * Удаление цены для типа стола
+ */
+async function deleteTableTypePricing(pricingId) {
+  if (!confirm('Вы уверены, что хотите удалить эту цену для типа стола?')) return;
+
+  try {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    const response = await fetch(`/settings/table-type-pricings/${pricingId}/delete/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrfToken,
+        'Accept': 'application/json',
+      }
+    });
+
+    const data = await response.json();
+    console.log('Response data:', data);
+
+    if (!response.ok || data.status === 'error') {
+      throw new Error(data.message || 'Ошибка сервера');
+    }
+
+    showNotification('Цена для типа стола успешно удалена!', 'success');
+
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+
+  } catch (error) {
+    console.error('Error deleting table type pricing:', error);
+    showNotification('Ошибка при удалении: ' + (error.message || 'Попробуйте позже'), 'error');
+  }
+}
+
+// ==============================================
+// Функции для работы с Special Offers
+// ==============================================
+
+/**
+ * Сохранение специального предложения
+ */
+
+/**
+ * Удаление специального предложения
+ */
+
+
+// ==============================================
+// Общие вспомогательные функции
+// ==============================================
+
+/**
+ * Универсальная функция открытия модального окна с анимацией
+ */
+function openModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+
+  const backdrop = modal.querySelector('.backdrop-blur-sm');
+  const content = modal.querySelector('[id$="ModalContent"]');
+
+  modal.classList.remove('hidden');
+  document.body.classList.add('overflow-hidden');
+
+  setTimeout(() => {
+    backdrop.classList.remove('opacity-0');
+    backdrop.classList.add('opacity-100');
+    content.classList.remove('opacity-0', 'translate-y-10');
+    content.classList.add('opacity-100', 'translate-y-0');
+  }, 10);
+}
+
+/**
+ * Инициализация обработчиков для кнопок действий в таблицах
+ */
+function initTableActionHandlers() {
+  // Обработчики для кнопок редактирования Table Type Pricing
+  document.querySelectorAll('[onclick^="openEditTableTypePricingModal"]').forEach(btn => {
+    const match = btn.getAttribute('onclick').match(/openEditTableTypePricingModal\((\d+)\)/);
+    if (match) {
+      btn.addEventListener('click', () => openEditTableTypePricingModal(match[1]));
+    }
+  });
+
+  // Обработчики для кнопок удаления Table Type Pricing
+  document.querySelectorAll('[onclick^="deleteTableTypePricing"]').forEach(btn => {
+    const match = btn.getAttribute('onclick').match(/deleteTableTypePricing\((\d+)\)/);
+    if (match) {
+      btn.addEventListener('click', () => deleteTableTypePricing(match[1]));
+    }
+  });
+
+  // Обработчики для кнопок редактирования Special Offers
+
+
+  // Обработчики для кнопок удаления Special Offers
+
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+  initTableActionHandlers();
+
+  // Обработчики для кнопок сохранения в формах
+  document.getElementById('saveTableTypePricingBtn')?.addEventListener('click', saveTableTypePricing);
+  document.getElementById('saveSpecialOfferBtn')?.addEventListener('click', saveSpecialOffer);
+
+  // Обработчики для кнопок закрытия модальных окон
+  document.querySelectorAll('[data-dismiss="modal"]').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const modal = this.closest('.modal');
+      if (modal) {
+        closeModal(modal.id);
+      }
+    });
+  });
+});
+
+
+
 // Функции для работы со специальными предложениями
 function openAddSpecialOfferModal() {
     const modal = document.getElementById('addSpecialOfferModal');
@@ -195,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Открытие модального окна с анимацией
   function openSpecialOfferModal() {
     const modal = document.getElementById('addSpecialOfferModal');
-    const backdrop = document.getElementById('addSpecialOfferBackdrop');
+    const backdrop = document.getElementById('specialOfferBackdrop');
     const content = document.getElementById('specialOfferModalContent');
 
     if (modal && backdrop && content) {
@@ -210,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Закрытие модального окна с анимацией
   function closeSpecialOfferModal() {
     const modal = document.getElementById('addSpecialOfferModal');
-    const backdrop = document.getElementById('addSpecialOfferBackdrop');
+    const backdrop = document.getElementById('specialOfferBackdrop');
     const content = document.getElementById('specialOfferModalContent');
 
     if (modal && backdrop && content) {
@@ -224,9 +359,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 300);
     }
   }
-
+/**
   // Сохранение спецпредложения
-  const saveSpecialOfferButton = document.getElementById('saveSpecialOffer');
+  const saveSpecialOfferButton = document.getElementById('SaveSpecialOffer');
   if (saveSpecialOfferButton) {
     saveSpecialOfferButton.addEventListener('click', async function () {
       const form = document.getElementById('SpecialOfferForm');
@@ -314,7 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showNotification('Ошибка загрузки данных: ' + error.message, 'error');
     }
   }
-
+**/
   // Функция для обновления спецпредложения
   async function updateSpecialOffer() {
     const form = document.getElementById('editSpecialOfferForm');
@@ -366,37 +501,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Функция для удаления спецпредложения
-  async function deleteSpecialOffer(offerId) {
-    if (!confirm('Вы уверены, что хотите удалить это специальное предложение?')) return;
-
-    try {
-      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-      const response = await fetch(`/settings/special-offers/${offerId}/delete/`, {
-        method: 'POST',
-        headers: {
-          'X-CSRFToken': csrfToken,
-          'Accept': 'application/json',
-        }
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Ошибка сервера');
-      }
-
-      showNotification('Специальное предложение успешно удалено!', 'success');
-
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-
-    } catch (error) {
-      console.error('Error deleting special offer:', error);
-      showNotification('Ошибка при удалении: ' + (error.message || 'Попробуйте позже'), 'error');
-    }
-  }
 
   // Показать уведомление
   function showNotification(message, type) {
@@ -422,7 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Закрытие модалки
   const closeModalButton = document.getElementById('closeSpecialOfferModal');
   const cancelButton = document.getElementById('cancelSpecialOffer');
-  const backdrop = document.getElementById('addSpecialOfferBackdrop');
+  const backdrop = document.getElementById('specialOfferBackdrop');
 
   if (closeModalButton) {
     closeModalButton.addEventListener('click', closeSpecialOfferModal);
@@ -455,7 +559,5 @@ document.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', () => editSpecialOffer(button.dataset.editOffer));
   });
 
-  document.querySelectorAll('[data-delete-offer]').forEach(button => {
-    button.addEventListener('click', () => deleteSpecialOffer(button.dataset.deleteOffer));
-  });
+
 });

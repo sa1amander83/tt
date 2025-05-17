@@ -332,7 +332,7 @@ class SpecialOffer(models.Model):
     tables = models.ManyToManyField(Table, blank=True, verbose_name="Применять к столам")
     time_from = models.TimeField(blank=True, null=True, verbose_name="Время начала")
     time_to = models.TimeField(blank=True, null=True, verbose_name="Время окончания")
-    weekdays = models.CharField(max_length=20, blank=True, default="1,2,3,4,5,6,7",
+    weekdays = models.CharField(max_length=50, blank=True, default="1,2,3,4,5,6,7",
                                 verbose_name="Дни недели (1-Пн,7-Вс)")
 
     class Meta:
