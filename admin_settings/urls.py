@@ -1,6 +1,5 @@
 from django.urls import path
 
-
 from .views import *
 
 app_name = 'admin_settings'
@@ -9,9 +8,17 @@ urlpatterns = [
 
     # Таблицы
     path('tables/create/', TableCreateView.as_view(), name='table_create'),
+    path('tables/<int:pk>/', TableDetailView.as_view(), name='table_detail'),
     path('tables/<int:pk>/update/', TableUpdateView.as_view(), name='table_update'),
     path('tables/<int:pk>/delete/', TableDeleteView.as_view(), name='table_delete'),
     path('table-types/create/', TableTypeCreateView.as_view(), name='table_type_create'),
+    path('table-types/<int:pk>/', TableTypeView.as_view(), name='table_type_view'),
+    path('table-types/<int:pk>/update/', TableTypeUpdateView.as_view(), name='table_type_update'),
+    path('table-types/<int:pk>/delete/', TableTypeDeleteView.as_view(), name='table_type_delete'),
+
+
+
+
 
     # Цены
     path('pricing-plans/create/', PricingPlanCreateView.as_view(), name='pricing_plan_create'),

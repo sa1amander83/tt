@@ -561,3 +561,170 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 });
+
+// Функция для открытия модального окна редактирования типа стола
+function openEditTableTypeModal(tableTypeId) {
+    fetch(`/settings/table-types/${tableTypeId}/`)
+        .then(response => response.json())
+        .then(data => {
+            // Заполняем форму данными
+            document.getElementById('editTableTypeId').value = data.id;
+            document.getElementById('editTableTypeName').value = data.name;
+            document.getElementById('editTableTypeDescription').value = data.description;
+            document.getElementById('editTableTypeCapacity').value = data.default_capacity;
+
+            // Показываем модальное окно
+            document.getElementById('edit-table-type-modal').classList.remove('hidden');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Ошибка загрузки данных типа стола', 'error');
+        });
+}
+
+// Функция для сохранения изменений типа стола
+function saveTableType() {
+    const form = document.getElementById('editTableTypeForm');
+    const tableTypeId = form.elements['id'].value;
+    const saveBtn = document.getElementById('saveTableTypeBtn');
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Сохранение...';
+
+    fetch(`/settings/table-types/${tableTypeId}/update/`, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showNotification(data.message, 'success');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            throw new Error(data.message || 'Ошибка сервера');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification(error.message, 'error');
+    })
+    .finally(() => {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = 'Сохранить';
+    });
+}
+
+
+
+// Функция для открытия модального окна редактирования стола
+function openEditTableModal(tableId) {
+    // Получаем CSRF токен
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // Показываем индикатор загрузки
+    const editBtn = document.querySelector(`button[onclick="openEditTableModal(${tableId})"]`);
+    const originalText = editBtn.innerHTML;
+    editBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    editBtn.disabled = true;
+
+    // Получаем данные стола через AJAX
+    fetch(`/settings/tables/${tableId}/`, {
+        headers: {
+            'Accept': 'application/json',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Ошибка сети');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Заполняем форму данными
+        document.getElementById('editTableId').value = data.id;
+        document.getElementById('editTableNumber').value = data.number;
+        document.getElementById('editTableType').value = data.table_type.id;
+        document.getElementById('editTableDescription').value = data.description;
+        document.getElementById('editTableIsActive').checked = data.is_active;
+
+        // Показываем модальное окно
+        document.getElementById('edit-table-modal').classList.remove('hidden');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка загрузки данных стола: ' + error.message, 'error');
+    })
+    .finally(() => {
+        editBtn.innerHTML = originalText;
+        editBtn.disabled = false;
+    });
+}
+
+// Функция для сохранения изменений стола
+function saveTableChanges() {
+    const form = document.getElementById('editTableForm');
+    const tableId = form.elements['id'].value;
+    const saveBtn = document.getElementById('saveTableBtn');
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Сохранение...';
+
+    fetch(`/settings/tables/${tableId}/update/`, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showNotification('Стол успешно обновлен', 'success');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            throw new Error(data.message || 'Ошибка сервера');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка при обновлении стола: ' + error.message, 'error');
+    })
+    .finally(() => {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = 'Сохранить';
+    });
+}
+
+
+
+
+// Функция для удаления типа стола
+function deleteTableType(tableTypeId) {
+    if (!confirm('Вы уверены, что хотите удалить этот тип стола? Все связанные столы будут переведены в тип по умолчанию.')) {
+        return;
+    }
+
+    fetch(`/settings/table-types/${tableTypeId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showNotification(data.message, 'success');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            throw new Error(data.message || 'Ошибка сервера');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification(error.message, 'error');
+    });
+}

@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import DetailView
 
 from admin_settings.forms import TableForm, TableTypeForm, PricingPlanForm, TableTypePricingForm, SpecialOfferForm, \
     MembershipTypeForm, HolidayForm, ClubSettingsForm, WorkingHoursForm
@@ -490,6 +491,38 @@ class PricingPlanDetailView(LoginRequiredMixin, IsAdminMixin, View):
 
         return JsonResponse(data)
 
+
+class TableDetailView(LoginRequiredMixin, IsAdminMixin, View):
+    def get(self, request, pk, *args, **kwargs):
+        table = get_object_or_404(Table, pk=pk)
+        data = {
+            'id': table.id,
+            'number': table.number,
+            'table_type': {
+                'id': table.table_type.id,
+                'name': table.table_type.name
+            },
+            'description': table.description,
+            'is_active': table.is_active
+        }
+        return JsonResponse(data)
+
+
+
+class TableTypeView(LoginRequiredMixin, IsAdminMixin, View):
+    def get(self, request, pk, *args, **kwargs):
+        table_type = get_object_or_404(TableType, pk=pk)
+
+        data = {
+            'id': table_type.id,
+            'description': table_type.description,
+            'name': table_type.name,
+            'default_capacity': table_type.default_capacity
+
+        }
+
+        return JsonResponse(data)
+
 class UpdateWorkingHoursView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         working_days = WorkingDay.objects.all().order_by('day')
@@ -516,3 +549,31 @@ class UpdateWorkingHoursView(LoginRequiredMixin, View):
         return redirect('admin_settings:club_settings', active_tab='schedule')
 from datetime import time
 
+
+class TableTypeUpdateView(LoginRequiredMixin, IsAdminMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        table_type = get_object_or_404(TableType, pk=pk)
+        form = TableTypeForm(request.POST, instance=table_type)
+
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'status': 'success', 'message': 'Тип стола успешно обновлен'})
+
+        return JsonResponse(
+            {'status': 'error', 'message': 'Ошибка валидации', 'errors': form.errors},
+            status=400
+        )
+
+
+class TableTypeDeleteView(LoginRequiredMixin, IsAdminMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        table_type = get_object_or_404(TableType, pk=pk)
+
+        try:
+            table_type.delete()
+            return JsonResponse({'status': 'success', 'message': 'Тип стола успешно удален'})
+        except Exception as e:
+            return JsonResponse(
+                {'status': 'error', 'message': str(e)},
+                status=400
+            )

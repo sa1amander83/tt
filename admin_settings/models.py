@@ -395,3 +395,25 @@ class Holiday(models.Model):
     def clean(self):
         if self.status in ['shortened', 'normal'] and not (self.open_time and self.close_time):
             raise ValidationError("Для сокращенного/обычного режима нужно указать время работы")
+
+
+from django.db import models
+
+class AchievementCategory(models.TextChoices):
+    ADULT = 'ADULT', 'Взрослые'
+    CHILD = 'CHILD', 'Дети'
+    UNIVERSAL = 'UNIVERSAL', 'Универсальные'
+
+class Achievement(models.Model):
+    title = models.CharField(max_length=255, help_text="Название ачивки")
+    description = models.TextField(blank=True, help_text="Описание ачивки")
+    category = models.CharField(max_length=20, choices=AchievementCategory.choices)
+    icon = models.ImageField(upload_to='achievement_icons/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.get_category_display()})"
+
+    class Meta:
+        verbose_name = "Ачивка"
+        verbose_name_plural = "Ачивки"

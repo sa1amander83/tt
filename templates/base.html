@@ -31,6 +31,9 @@
                                 {% if user.is_authenticated and user.role == 'ADMIN' %}
                 {#                    <li><a href="{% url 'admin-bookings' %}" class="hover:text-green-200">Текущие</a></li>#}
                                     <li><a href="{% url 'admin_settings:club_settings' 'general' %}" class="hover:text-green-200">Настройки 2</a></li>
+
+                                                     <li><a href="{% url 'accounts:profile' %}" class="hover:text-green-200">Профиль</a></li>
+
                 {#                    <li><a href="{% url 'admin-reports' %}" class="hover:text-green-200">Отчеты</a></li>#}
                 {#                    <li><a href="{% url 'admin-users' %}" class="hover:text-green-200">Пользователи</a></li>#}
                 {#                    <li><a href="{% url 'admin-users-detail' %}" class="hover:text-green-200">Пользователи 2</a></li>#}

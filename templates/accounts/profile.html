@@ -57,11 +57,17 @@
                                         <i class="fas fa-calendar-check mr-2"></i> Мои бронирования
                                     </a>
                                 </li>
-
                                 <li>
                                     <a href="#my-loyalty"
                                        class="block py-2 px-4 rounded-md hover:bg-gray-50 transition duration-200">
                                         <i class="fas fa-medal mr-2"></i> Программа лояльности
+                                    </a>
+                                </li>
+                                <!-- New Achievements Menu Item -->
+                                <li>
+                                    <a href="#my-achievements"
+                                       class="block py-2 px-4 rounded-md hover:bg-gray-50 transition duration-200">
+                                        <i class="fas fa-trophy mr-2"></i> Мои достижения
                                     </a>
                                 </li>
                                 <li>
@@ -355,6 +361,307 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- NEW ACHIEVEMENTS SECTION -->
+                <section id="my-achievements" class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+                    <div class="bg-green-600 text-white p-4">
+                        <h2 class="text-xl font-bold">Мои достижения</h2>
+                    </div>
+                    <div class="p-6">
+                        <!-- Achievement Categories Tabs -->
+                        <div class="mb-6 border-b border-gray-200">
+                            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
+                                <li class="mr-2">
+                                    <a href="#" class="inline-block p-4 border-b-2 border-green-600 rounded-t-lg text-green-600 active"
+                                       data-category="all">Все достижения</a>
+                                </li>
+                                <li class="mr-2">
+                                    <a href="#" class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300"
+                                       data-category="gameplay">Игровые</a>
+                                </li>
+                                <li class="mr-2">
+                                    <a href="#" class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300"
+                                       data-category="skill">Навыки</a>
+                                </li>
+                                <li class="mr-2">
+                                    <a href="#" class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300"
+                                       data-category="special">Особые</a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Achievement Grid -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            <!-- First Match Achievement (Unlocked) -->
+                            <div class="achievement-card group" data-category="gameplay">
+                                <div class="relative bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 transform hover:scale-105">
+                                    <div class="p-4 text-center">
+                                        <div class="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-3">
+                                            <i class="fas fa-table-tennis text-green-600 text-2xl"></i>
+                                        </div>
+                                        <h3 class="text-sm font-semibold mb-1">Первый матч</h3>
+                                        <p class="text-xs text-gray-500">Сыграйте свой первый матч</p>
+                                        <div class="mt-2">
+                                            <span class="inline-block px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Получено</span>
+                                        </div>
+                                    </div>
+                                    <!-- Achievement Details (Shown on Hover) -->
+                                    <div class="absolute inset-0 bg-white bg-opacity-95 p-3 flex flex-col justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <h3 class="text-sm font-semibold mb-2 text-green-700">Первый матч</h3>
+                                        <p class="text-xs text-gray-700 mb-2">Вы сыграли свой первый матч в нашем клубе!</p>
+                                        <p class="text-xs text-gray-600">Получено: 12.04.2023</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 10 Matches Achievement (Unlocked) -->
+                            <div class="achievement-card group" data-category="gameplay">
+                                <div class="relative bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 transform hover:scale-105">
+                                    <div class="p-4 text-center">
+                                        <div class="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                                            <i class="fas fa-dice-ten text-blue-600 text-2xl"></i>
+                                        </div>
+                                        <h3 class="text-sm font-semibold mb-1">10 матчей</h3>
+                                        <p class="text-xs text-gray-500">Сыграйте 10 матчей</p>
+                                        <div class="mt-2">
+                                            <span class="inline-block px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Получено</span>
+                                        </div>
+                                    </div>
+                                    <!-- Achievement Details (Shown on Hover) -->
+                                    <div class="absolute inset-0 bg-white bg-opacity-95 p-3 flex flex-col justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <h3 class="text-sm font-semibold mb-2 text-blue-700">10 матчей</h3>
+                                        <p class="text-xs text-gray-700 mb-2">Вы сыграли 10 матчей в нашем клубе! Продолжайте в том же духе!</p>
+                                        <p class="text-xs text-gray-600">Получено: 28.04.2023</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 50 Matches Achievement (In Progress) -->
+                            <div class="achievement-card group" data-category="gameplay">
+                                <div class="relative bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 transform hover:scale-105">
+                                    <div class="p-4 text-center">
+                                        <div class="w-16 h-16 mx-auto bg-indigo-100 rounded-full flex items-center justify-center mb-3 relative">
+                                            <i class="fas fa-award text-indigo-600 text-2xl"></i>
+                                            <!-- Progress Circle -->
+                                            <svg class="absolute inset-0 w-16 h-16" viewBox="0 0 36 36">
+                                                <circle cx="18" cy="18" r="16" fill="none" stroke="#e0e0e0" stroke-width="2"></circle>
+                                                <circle cx="18" cy="18" r="16" fill="none" stroke="#818cf8" stroke-width="2" stroke-dasharray="100" stroke-dashoffset="68" transform="rotate(-90 18 18)"></circle>
+                                            </svg>
+                                        </div>
+                                        <h3 class="text-sm font-semibold mb-1">50 матчей</h3>
+                                        <p class="text-xs text-gray-500">Сыграйте 50 матчей</p>
+                                        <div class="mt-2">
+                                            <span class="inline-block px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-800">32%</span>
+                                        </div>
+                                    </div>
+                                    <!-- Achievement Details (Shown on Hover) -->
+                                    <div class="absolute inset-0 bg-white bg-opacity-95 p-3 flex flex-col justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <h3 class="text-sm font-semibold mb-2 text-indigo-700">50 матчей</h3>
+                                        <p class="text-xs text-gray-700 mb-2">Сыграйте 50 матчей в нашем клубе.</p>
+                                        <div class="w-full bg-gray-200 rounded-full h-1.5 mb-1">
+                                            <div class="bg-indigo-600 h-1.5 rounded-full" style="width: 32%"></div>
+                                        </div>
+                                        <p class="text-xs text-gray-600">Прогресс: 16/50 матчей</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tournament Participant (Unlocked) -->
+                            <div class="achievement-card group" data-category="gameplay">
+                                <div class="relative bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 transform hover:scale-105">
+                                    <div class="p-4 text-center">
+                                        <div class="w-16 h-16 mx-auto bg-yellow-100 rounded-full flex items-center justify-center mb-3">
+                                            <i class="fas fa-trophy text-yellow-600 text-2xl"></i>
+                                        </div>
+                                        <h3 class="text-sm font-semibold mb-1">Участник турнира</h3>
+                                        <p class="text-xs text-gray-500">Примите участие в турнире</p>
+                                        <div class="mt-2">
+                                            <span class="inline-block px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Получено</span>
+                                        </div>
+                                    </div>
+                                    <!-- Achievement Details (Shown on Hover) -->
+                                    <div class="absolute inset-0 bg-white bg-opacity-95 p-3 flex flex-col justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <h3 class="text-sm font-semibold mb-2 text-yellow-700">Участник турнира</h3>
+                                        <p class="text-xs text-gray-700 mb-2">Вы приняли участие в турнире нашего клуба!</p>
+                                        <p class="text-xs text-gray-600">Получено: 05.05.2023</p>
+                                        <p class="text-xs text-gray-600">Турнир: Весенний кубок 2023</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Beginner Level (Unlocked) -->
+                            <div class="achievement-card group" data-category="skill">
+                                <div class="relative bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 transform hover:scale-105">
+                                    <div class="p-4 text-center">
+                                        <div class="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-3">
+                                            <i class="fas fa-seedling text-green-600 text-2xl"></i>
+                                        </div>
+                                        <h3 class="text-sm font-semibold mb-1">Начинающий</h3>
+                                        <p class="text-xs text-gray-500">Достигните уровня "Начинающий"</p>
+                                        <div class="mt-2">
+                                            <span class="inline-block px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Получено</span>
+                                        </div>
+                                    </div>
+                                    <!-- Achievement Details (Shown on Hover) -->
+                                    <div class="absolute inset-0 bg-white bg-opacity-95 p-3 flex flex-col justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <h3 class="text-sm font-semibold mb-2 text-green-700">Начинающий</h3>
+                                        <p class="text-xs text-gray-700 mb-2">Вы достигли уровня "Начинающий" в настольном теннисе!</p>
+                                        <p class="text-xs text-gray-600">Получено: 10.04.2023</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Intermediate Level (In Progress) -->
+                            <div class="achievement-card group" data-category="skill">
+                                <div class="relative bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 transform hover:scale-105">
+                                    <div class="p-4 text-center">
+                                        <div class="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-3 relative">
+                                            <i class="fas fa-graduation-cap text-blue-600 text-2xl"></i>
+                                            <!-- Progress Circle -->
+                                            <svg class="absolute inset-0 w-16 h-16" viewBox="0 0 36 36">
+                                                <circle cx="18" cy="18" r="16" fill="none" stroke="#e0e0e0" stroke-width="2"></circle>
+                                                <circle cx="18" cy="18" r="16" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="100" stroke-dashoffset="45" transform="rotate(-90 18 18)"></circle>
+                                            </svg>
+                                        </div>
+                                        <h3 class="text-sm font-semibold mb-1">Средний уровень</h3>
+                                        <p class="text-xs text-gray-500">Достигните уровня "Средний"</p>
+                                        <div class="mt-2">
+                                            <span class="inline-block px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">55%</span>
+                                        </div>
+                                    </div>
+                                    <!-- Achievement Details (Shown on Hover) -->
+                                    <div class="absolute inset-0 bg-white bg-opacity-95 p-3 flex flex-col justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <h3 class="text-sm font-semibold mb-2 text-blue-700">Средний уровень</h3>
+                                        <p class="text-xs text-gray-700 mb-2">Достигните уровня "Средний" в настольном теннисе.</p>
+                                        <div class="w-full bg-gray-200 rounded-full h-1.5 mb-1">
+                                            <div class="bg-blue-600 h-1.5 rounded-full" style="width: 55%"></div>
+                                        </div>
+                                        <p class="text-xs text-gray-600">Продолжайте тренироваться и улучшать свои навыки!</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Early Bird (Unlocked) -->
+                            <div class="achievement-card group" data-category="special">
+                                <div class="relative bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 transform hover:scale-105">
+                                    <div class="p-4 text-center">
+                                        <div class="w-16 h-16 mx-auto bg-orange-100 rounded-full flex items-center justify-center mb-3">
+                                            <i class="fas fa-sun text-orange-600 text-2xl"></i>
+                                        </div>
+                                        <h3 class="text-sm font-semibold mb-1">Ранняя пташка</h3>
+                                        <p class="text-xs text-gray-500">Сыграйте 5 игр до 10:00</p>
+                                        <div class="mt-2">
+                                            <span class="inline-block px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Получено</span>
+                                        </div>
+                                    </div>
+                                    <!-- Achievement Details (Shown on Hover) -->
+                                    <div class="absolute inset-0 bg-white bg-opacity-95 p-3 flex flex-col justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <h3 class="text-sm font-semibold mb-2 text-orange-700">Ранняя пташка</h3>
+                                        <p class="text-xs text-gray-700 mb-2">Вы сыграли 5 игр до 10:00 утра! Вы действительно любите ранние тренировки!</p>
+                                        <p class="text-xs text-gray-600">Получено: 02.05.2023</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Weekend Warrior (In Progress) -->
+                            <div class="achievement-card group" data-category="special">
+                                <div class="relative bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 transform hover:scale-105">
+                                    <div class="p-4 text-center">
+                                        <div class="w-16 h-16 mx-auto bg-purple-100 rounded-full flex items-center justify-center mb-3 relative">
+                                            <i class="fas fa-calendar-week text-purple-600 text-2xl"></i>
+                                            <!-- Progress Circle -->
+                                            <svg class="absolute inset-0 w-16 h-16" viewBox="0 0 36 36">
+                                                <circle cx="18" cy="18" r="16" fill="none" stroke="#e0e0e0" stroke-width="2"></circle>
+                                                <circle cx="18" cy="18" r="16" fill="none" stroke="#c084fc" stroke-width="2" stroke-dasharray="100" stroke-dashoffset="70" transform="rotate(-90 18 18)"></circle>
+                                            </svg>
+                                        </div>
+                                        <h3 class="text-sm font-semibold mb-1">Выходной воин</h3>
+                                        <p class="text-xs text-gray-500">Сыграйте 10 игр в выходные</p>
+                                        <div class="mt-2">
+                                            <span class="inline-block px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">30%</span>
+                                        </div>
+                                    </div>
+                                    <!-- Achievement Details (Shown on Hover) -->
+                                    <div class="absolute inset-0 bg-white bg-opacity-95 p-3 flex flex-col justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <h3 class="text-sm font-semibold mb-2 text-purple-700">Выходной воин</h3>
+                                        <p class="text-xs text-gray-700 mb-2">Сыграйте 10 игр в выходные дни.</p>
+                                        <div class="w-full bg-gray-200 rounded-full h-1.5 mb-1">
+                                            <div class="bg-purple-600 h-1.5 rounded-full" style="width: 30%"></div>
+                                        </div>
+                                        <p class="text-xs text-gray-600">Прогресс: 3/10 игр</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tournament Winner (Locked) -->
+                            <div class="achievement-card group" data-category="gameplay">
+                                <div class="relative bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 transform hover:scale-105 opacity-50">
+                                    <div class="p-4 text-center">
+                                        <div class="w-16 h-16 mx-auto bg-gray-200 rounded-full flex items-center justify-center mb-3">
+                                            <i class="fas fa-crown text-gray-400 text-2xl"></i>
+                                        </div>
+                                        <h3 class="text-sm font-semibold mb-1">Победитель турнира</h3>
+                                        <p class="text-xs text-gray-500">Выиграйте турнир</p>
+                                        <div class="mt-2">
+                                            <span class="inline-block px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-600">Заблокировано</span>
+                                        </div>
+                                    </div>
+                                    <!-- Achievement Details (Shown on Hover) -->
+                                    <div class="absolute inset-0 bg-white bg-opacity-95 p-3 flex flex-col justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <h3 class="text-sm font-semibold mb-2 text-gray-700">Победитель турнира</h3>
+                                        <p class="text-xs text-gray-700 mb-2">Выиграйте любой турнир в нашем клубе.</p>
+                                        <p class="text-xs text-gray-600">Участвуйте в турнирах, чтобы получить шанс разблокировать это достижение!</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Perfect Attendance (Locked) -->
+                            <div class="achievement-card group" data-category="special">
+                                <div class="relative bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 transform hover:scale-105 opacity-50">
+                                    <div class="p-4 text-center">
+                                        <div class="w-16 h-16 mx-auto bg-gray-200 rounded-full flex items-center justify-center mb-3">
+                                            <i class="fas fa-calendar-check text-gray-400 text-2xl"></i>
+                                        </div>
+                                        <h3 class="text-sm font-semibold mb-1">Идеальная посещаемость</h3>
+                                        <p class="text-xs text-gray-500">Посетите клуб 30 дней подряд</p>
+                                        <div class="mt-2">
+                                            <span class="inline-block px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-600">Заблокировано</span>
+                                        </div>
+                                    </div>
+                                    <!-- Achievement Details (Shown on Hover) -->
+                                    <div class="absolute inset-0 bg-white bg-opacity-95 p-3 flex flex-col justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <h3 class="text-sm font-semibold mb-2 text-gray-700">Идеальная посещаемость</h3>
+                                        <p class="text-xs text-gray-700 mb-2">Посетите клуб 30 дней подряд.</p>
+                                        <p class="text-xs text-gray-600">Это достижение для настоящих фанатов настольного тенниса!</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Referral Program (Locked) -->
+                            <div class="achievement-card group" data-category="special">
+                                <div class="relative bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 transform hover:scale-105 opacity-50">
+                                    <div class="p-4 text-center">
+                                        <div class="w-16 h-16 mx-auto bg-gray-200 rounded-full flex items-center justify-center mb-3">
+                                            <i class="fas fa-user-plus text-gray-400 text-2xl"></i>
+                                        </div>
+                                        <h3 class="text-sm font-semibold mb-1">Приведи друга</h3>
+                                        <p class="text-xs text-gray-500">Пригласите 3 друзей в клуб</p>
+                                        <div class="mt-2">
+                                            <span class="inline-block px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-600">Заблокировано</span>
+                                        </div>
+                                    </div>
+                                    <!-- Achievement Details (Shown on Hover) -->
+                                    <div class="absolute inset-0 bg-white bg-opacity-95 p-3 flex flex-col justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <h3 class="text-sm font-semibold mb-2 text-gray-700">Приведи друга</h3>
+                                        <p class="text-xs text-gray-700 mb-2">Пригласите 3 друзей, которые зарегистрируются в нашем клубе.</p>
+                                        <p class="text-xs text-gray-600">Используйте реферальную программу в разделе "Профиль".</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Change Password Section -->
                 <section id="password-change" class="bg-white rounded-lg shadow-md overflow-hidden">
                     <div class="bg-green-600 text-white p-4">
@@ -389,22 +696,14 @@
                         </form>
                     </div>
                 </section>
-
-
             </div>
-
-
         </div>
-
-
     </main>
 
 {% endblock %}
 
 {% block extrascripts %}
     <script>
-
-
         document.addEventListener('DOMContentLoaded', function () {
             // Обработка загрузки фото
             const photoUpload = document.getElementById('photo-upload');
@@ -473,11 +772,39 @@
                     notification.remove();
                 }, 5000);
             }
+
+            // Обработка табов в разделе достижений
+            const achievementTabs = document.querySelectorAll('[data-category]');
+            const achievementCards = document.querySelectorAll('.achievement-card');
+
+            achievementTabs.forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // Удаляем активный класс со всех табов
+                    achievementTabs.forEach(t => {
+                        t.classList.remove('border-green-600', 'text-green-600');
+                        t.classList.add('border-transparent');
+                    });
+
+                    // Добавляем активный класс текущему табу
+                    this.classList.add('border-green-600', 'text-green-600');
+                    this.classList.remove('border-transparent');
+
+                    const category = this.getAttribute('data-category');
+
+                    // Показываем/скрываем карточки достижений
+                    achievementCards.forEach(card => {
+                        if (category === 'all' || card.getAttribute('data-category') === category) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            });
         });
     </script>
-
-
-
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -503,85 +830,69 @@
         });
     </script>
 
-
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-
             const form = document.getElementById('profile-update-form');
             const messages = document.getElementById('form-messages');
 
             // Обработка отправки формы через fetch
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();  // Отменяем стандартную отправку
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();  // Отменяем стандартную отправку
 
-                messages.textContent = '';  // Очистить сообщения
+                    messages.textContent = '';  // Очистить сообщения
 
-                const formData = new FormData(form);
+                    const formData = new FormData(form);
 
-                try {
-                    const response = await fetch("{% url 'accounts:profile-update' %}", {
-                        method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
-                        },
-                        body: formData
-                    });
+                    try {
+                        const response = await fetch("{% url 'accounts:profile-update' %}", {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+                            },
+                            body: formData
+                        });
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.success) {
-                            messages.textContent = 'Профиль успешно обновлен!';
-                            messages.className = 'mt-4 text-green-600';
-
-
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                messages.textContent = 'Профиль успешно обновлен!';
+                                messages.className = 'mt-4 text-green-600';
+                            } else {
+                                messages.textContent = 'Ошибка обновления профиля.';
+                                messages.className = 'mt-4 text-red-600';
+                            }
                         } else {
-                            messages.textContent = 'Ошибка обновления профиля.';
+                            const errorData = await response.json();
+                            messages.textContent = 'Ошибка: ' + JSON.stringify(errorData.errors);
                             messages.className = 'mt-4 text-red-600';
                         }
-                    } else {
-                        const errorData = await response.json();
-                        messages.textContent = 'Ошибка: ' + JSON.stringify(errorData.errors);
+                    } catch (error) {
+                        messages.textContent = 'Ошибка сети или сервера.';
                         messages.className = 'mt-4 text-red-600';
+                        showNotification('Ошибка сети или сервера', 'error');
                     }
-                } catch (error) {
-                    messages.textContent = 'Ошибка сети или сервера.';
-                    messages.className = 'mt-4 text-red-600';
-                    showNotification('Ошибка сети или сервера', 'error');
-                }
-            });
-
-
-            function showNotification(message, type) {
-                const notification = document.createElement('div');
-                notification.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg ${
-                    type === 'success' ? 'bg-green-500' : 'bg-red-500'
-                } text-white`;
-                notification.textContent = message;
-                document.body.appendChild(notification);
-
-                setTimeout(() => {
-                    notification.remove();
-                }, 5000);
+                });
             }
+
+            // Обработка нажатия на меню в сайдбаре
+            const sidebarLinks = document.querySelectorAll('.sidebar a');
+            const sections = document.querySelectorAll('section');
+
+            document.querySelectorAll('nav a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // Удаляем активный класс со всех ссылок
+                    document.querySelectorAll('nav a').forEach(l => {
+                        l.classList.remove('bg-green-50', 'text-green-700');
+                        l.classList.add('hover:bg-gray-50');
+                    });
+
+                    // Добавляем активный класс текущей ссылке
+                    this.classList.add('bg-green-50', 'text-green-700');
+                    this.classList.remove('hover:bg-gray-50');
+                });
+            });
         });
     </script>
-
-
-
-
-
-    });
-
-
-
-
-
-
-
-
-
-
-    </script>
-
 {% endblock %}
