@@ -4,7 +4,6 @@ from admin_settings.models import MembershipType, SpecialOffer, Holiday, ClubSet
 from bookings.models import Table, TableType, PricingPlan, TableTypePricing
 
 
-
 class TableForm(forms.ModelForm):
     class Meta:
         model = Table
@@ -30,16 +29,16 @@ class TableForm(forms.ModelForm):
                 'class': 'mt-2 rounded border-2 border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
             }),
         }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['table_type'].queryset = TableType.objects.all()
 
 
-
-
 from django import forms
 from admin_settings.models import MembershipType, SpecialOffer, Holiday, ClubSettings, SiteSettings
 from bookings.models import Table, TableType, PricingPlan, TableTypePricing
+
 
 class TableTypeForm(forms.ModelForm):
     class Meta:
@@ -62,6 +61,7 @@ class TableTypeForm(forms.ModelForm):
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md  border-2 border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
         }
+
 
 class PricingPlanForm(forms.ModelForm):
     class Meta:
@@ -94,6 +94,7 @@ class PricingPlanForm(forms.ModelForm):
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md  border-2 border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
         }
+
 
 class TableTypePricingForm(forms.ModelForm):
     class Meta:
@@ -128,11 +129,12 @@ class TableTypePricingForm(forms.ModelForm):
             }),
         }
 
+
 class MembershipTypeForm(forms.ModelForm):
     class Meta:
         model = MembershipType
         fields = ['name', 'description', 'duration_days', 'price', 'is_active',
-                 'includes_booking', 'includes_discount', 'includes_tournaments', 'includes_training']
+                  'includes_booking', 'includes_discount', 'includes_tournaments', 'includes_training']
         labels = {
             'name': 'Название',
             'description': 'Описание',
@@ -146,17 +148,17 @@ class MembershipTypeForm(forms.ModelForm):
         }
         widgets = {
             'name': forms.TextInput(attrs={
-                'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+                'class': 'w-full  mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'description': forms.Textarea(attrs={
                 'rows': 3,
-                'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+                'class': 'w-full  mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'duration_days': forms.NumberInput(attrs={
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'price': forms.NumberInput(attrs={
-                'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+                'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'mt-2 rounded border-2 border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
@@ -175,11 +177,12 @@ class MembershipTypeForm(forms.ModelForm):
             }),
         }
 
+
 class SpecialOfferForm(forms.ModelForm):
     class Meta:
         model = SpecialOffer
         fields = ['name', 'description', 'discount_percent', 'is_active', 'valid_from', 'valid_to',
-                 'apply_to_all', 'tables', 'time_from', 'time_to', 'weekdays']
+                  'apply_to_all', 'tables', 'time_from', 'time_to', 'weekdays']
         labels = {
             'name': 'Название',
             'description': 'Описание',
@@ -234,6 +237,7 @@ class SpecialOfferForm(forms.ModelForm):
             }),
         }
 
+
 class HolidayForm(forms.ModelForm):
     class Meta:
         model = Holiday
@@ -258,14 +262,17 @@ class HolidayForm(forms.ModelForm):
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'open_time': forms.TimeInput(attrs={
+                'name': 'open_time',
                 'type': 'time',
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'close_time': forms.TimeInput(attrs={
+                'name': 'close_time',
                 'type': 'time',
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
         }
+
 
 class ClubSettingsForm(forms.ModelForm):
     class Meta:
@@ -273,18 +280,61 @@ class ClubSettingsForm(forms.ModelForm):
         fields = '__all__'
         widgets = {
             'club_name': forms.TextInput(attrs={
-                'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'club_description': forms.Textarea(attrs={
                 'rows': 3,
-                'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+                'class': 'w-full  px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
+
+            'club_email': forms.EmailInput(attrs={
+                'type': 'email',
+                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+            }),
+
+            'club_phone': forms.TextInput(attrs={
+                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+            }),
+
+            'club_address': forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+            }),
+            'currency': forms.Select(attrs={
+                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+            }),
+
+            'timezone': forms.Select(attrs={
+                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+            }),
+            'date_format': forms.Select(attrs={
+                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+            }),
+            'time_format': forms.Select(attrs={
+                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+            }),
+            'notify_bookings': forms.CheckboxInput(attrs={
+                'class': "h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+            }),
+            'notify_payments': forms.CheckboxInput(attrs={
+                'class': "h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"}),
+            'notify_cancellations': forms.CheckboxInput(attrs={
+                'class': "h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"}),
+            'notify_registrations': forms.CheckboxInput(attrs={
+                'class': "h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"}),
+
+            'auto_backup': forms.CheckboxInput(attrs={
+                'class': "h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"}),
+            'backup_frequency': forms.Select(attrs={
+                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'}),
             'backup_time': forms.TimeInput(attrs={
                 'type': 'time',
-                'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
-            }),
-            # Add similar widgets for other fields as needed
+                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'}),
+
+            'backup_retention': forms.Select(attrs={
+                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'})
         }
+
 
 class WorkingHoursForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -312,5 +362,3 @@ class WorkingHoursForm(forms.ModelForm):
                 'class': 'w-full rounded-md border-2 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
             }),
         }
-
-

@@ -503,25 +503,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Функция для удаления спецпредложения
 
   // Показать уведомление
-  function showNotification(message, type) {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium transform translate-x-full opacity-0 transition-all duration-300 ${
-      type === 'success' ? 'bg-green-500' : 'bg-red-500'
-    }`;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-      notification.classList.remove('translate-x-full', 'opacity-0');
-      notification.classList.add('translate-x-0', 'opacity-100');
-    }, 50);
-
-    setTimeout(() => {
-      notification.classList.remove('translate-x-0', 'opacity-100');
-      notification.classList.add('translate-x-full', 'opacity-0');
-      setTimeout(() => notification.remove(), 300);
-    }, 3000);
-  }
 
   // Закрытие модалки
   const closeModalButton = document.getElementById('closeSpecialOfferModal');

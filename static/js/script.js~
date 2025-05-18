@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 email: document.getElementById('email').value,
                 phone: document.getElementById('phone').value,
                 password: password, // In a real app, NEVER store passwords in plain text
-                level: 'Начинающий',
+                level: 'beginner',
                 registeredAt: new Date().toISOString()
             };
 

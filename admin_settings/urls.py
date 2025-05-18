@@ -39,7 +39,10 @@ urlpatterns = [
     path('special-offers/<int:pk>/update/', SpecialOfferUpdateView.as_view(), name='special_offer_update'),
     path('special-offers/<int:pk>/delete/', SpecialOfferDeleteView.as_view(), name='special_offer_delete'),
     # Абонементы
-    path('membership-types/create/', MembershipTypeCreateView.as_view(), name='membership_type_create'),
+    path('membership/create/', MembershipCreateView.as_view(), name='membership_type_create'),
+    path('membership/<int:pk>/update/', MembershipUpdateView.as_view(), name='membership_type_update'),
+    path('membership/<int:pk>/view/', MembershipView.as_view(), name='membership_type_view'),
+    path('membership/<int:pk>/delete/', MembershipDeleteView.as_view(), name='membership_type_delete'),
 
     # Расписание
     path('holidays/create/', HolidayCreateView.as_view(), name='holiday_create'),
@@ -49,4 +52,14 @@ urlpatterns = [
     path('schedule/update-working-hours/', UpdateWorkingHoursView.as_view(), name='update_working_hours'),
     path('general/update/', ClubSettingsUpdateView.as_view(), name='club_settings_update'),
     # path('schedule/', ScheduleSettingsView.as_view(), name='schedule'),
+
+    path('holidays/create/', HolidayCreateView.as_view(), name='holiday_create'),
+    path('holidays/<int:pk>/', HolidayView.as_view(), name='holiday_view'),
+    path('holidays/<int:pk>/update/', HolidayUpdateView.as_view(), name='holiday_update'),
+    path('holidays/<int:pk>/delete/', HolidayDeleteView.as_view(), name='holiday_delete'),
+
+
+
+
+
 ]

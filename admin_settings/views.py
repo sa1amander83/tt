@@ -7,7 +7,7 @@ from django.views.generic import DetailView
 
 from admin_settings.forms import TableForm, TableTypeForm, PricingPlanForm, TableTypePricingForm, SpecialOfferForm, \
     MembershipTypeForm, HolidayForm, ClubSettingsForm, WorkingHoursForm
-from admin_settings.models import ClubSettings, SpecialOffer, MembershipType, Holiday, WorkingDay
+from admin_settings.models import ClubSettings, SpecialOffer, MembershipType, Holiday, WorkingDay, NotificationSettings
 from bookings.models import Table, TableType, PricingPlan, TableTypePricing
 
 
@@ -30,16 +30,17 @@ class ClubSettingsView(LoginRequiredMixin, View):
     def get_context_data(self, active_tab):
         context = {
             'active_tab': active_tab,
-            'club_settings': ClubSettings.objects.first() or ClubSettings.objects.create()
+            'club_settings': ClubSettings.objects.first() or ClubSettings.objects.create(),
+            'notifications': NotificationSettings.objects.first(),
+            'settings_form': ClubSettingsForm
         }
 
         if active_tab == 'tables':
 
-
             context.update({
                 'tables': Table.objects.all(),
                 'table_form': TableForm(),
-                 'table_type_form': TableTypeForm(),  # Добавьте эту строку
+                'table_type_form': TableTypeForm(),  # Добавьте эту строку
                 'table_types': TableType.objects.all(),
 
             })
@@ -96,7 +97,7 @@ class ClubSettingsView(LoginRequiredMixin, View):
 
         elif active_tab == 'pricing':
             context.update({
-                'table_types':TableType.objects.all(),
+                'table_types': TableType.objects.all(),
                 'pricing_plans': PricingPlan.objects.all(),
                 'pricing_plan_form': PricingPlanForm(),
                 'table_type_pricing': TableTypePricing.objects.all(),
@@ -116,7 +117,6 @@ class ClubSettingsView(LoginRequiredMixin, View):
                 'default_weekdays': ['1', '2', '3', '4', '5', '6', '7']
 
             })
-
 
         return context
 
@@ -222,6 +222,7 @@ class PricingPlanView(LoginRequiredMixin, UserPassesTestMixin, View):
                 status=500
             )
 
+
 class PricingPlanUpdateView(LoginRequiredMixin, IsAdminMixin, View):
     def post(self, request, pk, *args, **kwargs):
         pricing_plan = get_object_or_404(PricingPlan, pk=pk)
@@ -241,6 +242,7 @@ class PricingPlanUpdateView(LoginRequiredMixin, IsAdminMixin, View):
             status=400
         )
 
+
 class PricingPlanDeleteView(LoginRequiredMixin, IsAdminMixin, View):
     def post(self, request, pk, *args, **kwargs):
         pricing_plan = get_object_or_404(PricingPlan, pk=pk)
@@ -252,6 +254,7 @@ class PricingPlanDeleteView(LoginRequiredMixin, IsAdminMixin, View):
             return JsonResponse(
                 {'status': 'error', 'message': str(e)},
                 status=400)
+
 
 class TableTypePricingCreateView(LoginRequiredMixin, IsAdminMixin, View):
     def post(self, request, *args, **kwargs):
@@ -311,6 +314,8 @@ class TableTypePricingView(LoginRequiredMixin, UserPassesTestMixin, View):
                     'error': str(e)
                 },
                 status=500)
+
+
 class TableTypePricingUpdateView(LoginRequiredMixin, IsAdminMixin, View):
     def post(self, request, pk, *args, **kwargs):
         table_type_pricing = get_object_or_404(TableTypePricing, pk=pk)
@@ -337,6 +342,7 @@ class TableTypePricingDeleteView(LoginRequiredMixin, IsAdminMixin, View):
             return JsonResponse(
                 {'status': 'error', 'message': str(e)},
                 status=400)
+
 
 class SpecialOfferCreateView(LoginRequiredMixin, IsAdminMixin, View):
     def post(self, request, *args, **kwargs):
@@ -424,6 +430,7 @@ class SpecialOfferUpdateView(LoginRequiredMixin, IsAdminMixin, View):
             'errors': errors
         }, status=400)
 
+
 class SpecialOfferDeleteView(LoginRequiredMixin, IsAdminMixin, View):
     def post(self, request, pk, *args, **kwargs):
         special_offer = get_object_or_404(SpecialOffer, pk=pk)
@@ -435,16 +442,83 @@ class SpecialOfferDeleteView(LoginRequiredMixin, IsAdminMixin, View):
             return JsonResponse(
                 {'status': 'error', 'message': str(e)},
                 status=400)
+
+
 # Абонементы
-class MembershipTypeCreateView(LoginRequiredMixin, IsAdminMixin, View):
+class MembershipCreateView(LoginRequiredMixin, IsAdminMixin, View):
     def post(self, request, *args, **kwargs):
         form = MembershipTypeForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, "Тип абонемента успешно добавлен")
-        else:
-            messages.error(request, "Ошибка при добавлении абонемента")
-        return redirect('admin_settings:club_settings', active_tab='memberships')
+            return JsonResponse({'status': 'success'})
+
+        return JsonResponse(
+            {'status': 'error', 'message': 'Проверьте введенные данные', 'errors': form.errors},
+            status=400
+        )
+
+
+class MembershipView(LoginRequiredMixin, View):
+    def get(self, request, pk, *args, **kwargs):
+        membership = get_object_or_404(MembershipType, pk=pk)
+
+        data = {
+            'id': membership.id,
+            'name': membership.name,
+            'description': membership.description,
+            'duration_days': membership.duration_days,
+            'price': membership.price,
+            'is_active': membership.is_active,
+            'includes_booking': membership.includes_booking,
+            'includes_discount': membership.includes_discount,
+            'includes_tournaments': membership.includes_tournaments,
+            'includes_training': membership.includes_training,
+        }
+
+        return JsonResponse(data)
+
+
+class MembershipUpdateView(LoginRequiredMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        try:
+            membership = get_object_or_404(MembershipType, pk=pk)
+            form = MembershipTypeForm(request.POST, instance=membership)
+
+            if form.is_valid():
+                form.save()
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Абонемент обновлен',
+                })
+
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Ошибка валидации',
+                'errors': form.errors
+            }, status=400)
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=500)
+
+
+class MembershipDeleteView(LoginRequiredMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        try:
+            membership = get_object_or_404(MembershipType, pk=pk)
+            membership.delete()
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Абонемент успешно удален!'
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=500)
 
 
 # Расписание
@@ -508,7 +582,6 @@ class TableDetailView(LoginRequiredMixin, IsAdminMixin, View):
         return JsonResponse(data)
 
 
-
 class TableTypeView(LoginRequiredMixin, IsAdminMixin, View):
     def get(self, request, pk, *args, **kwargs):
         table_type = get_object_or_404(TableType, pk=pk)
@@ -522,6 +595,7 @@ class TableTypeView(LoginRequiredMixin, IsAdminMixin, View):
         }
 
         return JsonResponse(data)
+
 
 class UpdateWorkingHoursView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
@@ -547,6 +621,8 @@ class UpdateWorkingHoursView(LoginRequiredMixin, View):
             messages.error(request, "Произошли ошибки при сохранении")
 
         return redirect('admin_settings:club_settings', active_tab='schedule')
+
+
 from datetime import time
 
 
@@ -577,3 +653,76 @@ class TableTypeDeleteView(LoginRequiredMixin, IsAdminMixin, View):
                 {'status': 'error', 'message': str(e)},
                 status=400
             )
+
+
+import json
+
+
+class HolidayView(LoginRequiredMixin, View):
+    def get(self, request, pk, *args, **kwargs):
+        holiday = get_object_or_404(Holiday, pk=pk)
+
+        data = {
+            'id': holiday.id,
+            'date': holiday.date.strftime('%d.%m.%Y'),
+            'description': holiday.description,
+            'status': holiday.get_status_display(),
+            'open_time': holiday.open_time.strftime('%H:%M') if holiday.open_time else None,
+            'close_time': holiday.close_time.strftime('%H:%M') if holiday.close_time else None
+        }
+
+        return JsonResponse(data)
+
+
+class HolidayUpdateView(LoginRequiredMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        try:
+            holiday = get_object_or_404(Holiday, pk=pk)
+            data = json.loads(request.body)
+            form = HolidayForm(data, instance=holiday)
+
+            if form.is_valid():
+                updated_holiday = form.save()
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Праздничный день обновлен',
+                    'data': {
+                        'id': updated_holiday.id,
+                        'date': updated_holiday.date.strftime('%d.%m.%Y'),
+                        'description': updated_holiday.description,
+                        'status': updated_holiday.get_status_display(),
+                        'open_time': updated_holiday.open_time.strftime('%H:%M') if updated_holiday.open_time else None,
+                        'close_time': updated_holiday.close_time.strftime(
+                            '%H:%M') if updated_holiday.close_time else None
+                    }
+                })
+
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Ошибка валидации',
+                'errors': form.errors
+            }, status=400)
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=500)
+
+
+class HolidayDeleteView(LoginRequiredMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        try:
+            holiday = get_object_or_404(Holiday, pk=pk)
+
+            holiday.delete()
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Праздничный день удален'
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=500)

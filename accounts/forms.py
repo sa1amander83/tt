@@ -64,7 +64,7 @@ class SignInForm(forms.Form):
         elif method == 'phone':
             if not login_phone:
                 raise ValidationError("Введите номер телефона")
-            cleaned_data['login'] = '+7' + login_phone
+            cleaned_data['login'] =  login_phone
         else:
             raise ValidationError("Неверный метод входа")
 

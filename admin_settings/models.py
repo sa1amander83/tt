@@ -405,6 +405,7 @@ class AchievementCategory(models.TextChoices):
     UNIVERSAL = 'UNIVERSAL', 'Универсальные'
 
 class Achievement(models.Model):
+    user=models.ForeignKey('accounts.User', on_delete=models.CASCADE)
     title = models.CharField(max_length=255, help_text="Название ачивки")
     description = models.TextField(blank=True, help_text="Описание ачивки")
     category = models.CharField(max_length=20, choices=AchievementCategory.choices)
@@ -417,3 +418,15 @@ class Achievement(models.Model):
     class Meta:
         verbose_name = "Ачивка"
         verbose_name_plural = "Ачивки"
+
+
+class NotificationSettings(models.Model):
+    user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, related_name='notification_settings')
+
+    notify_bookings = models.BooleanField(default=True)
+    notify_cancellations = models.BooleanField(default=True)
+    notify_payments = models.BooleanField(default=True)
+    notify_registrations = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Настройки уведомлений для {self.user.user_name}"

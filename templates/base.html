@@ -14,7 +14,7 @@
     <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet"/>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
-     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 {% endblock extracss %}
 <body class="bg-gray-100 min-h-screen">
@@ -22,21 +22,22 @@
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
         <div class="flex items-center">
             <i class="fas fa-table-tennis-paddle-ball text-2xl mr-2"></i>
-            <h1 class="text-xl font-bold">PingPong Club</h1>
+            <a href="{% url 'main:index' %}"><h1 class="text-xl font-bold">PingPong Club</h1></a>
         </div>
         <nav class="hidden md:block">
             <ul class="flex space-x-6">
                 <li><a href="{% url 'main:index' %}" class="hover:text-green-200 font-medium">Главная</a></li>
                 <li><a href="{% url 'bookings:bookings' %}" class="hover:text-green-200">Бронирование</a></li>
-                                {% if user.is_authenticated and user.role == 'ADMIN' %}
-                {#                    <li><a href="{% url 'admin-bookings' %}" class="hover:text-green-200">Текущие</a></li>#}
-                                    <li><a href="{% url 'admin_settings:club_settings' 'general' %}" class="hover:text-green-200">Настройки 2</a></li>
+                {% if user.is_authenticated and user.role == 'ADMIN' %}
+                    {#                    <li><a href="{% url 'admin-bookings' %}" class="hover:text-green-200">Текущие</a></li>#}
+                    <li><a href="{% url 'admin_settings:club_settings' 'general' %}" class="hover:text-green-200">Настройки
+                        2</a></li>
 
-                                                     <li><a href="{% url 'accounts:profile' %}" class="hover:text-green-200">Профиль</a></li>
-
-                {#                    <li><a href="{% url 'admin-reports' %}" class="hover:text-green-200">Отчеты</a></li>#}
-                {#                    <li><a href="{% url 'admin-users' %}" class="hover:text-green-200">Пользователи</a></li>#}
-                {#                    <li><a href="{% url 'admin-users-detail' %}" class="hover:text-green-200">Пользователи 2</a></li>#}
+                    <li><a href="{% url 'accounts:profile' %}" class="hover:text-green-200">Профиль</a></li>
+                    <li><a href="{% url 'accounts:logout' %}" class="hover:text-green-200">Выход</a></li>
+                    {#                    <li><a href="{% url 'admin-reports' %}" class="hover:text-green-200">Отчеты</a></li>#}
+                    {#                    <li><a href="{% url 'admin-users' %}" class="hover:text-green-200">Пользователи</a></li>#}
+                    {#                    <li><a href="{% url 'admin-users-detail' %}" class="hover:text-green-200">Пользователи 2</a></li>#}
                 {% endif %}
                 {#                {% elif user.is_authenticated and user.role == 'USER' %}#}
                 {##}
@@ -44,7 +45,7 @@
                 {##}
                 {#                 <li><a href="{% url 'statistics' %}" class="hover:text-green-200">Статистика</a></li>#}
 
-             
+
                 {% if not user.is_authenticated %}
                     <li><a href="{% url 'accounts:signin' %}" class="hover:text-green-200">Вход</a></li>
                     <li><a href="{% url 'accounts:signup' %}" class="hover:text-green-200">Регистрация</a></li>
@@ -68,10 +69,25 @@
         <ul class="container mx-auto px-4 py-2">
 
 
-            <li class="py-2"><a href="{% url 'main:index' %}" class="block hover:text-green-200 font-medium">Главная</a>
+            <li class="py-2"><a href="{% url 'main:index' %}"
+                                class="block mobile-menu-link  hover:text-green-200 font-medium">Главная</a>
             </li>
-            <li class="py-2"><a href="{% url 'bookings:bookings' %}" class="block hover:text-green-200">Бронирование</a>
+            <li class="py-2"><a href="{% url 'bookings:bookings' %}"
+                                class="block mobile-menu-link hover:text-green-200">Бронирование</a>
             </li>
+            {% if user.is_authenticated and user.role == 'ADMIN' %}
+                {#                    <li><a href="{% url 'admin-bookings' %}" class="hover:text-green-200">Текущие</a></li>#}
+                <li><a href="{% url 'admin_settings:club_settings' 'general' %}"
+                       class="mobile-menu-link hover:text-green-200">Настройки 2</a></li>
+
+                <li><a href="{% url 'accounts:profile' %}" class="mobile-menu-link hover:text-green-200">Профиль</a>
+                </li>
+                <li><a href="{% url 'accounts:logout' %}" class="hover:text-green-200">Выход</a></li>
+                {#                    <li><a href="{% url 'admin-reports' %}" class="hover:text-green-200">Отчеты</a></li>#}
+                {#                    <li><a href="{% url 'admin-users' %}" class="hover:text-green-200">Пользователи</a></li>#}
+                {#                    <li><a href="{% url 'admin-users-detail' %}" class="hover:text-green-200">Пользователи 2</a></li>#}
+            {% endif %}
+
             {#            {% if user.is_authenticated and user.role == 'ADMIN' %}#}
             {#                <li class="py-2"><a href="{% url 'admin-bookings' %}" class="block hover:text-green-200">Текущие</a>#}
             {#                </li>#}
@@ -149,11 +165,17 @@
     </div>
 </footer>
 {% block extrascripts %}
-      <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ru.js"></script>
 
-        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="{% static 'js/script.js' %}"></script>
+
+
+
+
+
+
 {% endblock %}
 </body>
 </html>
