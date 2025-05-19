@@ -1,38 +1,39 @@
+<!-- Table Type Pricing Modal -->
 <div id="addTableTypePricingModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
   <div class="flex items-center justify-center min-h-screen p-4">
-    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300" id="tableTypePricingBackdrop"></div>
-    
-    <div class="modal-content relative bg-white rounded-xl shadow-2xl w-full max-w-sm transform transition-all duration-300 ease-out translate-y-10 opacity-0"
-         id="tableTypePricingModalContent">
-      <div class="bg-gradient-to-r from-green-600 to-green-500 px-4 py-3 rounded-t-xl flex justify-between items-center">
-        <h3 class="text-lg font-semibold text-white" id="modalTitle">Добавить цены для типа стола</h3>
-        <button type="button" class="text-white hover:text-green-200 transition-colors" onclick="closeModal('addTableTypePricingModal')">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
+
+    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md">
+      <div class="bg-gradient-to-r from-green-600 to-green-500 px-6 py-4 rounded-t-xl flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-white" id="modalTitle">Новая цена для типа стола</h3>
+        <button type="button" class="text-white hover:text-green-200" onclick="closeModal('addTableTypePricingModal')">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
       </div>
-      
+
       <div class="p-4" id="modalBody">
         <form id="tableTypePricingForm" class="space-y-3">
           {% csrf_token %}
           <input type="hidden" name="pricing_id" id="pricingIdInput" value="">
-          
+
           <div class="space-y-3">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Тип стола*</label>
-              <select name="table_type" required
-                      class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+              <select name="table_type" id="tableTypeSelect" required
+                      class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg">
                 <option value="">Выберите тип</option>
                 {% for table_type in table_types %}
                 <option value="{{ table_type.id }}">{{ table_type.name }}</option>
                 {% endfor %}
               </select>
             </div>
+
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Тарифный план*</label>
-              <select name="pricing_plan" required
-                      class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+              <select name="pricing_plan" id="pricingPlanSelect" required
+                      class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg">
                 <option value="">Выберите тариф</option>
                 {% for plan in pricing_plans %}
                 <option value="{{ plan.id }}">{{ plan.name }}</option>
@@ -40,57 +41,42 @@
               </select>
             </div>
           </div>
-          
+
           <div class="space-y-3">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Цена за час (₽)*</label>
-              <input type="number" name="hour_rate" required min="0"
-                     class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                     placeholder="400">
+              <input type="number" name="hour_rate" id="hourRateInput" required min="0" placeholder="400"
+                     class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg">
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Групповая цена (₽)*</label>
-              <input type="number" name="hour_rate_group" required min="0"
-                     class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                     placeholder="600">
+              <input type="number" name="hour_rate_group" id="hourRateGroupInput" required min="0" placeholder="600"
+                     class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg">
             </div>
           </div>
 
           <div class="space-y-3">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Минимальное время игры (мин)*</label>
-              <input type="number" name="min_duration" required min="0"
-                     class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                     placeholder="60">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Мин. время игры (мин)*</label>
+              <input type="number" name="min_duration" id="minDurationInput" required min="0" placeholder="30"
+                     class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg">
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Максимальное время игры (мин)*</label>
-              <input type="number" name="max_duration" required min="0"
-                     class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                     placeholder="180">
-            </div>
-          </div>
-
-          <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-lg text-xs">
-            <div class="flex items-start">
-              <svg class="h-4 w-4 text-yellow-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-              </svg>
-              <p class="ml-2 text-yellow-700">
-                Убедитесь, что такая комбинация типа стола и тарифа еще не существует
-              </p>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Макс. время игры (мин)*</label>
+              <input type="number" name="max_duration" id="maxDurationInput" required min="0" placeholder="60"
+                     class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg">
             </div>
           </div>
         </form>
       </div>
-      
-      <div class="bg-gray-50 px-4 py-3 rounded-b-xl flex justify-center space-x-3" id="modalFooter">
-        <button type="button" onclick="closeModal('addTableTypePricingModal')" 
-                class="px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition">
+
+      <div class="bg-gray-50 px-4 py-3 rounded-b-xl flex justify-center space-x-3">
+        <button type="button" onclick="closeModal('addTableTypePricingModal')"
+                class="px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">
           Отмена
         </button>
-        <button type="button" id="saveButton" onclick="saveTableTypePricing()"
-                class="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+        <button type="button" id="saveButton"
+                class="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700">
           Сохранить
         </button>
       </div>

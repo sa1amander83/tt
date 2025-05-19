@@ -259,121 +259,7 @@ document.addEventListener('DOMContentLoaded', function () {
  * Открытие модального окна для редактирования Table Type Pricing
  */
 // Открытие модального окна для редактирования
-async function openEditTableTypePricingModal(pricingId) {
-    try {
-        const modal = document.getElementById('addTableTypePricingModal');
-        const modalBody = document.getElementById('modalBody');
-        const modalTitle = document.getElementById('modalTitle');
-        const saveButton = document.getElementById('saveButton');
-
-        // Показать индикатор загрузки
-        modalBody.innerHTML = `
-            <div class="flex justify-center items-center h-64">
-                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-        `;
-
-        openModal('addTableTypePricingModal');
-
-        // Загрузить данные с сервера
-        const response = await fetch(`/settings/table-type-pricings/${pricingId}/`);
-        if (!response.ok) throw new Error('Не удалось загрузить данные');
-        const pricingData = await response.json();
-
-        // Получить данные для select-ов заранее
-        const tableTypes = JSON.parse(document.getElementById('table-types-data').textContent);
-        const pricingPlans = JSON.parse(document.getElementById('pricing-plans-data').textContent);
-
-        // Генерация options для типов столов
-        let tableTypeOptions = '<option value="">Выберите тип</option>';
-        tableTypes.forEach(tableType => {
-            const selected = pricingData.table_type.id == tableType.id ? 'selected' : '';
-            tableTypeOptions += `<option value="${tableType.id}" ${selected}>${tableType.name}</option>`;
-        });
-
-        // Генерация options для тарифных планов
-        let pricingPlanOptions = '<option value="">Выберите тариф</option>';
-        pricingPlans.forEach(plan => {
-            const selected = pricingData.pricing_plan.id == plan.id ? 'selected' : '';
-            pricingPlanOptions += `<option value="${plan.id}" ${selected}>${plan.name}</option>`;
-        });
-
-        // Заполнить форму
-        const formHtml = `
-            <form id="tableTypePricingForm" class="space-y-3">
-                <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
-                <input type="hidden" name="pricing_id" value="${pricingId}">
-                
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Тип стола*</label>
-                        <select name="table_type" required
-                                class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                            ${tableTypeOptions}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Тарифный план*</label>
-                        <select name="pricing_plan" required
-                                class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                            ${pricingPlanOptions}
-                        </select>
-                    </div>
-                </div>
-                
-                <!-- Остальные поля формы остаются без изменений -->
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Цена за час (₽)*</label>
-                        <input type="number" name="hour_rate" required min="0" value="${pricingData.hour_rate}"
-                               class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Групповая цена (₽)*</label>
-                        <input type="number" name="hour_rate_group" required min="0" value="${pricingData.hour_rate_group}"
-                               class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Минимальное время игры (мин)*</label>
-                        <input type="number" name="min_duration" required min="0" value="${pricingData.min_duration}"
-                               class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Максимальное время игры (мин)*</label>
-                        <input type="number" name="max_duration" required min="0" value="${pricingData.max_duration}"
-                               class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                    </div>
-                </div>
-
-                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-lg text-xs">
-                    <div class="flex items-start">
-                        <svg class="h-4 w-4 text-yellow-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                        </svg>
-                        <p class="ml-2 text-yellow-700">
-                            Убедитесь, что такая комбинация типа стола и тарифа еще не существует
-                        </p>
-                    </div>
-                </div>
-            </form>
-        `;
-
-        modalBody.innerHTML = formHtml;
-        modalTitle.textContent = 'Редактировать цены для типа стола';
-
-        // Обновить обработчик сохранения
-        saveButton.onclick = () => updateTableTypePricing(pricingId);
-
-    } catch (error) {
-        console.error('Ошибка загрузки ценообразования:', error);
-        closeModal('addTableTypePricingModal');
-        showNotification(`Ошибка: ${error.message}`, 'error');
-    }
-}
-// Сохранение новой цены
+//
 async function saveTableTypePricing() {
     const form = document.getElementById('tableTypePricingForm');
     const saveButton = document.getElementById('saveButton');
@@ -425,70 +311,70 @@ async function saveTableTypePricing() {
 }
 
 // Обновление существующей цены
-async function updateTableTypePricing(pricingId) {
-    const form = document.getElementById('tableTypePricingForm');
-    const saveButton = document.getElementById('saveButton');
-
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
-
-    try {
-        // Показать состояние загрузки
-        saveButton.innerHTML = `
-            <span class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" role="status"></span>
-            Сохранение...
-        `;
-        saveButton.disabled = true;
-
-        const formData = new FormData(form);
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-        const response = await fetch(`/settings/table-type-pricings/${pricingId}/update/`, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': csrfToken
-            }
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Ошибка сервера');
-        }
-
-        showNotification('Цены успешно обновлены!', 'success');
-        closeModal('addTableTypePricingModal');
-
-        // Обновить страницу через 1 секунду
-        setTimeout(() => {
-            window.location.reload();
-        }, 1000);
-
-    } catch (error) {
-        console.error('Ошибка обновления цен:', error);
-        showNotification(`Ошибка: ${error.message}`, 'error');
-    } finally {
-        saveButton.innerHTML = 'Сохранить';
-        saveButton.disabled = false;
-    }
-}
-
-// Универсальные функции для работы с модальными окнами
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    const backdrop = document.getElementById(`${modalId}Backdrop`);
-    const content = document.getElementById(`${modalId}Content`);
-
-    modal.classList.remove('hidden');
-    document.body.classList.add('overflow-hidden');
-
-    setTimeout(() => {
-        backdrop.classList.add('opacity-100');
-        content.classList.add('opacity-100', 'translate-y-0');
-    }, 10);
-}
+// async function updateTableTypePricing(pricingId) {
+//     const form = document.getElementById('tableTypePricingForm');
+//     const saveButton = document.getElementById('saveButton');
+//
+//     if (!form.checkValidity()) {
+//         form.reportValidity();
+//         return;
+//     }
+//
+//     try {
+//         // Показать состояние загрузки
+//         saveButton.innerHTML = `
+//             <span class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" role="status"></span>
+//             Сохранение...
+//         `;
+//         saveButton.disabled = true;
+//
+//         const formData = new FormData(form);
+//         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+//
+//         const response = await fetch(`/settings/table-type-pricings/${pricingId}/update/`, {
+//             method: 'POST',
+//             body: formData,
+//             headers: {
+//                 'X-CSRFToken': csrfToken
+//             }
+//         });
+//
+//         if (!response.ok) {
+//             const errorData = await response.json();
+//             throw new Error(errorData.message || 'Ошибка сервера');
+//         }
+//
+//         showNotification('Цены успешно обновлены!', 'success');
+//         closeModal('addTableTypePricingModal');
+//
+//         // Обновить страницу через 1 секунду
+//         setTimeout(() => {
+//             window.location.reload();
+//         }, 1000);
+//
+//     } catch (error) {
+//         console.error('Ошибка обновления цен:', error);
+//         showNotification(`Ошибка: ${error.message}`, 'error');
+//     } finally {
+//         saveButton.innerHTML = 'Сохранить';
+//         saveButton.disabled = false;
+//     }
+// }
+//
+// // Универсальные функции для работы с модальными окнами
+// function openModal(modalId) {
+//     const modal = document.getElementById(modalId);
+//     const backdrop = document.getElementById(`${modalId}Backdrop`);
+//     const content = document.getElementById(`${modalId}Content`);
+//
+//     modal.classList.remove('hidden');
+//     document.body.classList.add('overflow-hidden');
+//
+//     setTimeout(() => {
+//         backdrop.classList.add('opacity-100');
+//         content.classList.add('opacity-100', 'translate-y-0');
+//     }, 10);
+// }
 
 
 
@@ -504,10 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Функция для показа уведомлений
-function showNotification(message, type = 'success') {
-    // Реализация показа уведомлений
-    alert(`${type.toUpperCase()}: ${message}`);
-}
+
 /**
  * Обновление ценообразования для типа стола
  */
@@ -516,60 +399,7 @@ function showNotification(message, type = 'success') {
 
 
 
-
-async function updateTableTypePricing() {
-    const form = document.getElementById('tableTypePricingForm');
-    const pricingId = form.dataset.pricingId;
-    const saveBtn = form.querySelector('button[type="submit"]');
-
-    if (form.checkValidity()) {
-        try {
-            // Показать состояние загрузки
-            saveBtn.innerHTML = `
-        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        Сохранение...
-      `;
-            saveBtn.disabled = true;
-
-            // Подготовка данных формы
-            const formData = new FormData(form);
-
-            // Отправка данных на сервер
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-            const response = await fetch(`/settings/table-type-pricings/${pricingId}/update/`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': csrfToken,
-                }
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Ошибка сервера');
-            }
-
-            showNotification('Цены успешно обновлены!', 'success');
-            closeModal('addTableTypePricingModal');
-
-            // Обновляем страницу через 1.5 секунды
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-
-        } catch (error) {
-            console.error('Ошибка обновления цен:', error);
-            showNotification(`Ошибка: ${error.message}`, 'error');
-        } finally {
-            saveBtn.innerHTML = 'Сохранить';
-            saveBtn.disabled = false;
-        }
-    } else {
-        form.reportValidity();
-    }
-}
-
-// ==============================================
+// =====================Институт дополнительного образования=========================
 // Функции для модального окна Membership
 // ==============================================
 
@@ -762,11 +592,131 @@ function openModal(modalId) {
     document.body.classList.add('overflow-hidden');
 }
 
+// function closeModal(modalId) {
+//     document.getElementById(modalId).classList.add('hidden');
+//     document.body.classList.remove('overflow-hidden');
+// }
+// Универсальная функция для закрытия модальных окон
 function closeModal(modalId) {
-    document.getElementById(modalId).classList.add('hidden');
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+
+  // Анимация закрытия
+  const backdrop = modal.querySelector('.backdrop-blur-sm');
+  const content = modal.querySelector('[id$="ModalContent"]');
+
+  if (backdrop) backdrop.classList.remove('opacity-100');
+  if (content) content.classList.remove('opacity-100', 'scale-100', 'translate-y-10');
+
+  setTimeout(() => {
+    modal.classList.add('hidden');
     document.body.classList.remove('overflow-hidden');
+  }, 300);
 }
 
+// Функции открытия для каждой модалки
+function openAddPricingPlanModal() {
+  const modal = document.getElementById('addPricingPlanModal');
+  if (!modal) return;
+
+  // Сброс формы и заголовка
+  const form = document.getElementById('pricingPlanForm');
+  if (form) form.reset();
+
+  const title = modal.querySelector('h3');
+  if (title) title.textContent = 'Новый тарифный план';
+
+  // Показ с анимацией
+  modal.classList.remove('hidden');
+  document.body.classList.add('overflow-hidden');
+
+  setTimeout(() => {
+    const backdrop = document.getElementById('pricingPlanBackdrop');
+    const content = document.getElementById('pricingPlanModalContent');
+    if (backdrop) backdrop.classList.add('opacity-100');
+    if (content) content.classList.add('opacity-100', 'scale-100', 'translate-y-0');
+  }, 10);
+}
+
+function openAddSpecialOfferModal() {
+  const modal = document.getElementById('addSpecialOfferModal');
+  if (!modal) return;
+
+  const form = document.getElementById('specialOfferForm');
+  if (form) form.reset();
+
+  const title = modal.querySelector('h3');
+  if (title) title.textContent = 'Новое спецпредложение';
+
+  modal.classList.remove('hidden');
+  document.body.classList.add('overflow-hidden');
+
+  setTimeout(() => {
+    const backdrop = document.getElementById('specialOfferBackdrop');
+    const content = document.getElementById('specialOfferModalContent');
+    if (backdrop) backdrop.classList.add('opacity-100');
+    if (content) content.classList.add('opacity-100', 'scale-100', 'translate-y-0');
+  }, 10);
+
+
+
+}
+
+
+
+
+function openAddTableTypePricingModal() {
+  const modal = document.getElementById('addTableTypePricingModal');
+  if (!modal) return;
+
+  const form = document.getElementById('tableTypePricingForm');
+  if (form) form.reset();
+
+  const title = modal.querySelector('h3');
+  if (title) title.textContent = 'Цены для типа стола';
+
+  modal.classList.remove('hidden');
+  document.body.classList.add('overflow-hidden');
+
+  setTimeout(() => {
+    const backdrop = document.getElementById('tableTypePricingBackdrop');
+    const content = document.getElementById('tableTypePricingModalContent');
+    if (backdrop) backdrop.classList.add('opacity-100');
+    if (content) content.classList.add('opacity-100', 'scale-100', 'translate-y-0');
+  }, 10);
+}
+
+// Инициализация обработчиков
+document.addEventListener('DOMContentLoaded', function() {
+  // Обработчики для кнопок открытия
+  document.querySelectorAll('[data-modal="pricing-plan"]').forEach(btn => {
+    btn.addEventListener('click', openAddPricingPlanModal);
+  });
+
+  document.querySelectorAll('[data-modal="special-offer"]').forEach(btn => {
+    btn.addEventListener('click', openAddSpecialOfferModal);
+  });
+
+  document.querySelectorAll('[data-modal="table-type-pricing"]').forEach(btn => {
+    btn.addEventListener('click', openAddTableTypePricingModal);
+  });
+
+  // Обработчики закрытия по кнопкам
+  document.querySelectorAll('[onclick^="closeModal"]').forEach(btn => {
+    const match = btn.getAttribute('onclick').match(/closeModal\('([^']+)'/);
+    if (match && match[1]) {
+      btn.addEventListener('click', () => closeModal(match[1]));
+    }
+  });
+
+  // Закрытие по клику на бэкдроп
+  document.querySelectorAll('.backdrop-blur-sm').forEach(backdrop => {
+    backdrop.addEventListener('click', function() {
+      const modal = this.closest('.fixed.inset-0');
+      if (modal) closeModal(modal.id);
+    });
+  });
+});
 
 // ==============================================
 // Универсальные функции для работы с модальными окнами

@@ -128,38 +128,6 @@ async function saveTableTypePricing() {
 /**
  * Удаление цены для типа стола
  */
-async function deleteTableTypePricing(pricingId) {
-  if (!confirm('Вы уверены, что хотите удалить эту цену для типа стола?')) return;
-
-  try {
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-    const response = await fetch(`/settings/table-type-pricings/${pricingId}/delete/`, {
-      method: 'POST',
-      headers: {
-        'X-CSRFToken': csrfToken,
-        'Accept': 'application/json',
-      }
-    });
-
-    const data = await response.json();
-    console.log('Response data:', data);
-
-    if (!response.ok || data.status === 'error') {
-      throw new Error(data.message || 'Ошибка сервера');
-    }
-
-    showNotification('Цена для типа стола успешно удалена!', 'success');
-
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
-
-  } catch (error) {
-    console.error('Error deleting table type pricing:', error);
-    showNotification('Ошибка при удалении: ' + (error.message || 'Попробуйте позже'), 'error');
-  }
-}
 
 // ==============================================
 // Функции для работы с Special Offers
@@ -210,19 +178,6 @@ function initTableActionHandlers() {
       btn.addEventListener('click', () => openEditTableTypePricingModal(match[1]));
     }
   });
-
-  // Обработчики для кнопок удаления Table Type Pricing
-  document.querySelectorAll('[onclick^="deleteTableTypePricing"]').forEach(btn => {
-    const match = btn.getAttribute('onclick').match(/deleteTableTypePricing\((\d+)\)/);
-    if (match) {
-      btn.addEventListener('click', () => deleteTableTypePricing(match[1]));
-    }
-  });
-
-  // Обработчики для кнопок редактирования Special Offers
-
-
-  // Обработчики для кнопок удаления Special Offers
 
 }
 

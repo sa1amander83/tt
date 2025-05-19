@@ -118,10 +118,10 @@
                                     мин
                                 </td>
                                 <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium">
-                                    <button onclick="openEditTableTypePricingModal({{ pricing.id }})"
+                                    <button data-edit-pricing="{{ pricing.id }}"
                                             class="text-green-600 hover:text-green-900 mr-2 md:mr-3">Ред.
                                     </button>
-                                    <button onclick="deleteTableTypePricing({{ pricing.id }})"
+                                    <button data-delete-pricing="{{ pricing.id }}"
                                             class="text-red-600 hover:text-red-900">Удал.
                                     </button>
                                 </td>
