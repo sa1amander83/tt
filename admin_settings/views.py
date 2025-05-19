@@ -1,3 +1,4 @@
+from django.core import serializers
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
@@ -96,9 +97,18 @@ class ClubSettingsView(LoginRequiredMixin, View):
 
 
         elif active_tab == 'pricing':
+            table_types = TableType.objects.all()
+            pricing_plans = PricingPlan.objects.all()
+
+
             context.update({
-                'table_types': TableType.objects.all(),
-                'pricing_plans': PricingPlan.objects.all(),
+
+                'table_types': table_types,
+                'table_types_json': serializers.serialize('json', table_types),
+                    'pricing_plans': pricing_plans,
+                'pricing_plans_json': serializers.serialize('json', pricing_plans),
+
+
                 'pricing_plan_form': PricingPlanForm(),
                 'table_type_pricing': TableTypePricing.objects.all(),
                 'table_type_pricing_form': TableTypePricingForm(),

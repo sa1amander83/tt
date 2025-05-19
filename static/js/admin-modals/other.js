@@ -87,8 +87,34 @@ async function openEditPricingPlanModal(planId) {
         }
 
         // Показываем модальное окно с индикатором загрузки
-        modal.classList.remove('hidden');
-        document.body.classList.add('overflow-hidden');
+        // Показываем модалку
+modal.classList.remove('hidden');
+document.body.classList.add('overflow-hidden');
+
+const backdrop = document.getElementById('pricingPlanBackdrop');
+const content = document.getElementById('pricingPlanModalContent');
+
+// Сбросим анимационные классы к начальному состоянию (важно!)
+if (backdrop) {
+    backdrop.classList.remove('opacity-100');
+    backdrop.classList.add('opacity-0');
+}
+if (content) {
+    content.classList.remove('opacity-100', 'translate-y-0');
+    content.classList.add('opacity-0', 'translate-y-10');
+}
+
+// Принудительная перерисовка DOM, чтобы transition сработал
+requestAnimationFrame(() => {
+    if (backdrop) {
+        backdrop.classList.remove('opacity-0');
+        backdrop.classList.add('opacity-100');
+    }
+    if (content) {
+        content.classList.remove('opacity-0', 'translate-y-10');
+        content.classList.add('opacity-100', 'translate-y-0');
+    }
+});
 
         // Добавляем индикатор загрузки
         const loader = document.createElement('div');
@@ -132,13 +158,6 @@ async function openEditPricingPlanModal(planId) {
             title.textContent = 'Редактировать тарифный план';
         }
 
-        // Анимация появления
-        setTimeout(() => {
-            const backdrop = document.getElementById('pricingPlanBackdrop');
-            const content = document.getElementById('pricingPlanModalContent');
-            if (backdrop) backdrop.classList.add('opacity-100');
-            if (content) content.classList.add('opacity-100', 'translate-y-0');
-        }, 10);
 
     } catch (error) {
         console.error('Error loading pricing plan:', error);
@@ -245,7 +264,6 @@ async function openEditTableTypePricingModal(pricingId) {
         const modal = document.getElementById('addTableTypePricingModal');
         const modalBody = document.getElementById('modalBody');
         const modalTitle = document.getElementById('modalTitle');
-        const modalFooter = document.getElementById('modalFooter');
         const saveButton = document.getElementById('saveButton');
 
         // Показать индикатор загрузки
@@ -262,10 +280,28 @@ async function openEditTableTypePricingModal(pricingId) {
         if (!response.ok) throw new Error('Не удалось загрузить данные');
         const pricingData = await response.json();
 
+        // Получить данные для select-ов заранее
+        const tableTypes = JSON.parse(document.getElementById('table-types-data').textContent);
+        const pricingPlans = JSON.parse(document.getElementById('pricing-plans-data').textContent);
+
+        // Генерация options для типов столов
+        let tableTypeOptions = '<option value="">Выберите тип</option>';
+        tableTypes.forEach(tableType => {
+            const selected = pricingData.table_type.id == tableType.id ? 'selected' : '';
+            tableTypeOptions += `<option value="${tableType.id}" ${selected}>${tableType.name}</option>`;
+        });
+
+        // Генерация options для тарифных планов
+        let pricingPlanOptions = '<option value="">Выберите тариф</option>';
+        pricingPlans.forEach(plan => {
+            const selected = pricingData.pricing_plan.id == plan.id ? 'selected' : '';
+            pricingPlanOptions += `<option value="${plan.id}" ${selected}>${plan.name}</option>`;
+        });
+
         // Заполнить форму
         const formHtml = `
             <form id="tableTypePricingForm" class="space-y-3">
-                {% csrf_token %}
+                <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
                 <input type="hidden" name="pricing_id" value="${pricingId}">
                 
                 <div class="space-y-3">
@@ -273,28 +309,19 @@ async function openEditTableTypePricingModal(pricingId) {
                         <label class="block text-sm font-medium text-gray-700 mb-1">Тип стола*</label>
                         <select name="table_type" required
                                 class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                            <option value="">Выберите тип</option>
-                            {% for table_type in table_types %}
-                            <option value="{{ table_type.id }}" ${pricingData.table_type.id === {{ table_type.id }} ? 'selected' : ''}>
-                                {{ table_type.name }}
-                            </option>
-                            {% endfor %}
+                            ${tableTypeOptions}
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Тарифный план*</label>
                         <select name="pricing_plan" required
                                 class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                            <option value="">Выберите тариф</option>
-                            {% for plan in pricing_plans %}
-                            <option value="{{ plan.id }}" ${pricingData.pricing_plan.id === {{ plan.id }} ? 'selected' : ''}>
-                                {{ plan.name }}
-                            </option>
-                            {% endfor %}
+                            ${pricingPlanOptions}
                         </select>
                     </div>
                 </div>
                 
+                <!-- Остальные поля формы остаются без изменений -->
                 <div class="space-y-3">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Цена за час (₽)*</label>
@@ -346,7 +373,6 @@ async function openEditTableTypePricingModal(pricingId) {
         showNotification(`Ошибка: ${error.message}`, 'error');
     }
 }
-
 // Сохранение новой цены
 async function saveTableTypePricing() {
     const form = document.getElementById('tableTypePricingForm');
