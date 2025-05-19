@@ -1,3 +1,5 @@
+//membership.js для обработки абонементов
+
 let currentMembershipId = null;
 
 // Открыть модалку для создания

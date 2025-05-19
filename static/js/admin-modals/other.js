@@ -1,5 +1,4 @@
-// ==============================================
-// Функции для модального окна Special Offer
+//   другие функции для всякого говна Функции для модального окна Special Offer
 // ==============================================
 
 /**
@@ -240,53 +239,106 @@ document.addEventListener('DOMContentLoaded', function () {
 /**
  * Открытие модального окна для редактирования Table Type Pricing
  */
+// Открытие модального окна для редактирования
 async function openEditTableTypePricingModal(pricingId) {
     try {
-        // Показываем индикатор загрузки
         const modal = document.getElementById('addTableTypePricingModal');
+        const modalBody = document.getElementById('modalBody');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalFooter = document.getElementById('modalFooter');
+        const saveButton = document.getElementById('saveButton');
 
-        modal.querySelector('.modal-content').innerHTML = `
-      <div class="flex justify-center items-center h-64">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    `;
+        // Показать индикатор загрузки
+        modalBody.innerHTML = `
+            <div class="flex justify-center items-center h-64">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+        `;
+
         openModal('addTableTypePricingModal');
 
-        // Загружаем данные ценообразования с сервера
+        // Загрузить данные с сервера
         const response = await fetch(`/settings/table-type-pricings/${pricingId}/`);
-        if (!response.ok) {
-            throw new Error('Не удалось загрузить данные ценообразования');
-        }
+        if (!response.ok) throw new Error('Не удалось загрузить данные');
         const pricingData = await response.json();
 
-        // Заполняем форму данными
-        const form = document.getElementById('tableTypePricingForm');
-        form.reset();
+        // Заполнить форму
+        const formHtml = `
+            <form id="tableTypePricingForm" class="space-y-3">
+                {% csrf_token %}
+                <input type="hidden" name="pricing_id" value="${pricingId}">
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Тип стола*</label>
+                        <select name="table_type" required
+                                class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            <option value="">Выберите тип</option>
+                            {% for table_type in table_types %}
+                            <option value="{{ table_type.id }}" ${pricingData.table_type.id === {{ table_type.id }} ? 'selected' : ''}>
+                                {{ table_type.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Тарифный план*</label>
+                        <select name="pricing_plan" required
+                                class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            <option value="">Выберите тариф</option>
+                            {% for plan in pricing_plans %}
+                            <option value="{{ plan.id }}" ${pricingData.pricing_plan.id === {{ plan.id }} ? 'selected' : ''}>
+                                {{ plan.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Цена за час (₽)*</label>
+                        <input type="number" name="hour_rate" required min="0" value="${pricingData.hour_rate}"
+                               class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Групповая цена (₽)*</label>
+                        <input type="number" name="hour_rate_group" required min="0" value="${pricingData.hour_rate_group}"
+                               class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    </div>
+                </div>
 
-        form.querySelector('[name="table_type"]').value = pricingData.table_type.id;
-        form.querySelector('[name="pricing_plan"]').value = pricingData.pricing_plan.id;
-        form.querySelector('[name="hour_rate"]').value = pricingData.hour_rate;
-        form.querySelector('[name="hour_rate_group"]').value = pricingData.hour_rate_group;
-        form.querySelector('[name="min_duration"]').value = pricingData.min_duration;
-        form.querySelector('[name="max_duration"]').value = pricingData.max_duration;
-        form.dataset.pricingId = pricingId;
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Минимальное время игры (мин)*</label>
+                        <input type="number" name="min_duration" required min="0" value="${pricingData.min_duration}"
+                               class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Максимальное время игры (мин)*</label>
+                        <input type="number" name="max_duration" required min="0" value="${pricingData.max_duration}"
+                               class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    </div>
+                </div>
 
-        // Восстанавливаем содержимое модального окна
-        modal.querySelector('.modal-content').innerHTML = `
-      <!-- Ваш HTML-код модального окна -->
-      <div class="modal-header">
-        <h3>Редактировать цены</h3>
-        <button onclick="closeModal('addTableTypePricingModal')">×</button>
-      </div>
-      <div class="modal-body">
-        <form id="tableTypePricingForm">
-          <!-- Поля формы -->
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button onclick="updateTableTypePricing()">Сохранить</button>
-      </div>
-    `;
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-lg text-xs">
+                    <div class="flex items-start">
+                        <svg class="h-4 w-4 text-yellow-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <p class="ml-2 text-yellow-700">
+                            Убедитесь, что такая комбинация типа стола и тарифа еще не существует
+                        </p>
+                    </div>
+                </div>
+            </form>
+        `;
+
+        modalBody.innerHTML = formHtml;
+        modalTitle.textContent = 'Редактировать цены для типа стола';
+
+        // Обновить обработчик сохранения
+        saveButton.onclick = () => updateTableTypePricing(pricingId);
 
     } catch (error) {
         console.error('Ошибка загрузки ценообразования:', error);
@@ -295,6 +347,141 @@ async function openEditTableTypePricingModal(pricingId) {
     }
 }
 
+// Сохранение новой цены
+async function saveTableTypePricing() {
+    const form = document.getElementById('tableTypePricingForm');
+    const saveButton = document.getElementById('saveButton');
+
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    try {
+        // Показать состояние загрузки
+        saveButton.innerHTML = `
+            <span class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" role="status"></span>
+            Сохранение...
+        `;
+        saveButton.disabled = true;
+
+        const formData = new FormData(form);
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        const response = await fetch('/settings/table-type-pricings/create/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Ошибка сервера');
+        }
+
+        showNotification('Цены успешно сохранены!', 'success');
+        closeModal('addTableTypePricingModal');
+
+        // Обновить страницу через 1 секунду
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+
+    } catch (error) {
+        console.error('Ошибка сохранения цен:', error);
+        showNotification(`Ошибка: ${error.message}`, 'error');
+    } finally {
+        saveButton.innerHTML = 'Сохранить';
+        saveButton.disabled = false;
+    }
+}
+
+// Обновление существующей цены
+async function updateTableTypePricing(pricingId) {
+    const form = document.getElementById('tableTypePricingForm');
+    const saveButton = document.getElementById('saveButton');
+
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    try {
+        // Показать состояние загрузки
+        saveButton.innerHTML = `
+            <span class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" role="status"></span>
+            Сохранение...
+        `;
+        saveButton.disabled = true;
+
+        const formData = new FormData(form);
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        const response = await fetch(`/settings/table-type-pricings/${pricingId}/update/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Ошибка сервера');
+        }
+
+        showNotification('Цены успешно обновлены!', 'success');
+        closeModal('addTableTypePricingModal');
+
+        // Обновить страницу через 1 секунду
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+
+    } catch (error) {
+        console.error('Ошибка обновления цен:', error);
+        showNotification(`Ошибка: ${error.message}`, 'error');
+    } finally {
+        saveButton.innerHTML = 'Сохранить';
+        saveButton.disabled = false;
+    }
+}
+
+// Универсальные функции для работы с модальными окнами
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    const backdrop = document.getElementById(`${modalId}Backdrop`);
+    const content = document.getElementById(`${modalId}Content`);
+
+    modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+
+    setTimeout(() => {
+        backdrop.classList.add('opacity-100');
+        content.classList.add('opacity-100', 'translate-y-0');
+    }, 10);
+}
+
+
+
+// Инициализация обработчиков
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработчики для кнопок редактирования
+    document.querySelectorAll('[onclick^="openEditTableTypePricingModal"]').forEach(btn => {
+        const match = btn.getAttribute('onclick').match(/openEditTableTypePricingModal\((\d+)\)/);
+        if (match) {
+            btn.addEventListener('click', () => openEditTableTypePricingModal(match[1]));
+        }
+    });
+});
+
+// Функция для показа уведомлений
+function showNotification(message, type = 'success') {
+    // Реализация показа уведомлений
+    alert(`${type.toUpperCase()}: ${message}`);
+}
 /**
  * Обновление ценообразования для типа стола
  */

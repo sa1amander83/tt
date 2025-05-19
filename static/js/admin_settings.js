@@ -1,3 +1,5 @@
+//общие функции админки
+
 document.addEventListener('DOMContentLoaded', function () {
     // Mobile menu toggle
     const mobileMenuButton = document.getElementById('mobile-menu-button');

@@ -1,3 +1,4 @@
+//функции бронирования
 document.addEventListener('DOMContentLoaded', function() {
     // Основные элементы
     const elements = {

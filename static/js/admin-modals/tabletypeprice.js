@@ -1,3 +1,5 @@
+//функции для работы с ценами на типы столов
+
 // Универсальная функция для закрытия модальных окон
 function closeModal(modalId) {
   const modal = document.getElementById(modalId);
