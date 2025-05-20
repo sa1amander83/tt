@@ -3,6 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, get_object_or_404
 from datetime import date, timedelta, time, datetime
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, UpdateView
 from django.http import JsonResponse
@@ -10,7 +11,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.core.exceptions import ValidationError
 import json
 
-from admin_settings.models import WorkingDay
+from admin_settings.models import WorkingDay, Holiday
 from events.forms import BookingForm
 from .models import Table, TableType, TimeSlot, Booking, BookingEquipment, Equipment, PricingPlan, TableTypePricing
 
@@ -174,26 +175,89 @@ def month_view(request):
     })
 
 
+from django.core.serializers import serialize
+
+
 def get_site_settings(request):
     try:
-        settings = WorkingDay.objects.first()
+        # Получаем текущий день недели (0-6, где 0 - понедельник)
+        today = timezone.now().date()
+        weekday = today.weekday()  # Python: 0=понедельник, 6=воскресенье
 
+        # Проверяем, является ли сегодня праздником
+        holiday = Holiday.objects.filter(date=today).first()
+
+        if holiday:
+            # Если сегодня праздник с особым режимом работы
+            if holiday.status == 'closed':
+                opening_time = None
+                closing_time = None
+            elif holiday.status == 'shortened' and holiday.open_time and holiday.close_time:
+                opening_time = holiday.open_time.strftime('%H:%M')
+                closing_time = holiday.close_time.strftime('%H:%M')
+            else:
+                # Обычный режим в праздник - берем стандартное время
+                working_day = WorkingDay.objects.get(day=weekday)
+                opening_time = working_day.open_time.strftime('%H:%M')
+                closing_time = working_day.close_time.strftime('%H:%M')
+        else:
+            # Обычный рабочий день
+            working_day = WorkingDay.objects.get(day=weekday)
+            opening_time = working_day.open_time.strftime('%H:%M')
+            closing_time = working_day.close_time.strftime('%H:%M')
+
+        # Получаем все рабочие дни для календаря
+        workdays = WorkingDay.objects.all().order_by('day')
+        workdays_data = [
+            {
+                'day': w.day,
+                'day_name': w.get_day_display(),
+                'open_time': w.open_time.strftime('%H:%M'),
+                'close_time': w.close_time.strftime('%H:%M'),
+                'is_open': w.is_open
+            }
+            for w in workdays
+        ]
+
+        # Получаем ближайшие праздники (на 3 месяца вперед)
+        upcoming_holidays = Holiday.objects.filter(
+            date__gte=today,
+            date__lte=today + timezone.timedelta(days=90)
+        ).order_by('date')
+
+        holidays_data = [
+            {
+                'date': h.date.strftime('%Y-%m-%d'),
+                'description': h.description,
+                'status': h.status,
+                'open_time': h.open_time.strftime('%H:%M') if h.open_time else None,
+                'close_time': h.close_time.strftime('%H:%M') if h.close_time else None
+            }
+            for h in upcoming_holidays
+        ]
 
         return JsonResponse({
-            'opening_time': {
-                'open_time': settings.opening_time,
-
+            'current_day': {
+                'is_holiday': bool(holiday),
+                'opening_time': opening_time,
+                'closing_time': closing_time,
+                'is_open': False if holiday and holiday.status == 'closed' else True
             },
-            'closing_time': {
-                'close_time': settings.closing_time,
-
-            }
+            'workdays': workdays_data,
+            'upcoming_holidays': holidays_data,
+            'status': 'success'
         })
+
+    except WorkingDay.DoesNotExist:
+        return JsonResponse({
+            'error': 'Working day configuration not found',
+            'status': 'error'
+        }, status=404)
     except Exception as e:
         return JsonResponse({
-            'error': str(e)
-        }, status=500)
-@require_GET
+            'error': str(e),
+            'status': 'error'
+        }, status=500)@require_GET
 def get_user_bookings(request):
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Not authenticated'}, status=401)
@@ -509,12 +573,15 @@ def day_calendar_api(request, selected_date, tables, status_filter):
     for table in tables:
         table_slots = time_slots.filter(table=table)
         for slot in table_slots:
+            time_str = slot.start_time.strftime('%H:%M')
             booking = bookings.filter(timeslot=slot).first()
-            schedule[f"{table.id}-{slot.start_time.hour}"] = {
-                'is_available': booking is None,
-                'booking_id': booking.id if booking else None,
+            schedule[f"{table.id}-{time_str}"] = {
                 'status': booking.status if booking else 'available',
-                'slot_id': slot.id
+                'slot_id': slot.id,
+                'booking': {
+                    'status': booking.status,
+                    'id': booking.id
+                } if booking else None
             }
 
     return JsonResponse({
@@ -529,7 +596,6 @@ def day_calendar_api(request, selected_date, tables, status_filter):
         'time_slots': [t.start_time.strftime('%H:%M') for t in time_slots],
         'schedule': schedule
     })
-
 
 # Остальные API view (week_calendar_api, month_calendar_api) аналогично адаптируются
 
