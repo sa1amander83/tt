@@ -10,10 +10,11 @@ from django.views.decorators.http import require_GET, require_POST
 from django.core.exceptions import ValidationError
 import json
 
+from admin_settings.models import WorkingDay
 from events.forms import BookingForm
 from .models import Table, TableType, TimeSlot, Booking, BookingEquipment, Equipment, PricingPlan, TableTypePricing
 
-from admin_settings.models import SiteSettings
+
 
 
 def booking_view(request):
@@ -175,7 +176,7 @@ def month_view(request):
 
 def get_site_settings(request):
     try:
-        settings = SiteSettings.objects.first()
+        settings = WorkingDay.objects.first()
 
 
         return JsonResponse({

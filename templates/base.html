@@ -78,6 +78,14 @@
                 <li class="py-2"><a href="{% url 'main:index' %}"
                                     class="block mobile-menu-link  hover:text-green-200 font-medium">Главная</a>
                 </li>
+
+
+
+
+              {% if not user.is_authenticated %}
+                    <li><a href="{% url 'accounts:signin' %}" class="hover:text-green-200">Вход</a></li>
+                    <li><a href="{% url 'accounts:signup' %}" class="hover:text-green-200">Регистрация</a></li>
+                {% endif %}
                 <li class="py-2"><a href="{% url 'bookings:bookings' %}"
                                     class="block mobile-menu-link hover:text-green-200">Бронирование</a>
                 </li>

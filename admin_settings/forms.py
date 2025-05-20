@@ -1,6 +1,6 @@
 from django import forms
 
-from admin_settings.models import MembershipType, SpecialOffer, Holiday, ClubSettings, SiteSettings, WorkingDay
+from admin_settings.models import MembershipType, SpecialOffer, Holiday, ClubSettings,  WorkingDay
 from bookings.models import Table, TableType, PricingPlan, TableTypePricing
 
 
@@ -36,7 +36,7 @@ class TableForm(forms.ModelForm):
 
 
 from django import forms
-from admin_settings.models import MembershipType, SpecialOffer, Holiday, ClubSettings, SiteSettings
+from admin_settings.models import MembershipType, SpecialOffer, Holiday, ClubSettings
 from bookings.models import Table, TableType, PricingPlan, TableTypePricing
 
 

@@ -47,25 +47,6 @@ class SingletonModel(models.Model):
 
 from django.db import models
 
-class SiteSettings(models.Model):
-    opening_time = models.TimeField(default='09:00')
-    closing_time = models.TimeField(default='21:00')
-    slot_duration_minutes = models.PositiveIntegerField(default=60)
-
-    # Дополнительно: выходные
-    weekend_days = models.JSONField(default=list, help_text='Список выходных, например ["Saturday", "Sunday"]')
-
-    def get_opening_time_display(self):
-        return self.opening_time.strftime("%H:%M") if self.opening_time else "09:00"
-
-    def get_closing_time_display(self):
-        return self.closing_time.strftime("%H:%M") if self.closing_time else "22:00"
-    def __str__(self):
-        return "Настройки сайта"
-
-    class Meta:
-        verbose_name = "Настройка сайта"
-        verbose_name_plural = "Настройки сайта"
 
 
 class LoyaltyProfile(models.Model):
