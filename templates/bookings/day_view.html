@@ -1,6 +1,8 @@
+<!-- day_view.html -->
 {% load custom_tags %}
 
 <div id="day-view-container" class="calendar-container overflow-x-auto">
+    {% if is_working_day %}
     <div class="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
         <!-- Заголовки столов -->
         <div class="flex border-b border-gray-200 bg-gray-50">
@@ -22,33 +24,42 @@
                 </div>
 
                 <!-- Ячейки столов -->
-                <div class="flex-1 grid grid-cols-{{ tables|length }} divide-x divide-gray-200">
+                <div class="flex-1 grid {{ cols_class }} divide-x divide-gray-200">
                     {% for table in tables %}
-                        {% with schedule|get_item:table.id|get_item:hour as booking %}
-                            <div class="flex items-center justify-center p-2
+                        {% with schedule|get_item:table.id as table_schedule %}
+                            {% with table_schedule|get_item:hour as booking %}
+                                <div class="flex items-center justify-center p-2 min-h-12
                                     {% if booking %}
                                         bg-red-100 hover:bg-red-200
                                     {% else %}
                                         bg-green-100 hover:bg-green-200 cursor-pointer booking-slot-available
                                     {% endif %}"
                                     {% if not booking %}
-                                 data-time="{{ hour|time:'H:i' }}"
-                                 data-table="{{ table.id }}"
+                                        data-date="{{ selected_date|date:'Y-m-d' }}"
+                                        data-time="{{ hour|time:'H:i' }}"
+                                        data-table="{{ table.id }}"
                                     {% endif %}>
-                                <span class="text-sm">
-                                    {% if booking %}
-                                        <span class="text-red-800">Занято</span>
-                                    {% else %}
-                                        <span class="text-green-800">Свободно</span>
-                                    {% endif %}
-                                </span>
-                            </div>
+                                    <span class="text-sm">
+                                        {% if booking %}
+                                            <span class="text-red-800">Занято</span>
+                                        {% else %}
+                                            <span class="text-green-800">Свободно</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            {% endwith %}
                         {% endwith %}
                     {% endfor %}
                 </div>
             </div>
         {% endfor %}
     </div>
+    {% else %}
+        <div class="text-center py-8 bg-gray-100 rounded-lg">
+            <h3 class="text-lg font-medium text-gray-700">Сегодня выходной день</h3>
+            <p class="text-gray-500 mt-2">Бронирование столов недоступно</p>
+        </div>
+    {% endif %}
 </div>
 
 <div id="user-bookings-container"></div>
