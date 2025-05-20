@@ -1,74 +1,74 @@
-{% extends 'base.html' %}
-{% load static %}
+    {% extends 'base.html' %}
+    {% load static %}
 
-{% block content %}
-    <main class="container mx-auto px-4 py-8">
-        <h1 class="text-2xl font-bold mb-8">Настройки клуба</h1>
+    {% block content %}
+        <main class="container mx-auto px-4 py-8">
+            <h1 class="text-2xl font-bold mb-8">Настройки клуба</h1>
 
-        <!-- Settings Tabs - исправленная версия -->
-        <div class="mb-8 overflow-x-auto">
-            <div class="border-b border-gray-200 w-max min-w-full">
-                <nav class="-mb-px flex space-x-8 overflow-x-auto pb-2">
-                    <a href="{% url 'admin_settings:club_settings' 'tables' %}"
-                       class="{% if active_tab == 'tables' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                        Столы
-                    </a>
-                    <a href="{% url 'admin_settings:club_settings' 'pricing' %}"
-                       class="{% if active_tab == 'pricing' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                        Цены
-                    </a>
+            <!-- Settings Tabs - исправленная версия -->
+            <div class="mb-8 overflow-x-auto">
+                <div class="border-b border-gray-200 w-max min-w-full">
+                    <nav class="-mb-px flex space-x-8 overflow-x-auto pb-2">
+                        <a href="{% url 'admin_settings:club_settings' 'tables' %}"
+                           class="{% if active_tab == 'tables' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                            Столы
+                        </a>
+                        <a href="{% url 'admin_settings:club_settings' 'pricing' %}"
+                           class="{% if active_tab == 'pricing' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                            Цены
+                        </a>
 
-                    <a href="{% url 'admin_settings:club_settings' 'memberships' %}"
-                       class="{% if active_tab == 'memberships' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                        Абонементы
-                    </a>
+                        <a href="{% url 'admin_settings:club_settings' 'memberships' %}"
+                           class="{% if active_tab == 'memberships' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                            Абонементы
+                        </a>
 
-                    <a href="{% url 'admin_settings:club_settings' 'schedule' %}"
-                       class="{% if active_tab == 'schedule' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                        Расписание
-                    </a>
-                    <a href="{% url 'admin_settings:club_settings' 'general' %}"
-                       class="{% if active_tab == 'general' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                        Общие
-                    </a>
-                </nav>
+                        <a href="{% url 'admin_settings:club_settings' 'schedule' %}"
+                           class="{% if active_tab == 'schedule' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                            Расписание
+                        </a>
+                        <a href="{% url 'admin_settings:club_settings' 'general' %}"
+                           class="{% if active_tab == 'general' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                            Общие
+                        </a>
+                    </nav>
+                </div>
             </div>
-        </div>
 
-        <!-- Остальной код остается без изменений -->
-        {% if active_tab == 'tables' %}
-            {% include 'admin/settings_templates/tables_settings.html' %}
-        {% elif active_tab == 'pricing' %}
-            {% include 'admin/settings_templates/pricing_settings.html' %}
-        {% elif active_tab == 'memberships' %}
-            {% include 'admin/settings_templates/memberships_settings.html' %}
-        {% elif active_tab == 'schedule' %}
-            {% include 'admin/settings_templates/schedule_settings.html' %}
-        {% elif active_tab == 'general' %}
-            {% include 'admin/settings_templates/general_settings.html' %}
-        {% endif %}
-    </main>
+            <!-- Остальной код остается без изменений -->
+            {% if active_tab == 'tables' %}
+                {% include 'admin/settings_templates/tables_settings.html' %}
+            {% elif active_tab == 'pricing' %}
+                {% include 'admin/settings_templates/pricing_settings.html' %}
+            {% elif active_tab == 'memberships' %}
+                {% include 'admin/settings_templates/memberships_settings.html' %}
+            {% elif active_tab == 'schedule' %}
+                {% include 'admin/settings_templates/schedule_settings.html' %}
+            {% elif active_tab == 'general' %}
+                {% include 'admin/settings_templates/general_settings.html' %}
+            {% endif %}
+        </main>
 
-    <footer class="bg-gray-800 text-white py-8 mt-12">
-        <div class="container mx-auto px-4">
-            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
-                <p>&copy; {% now "Y" %} PingPong Club. Панель администратора.</p>
+        <footer class="bg-gray-800 text-white py-8 mt-12">
+            <div class="container mx-auto px-4">
+                <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                    <p>&copy; {% now "Y" %} PingPong Club. Панель администратора.</p>
+                </div>
             </div>
-        </div>
-    </footer>
+        </footer>
 
-{% endblock %}
+    {% endblock %}
 
-{% block extrascripts %}
-    {{ block.super }}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
-<script src="{% static 'js/ru.js' %}"></script>
-<script src="{% static 'js/admin_settings.js' %}"></script>
-<script src="{% static 'js/admin-modals/table_pricing.js' %}"></script>
-<script src="{% static 'js/admin-modals/special_offers.js' %}"></script>
-<script src="{% static 'js/admin-modals/other.js' %}"></script>
-<script src="{% static 'js/admin-modals/tabletypeprice.js' %}"></script>
-<script src="{% static 'js/admin-modals/schedule.js' %}"></script>
-<script src="{% static 'js/admin-modals/membership.js' %}"></script>
+    {% block extrascripts %}
+        {{ block.super }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+    <script src="{% static 'js/ru.js' %}"></script>
+    <script src="{% static 'js/admin_settings.js' %}"></script>
+    <script src="{% static 'js/admin-modals/table_pricing.js' %}"></script>
+    <script src="{% static 'js/admin-modals/special_offers.js' %}"></script>
+    <script src="{% static 'js/admin-modals/other.js' %}"></script>
+    <script src="{% static 'js/admin-modals/tabletypeprice.js' %}"></script>
+    <script src="{% static 'js/admin-modals/schedule.js' %}"></script>
+    <script src="{% static 'js/admin-modals/membership.js' %}"></script>
 
-{% endblock %}
+    {% endblock %}

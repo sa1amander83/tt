@@ -1,5 +1,14 @@
 /* Additional custom styles */
+#mobile-menu {
+    transition: all 0.3s ease;
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+}
 
+/* Блокировка прокрутки при открытом меню */
+body.overflow-hidden {
+    overflow: hidden;
+}
 /* Table card hover effect */
 .table-card {
     transition: all 0.3s ease;
