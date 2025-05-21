@@ -663,69 +663,73 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // Генерация недельного представления
-    function generateWeekView(data) {
-        if (!data.days_of_week?.length || !data.tables?.length) {
-            return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
-        }
 
-        let html = `
-        <div class="overflow-x-auto">
-            <table class="min-w-full border-collapse">
-                <thead>
-                    <tr>
-                        <th class="p-2 border-b">Стол / День</th>
-                        ${data.days_of_week.map(day => {
-            const date = new Date(day);
-            return `<th class="p-2 border-b">${date.getDate()}</th>`;
-        }).join('')}
-                    </tr>
-                </thead>
-                <tbody>
-    `;
-
-        data.tables.forEach(table => {
-            html += `
-            <tr>
-                <td class="p-2 border-b">
-                    Стол #${table.number}<br>
-                    <span class="text-xs text-gray-500">${table.type}</span>
-                </td>
-        `;
-
-            data.days_of_week.forEach(day => {
-                const key = `${table.id}-${day}`;
-                const dayBookings = data.week_schedule[key] || [];
-
-                html += `<td class="p-2 border-b">`;
-
-                if (dayBookings.length > 0) {
-                    dayBookings.forEach(booking => {
-                        html += `
-                        <div class="mb-1 p-1 text-sm rounded 
-                            ${booking.status === 'available' ? 'bg-green-100' : 'bg-red-100'}">
-                            ${booking.start}-${booking.end}
-                        </div>
-                    `;
-                    });
-                } else {
-                    html += '<div class="text-sm text-gray-400">Нет броней</div>';
-                }
-
-                html += `</td>`;
-            });
-
-            html += `</tr>`;
-        });
-
-        html += `
-                </tbody>
-            </table>
-        </div>
-    `;
-
-        return html;
+    // Функция для генерации таблицы недели
+function generateWeekView(data) {
+    if (!data.days_of_week?.length || !data.tables?.length) {
+        return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
     }
 
+    let html = `
+    <div class="overflow-x-auto">
+        <table class="min-w-full border-collapse" border="1" cellspacing="0" cellpadding="4">
+            <thead>
+                <tr>
+                    <th>Стол / День</th>
+                    ${data.days_of_week.map(day => {
+                        const date = new Date(day);
+                        return `<th>${date.getDate()}</th>`;
+                    }).join('')}
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    data.tables.forEach(table => {
+        html += `
+        <tr>
+            <td>
+                Стол #${table.number}<br>
+                <small>${table.table_type || ''}</small>
+            </td>
+        `;
+
+        data.days_of_week.forEach(day => {
+            const availability = data.week_schedule[table.id] ? data.week_schedule[table.id][day] : null;
+
+            if (!availability) {
+                html += `<td style="background:#eee; color:#999; text-align:center;">Нет данных</td>`;
+                return;
+            }
+
+            if (!availability.is_working_day) {
+                html += `<td style="background:#f0f0f0; color:#777; text-align:center;">Выходной</td>`;
+            } else if (availability.total_slots === 0) {
+                html += `<td style="background:#ddd; color:#555; text-align:center;">Нет слотов</td>`;
+            } else if (availability.booked_slots === availability.total_slots) {
+                html += `<td style="background:#f8d7da; color:#721c24; text-align:center;">
+                    ${availability.booked_slots}/${availability.total_slots}
+                </td>`;
+            } else {
+                html += `<td style="background:#d4edda; color:#155724; text-align:center;">
+                    ${availability.booked_slots}/${availability.total_slots}
+                </td>`;
+            }
+        });
+
+        html += `</tr>`;
+    });
+
+    html += `
+            </tbody>
+        </table>
+    </div>
+    `;
+
+    return html;
+}
+    // Вставляем сгенерированную таблицу в контейнер
+    document.getElementById('week-view-container').innerHTML = generateWeekView(weekData);
     // Генерация месячного представления
     function generateMonthView(data) {
         if (!data.weeks?.length || !data.tables?.length || !data.weeks[0]?.length) {

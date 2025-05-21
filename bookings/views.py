@@ -229,33 +229,27 @@ def week_view(request):
     table_filter = request.GET.get('table', 'all')
     status_filter = request.GET.get('status', 'all')
 
-    # Определяем начало и конец недели
     start_of_week = selected_date - timedelta(days=selected_date.weekday())
     end_of_week = start_of_week + timedelta(days=6)
     days_of_week = [start_of_week + timedelta(days=i) for i in range(7)]
 
-    # Получаем столы
     tables = Table.objects.filter(is_active=True).order_by('number')
     if table_filter != 'all':
         tables = tables.filter(id=table_filter)
 
-    # Получаем бронирования на неделю
     bookings = Booking.objects.filter(
         timeslot__start_time__date__range=(start_of_week, end_of_week)
     )
     if status_filter != 'all':
         bookings = bookings.filter(status=status_filter)
 
-    # Получаем рабочие дни
     workdays = WorkingDay.objects.all()
     holidays = Holiday.objects.filter(date__range=(start_of_week, end_of_week))
 
-    # Формируем данные для шаблона
     week_schedule = {}
     for table in tables:
         table_schedule = {}
         for day in days_of_week:
-            # Проверяем, рабочий ли день
             weekday = day.weekday()
             working_day = next((wd for wd in workdays if wd.day == weekday), None)
             holiday = next((h for h in holidays if h.date == day), None)
@@ -264,7 +258,6 @@ def week_view(request):
             if holiday:
                 is_working_day = holiday.status != 'closed'
 
-            # Получаем временные слоты для этого дня и стола
             slots = TimeSlot.objects.filter(
                 table=table,
                 start_time__date=day,
@@ -272,7 +265,6 @@ def week_view(request):
                 is_blocked=False
             )
 
-            # Получаем бронирования
             booked_slots = bookings.filter(timeslot__in=slots).count()
             total_slots = slots.count() if is_working_day else 0
 
@@ -284,7 +276,6 @@ def week_view(request):
 
         week_schedule[table.id] = table_schedule
 
-    # Бронирования текущего пользователя
     user_bookings = []
     if request.user.is_authenticated:
         user_bookings = Booking.objects.filter(
@@ -292,10 +283,15 @@ def week_view(request):
             timeslot__start_time__date__range=(start_of_week, end_of_week)
         ).order_by('timeslot__start_time')
 
-    return render(request, "bookings/week_view.html", {
-        "tables": tables,
+    # Подготавливаем JSON-данные для JS
+    week_data = {
         "days_of_week": [d.isoformat() for d in days_of_week],
+        "tables": list(tables.values('id', 'number', 'table_type')),
         "week_schedule": week_schedule,
+    }
+
+    return render(request, "bookings/week_view.html", {
+        "week_data_json": json.dumps(week_data, cls=DjangoJSONEncoder),
         "user_bookings": user_bookings,
         "start_of_week": start_of_week,
         "status_filter": status_filter,
