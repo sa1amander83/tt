@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.serializers.json import DjangoJSONEncoder
 from django.shortcuts import render, get_object_or_404
 from datetime import date, timedelta, time, datetime
 from django.urls import reverse_lazy
@@ -52,7 +53,6 @@ def booking_view(request):
 
 
 @require_GET
-
 def day_view(request):
     selected_date_str = request.GET.get("date", date.today().isoformat())
     selected_date = date.fromisoformat(selected_date_str)
@@ -140,63 +140,49 @@ def day_view(request):
     })
 
 @require_GET
+@require_GET
 def day_calendar_api(request, selected_date, tables, status_filter):
     weekday = selected_date.weekday()
-    try:
-        working_day = WorkingDay.objects.get(day=weekday)
-        is_working_day = working_day.is_open
-    except WorkingDay.DoesNotExist:
-        is_working_day = False
-        working_day = None
+    is_working_day = False
+    opening_time, closing_time = time(9, 0), time(22, 0)
 
+    working_day = WorkingDay.objects.filter(day=weekday).first()
     holiday = Holiday.objects.filter(date=selected_date).first()
+
+    if working_day:
+        is_working_day = working_day.is_open
+        opening_time, closing_time = working_day.open_time, working_day.close_time
+
     if holiday:
-        is_working_day = holiday.status != 'closed'
+        if holiday.status == 'closed':
+            is_working_day = False
+        elif holiday.status == 'shortened':
+            opening_time = holiday.open_time or opening_time
+            closing_time = holiday.close_time or closing_time
 
-    # Время работы
-    opening_time = time(9, 0)
-    closing_time = time(22, 0)
-
-    if is_working_day and working_day:
-        opening_time = working_day.open_time
-        closing_time = working_day.close_time
-
-        if holiday and holiday.status == 'shortened':
-            if holiday.open_time:
-                opening_time = holiday.open_time
-            if holiday.close_time:
-                closing_time = holiday.close_time
-
-    # Временные слоты
     time_slots = []
     current_dt = datetime.combine(selected_date, opening_time)
     closing_dt = datetime.combine(selected_date, closing_time)
-
     while current_dt < closing_dt:
         time_slots.append(current_dt.time())
         current_dt += timedelta(hours=1)
 
-    # Бронирования
-    bookings = Booking.objects.filter(
-        timeslot__start_time__date=selected_date,
-        timeslot__is_available=False
-    ) if is_working_day else Booking.objects.none()
+    bookings_qs = Booking.objects.none()
+    if is_working_day:
+        bookings_qs = Booking.objects.filter(
+            timeslot__start_time__date=selected_date,
+            timeslot__is_available=False
+        ).select_related('timeslot', 'timeslot__table')
+        if status_filter != 'all':
+            bookings_qs = bookings_qs.filter(status=status_filter)
 
-    if status_filter != 'all':
-        bookings = bookings.filter(status=status_filter)
+    bookings_map = {(b.timeslot.table.id, b.timeslot.start_time.time()): b for b in bookings_qs}
 
-    # Расписание
     schedule = {}
     for table in tables:
         table_schedule = {}
         for slot_time in time_slots:
-            slot_dt = timezone.make_aware(datetime.combine(selected_date, slot_time))
-            booking = bookings.filter(
-                timeslot__table=table,
-                timeslot__start_time__lte=slot_dt,
-                timeslot__end_time__gt=slot_dt
-            ).first()
-
+            booking = bookings_map.get((table.id, slot_time))
             time_str = slot_time.strftime('%H:%M')
             table_schedule[time_str] = {
                 'status': booking.status if booking else 'available',
@@ -205,13 +191,13 @@ def day_calendar_api(request, selected_date, tables, status_filter):
                     'status': booking.status
                 } if booking else None
             }
-
         schedule[table.id] = table_schedule
 
     return JsonResponse({
         'view': 'day',
         'date': selected_date.isoformat(),
         'is_working_day': is_working_day,
+        'cols_class': f'grid-cols-{len(tables)}',
         'tables': [{
             'id': t.id,
             'number': t.number,

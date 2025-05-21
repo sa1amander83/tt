@@ -1,5 +1,4 @@
 //функции бронирования
-
 document.addEventListener('DOMContentLoaded', async function () {
     // Конфигурация API
     const API_ENDPOINTS = {
@@ -8,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         CALENDAR: '/bookings/api/calendar/',
         BOOKINGS: '/bookings/api/bookings/',
         CALCULATE: '/bookings/api/calculate/',
+
         USER_BOOKINGS: '/bookings/api/user-bookings/',
         SITE_SETTINGS: '/bookings/api/site-settings/'
     };
@@ -366,9 +366,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             showError(error.message);
         }
     }
-
     // Загрузка бронирований пользователя
     async function loadUserBookings() {
+
         try {
             const response = await fetch(API_ENDPOINTS.USER_BOOKINGS);
             if (!response.ok) throw new Error('Ошибка загрузки бронирований');
@@ -594,8 +594,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // Генерация дневного представления
-    function generateDayView(data) {
-         if (data.is_working_day === false) {
+function generateDayView(data) {
+    if (data.is_working_day === false) {
         return `
             <div class="text-center py-8 bg-gray-100 rounded-lg">
                 <h3 class="text-lg font-medium text-gray-700">Сегодня выходной день</h3>
@@ -604,64 +604,63 @@ document.addEventListener('DOMContentLoaded', async function () {
         `;
     }
 
-          if (!data.tables?.length || !data.time_slots?.length) {
-            return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
-        }
-
-        let html = `
-        <div class="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
-            <div class="flex border-b border-gray-200 bg-gray-50">
-                <div class="w-24 md:w-32 flex-shrink-0 p-3"></div>
-                ${data.tables.map(table => `
-                    <div class="flex-1 p-3 text-center font-medium">
-                        Стол #${table.number}<br>
-                        <span class="lg:text-xl text-gray-500">${table.type}</span>
-                    </div>
-                `).join('')}
-            </div>
-    `;
-
-        data.time_slots.forEach(slot => {
-            html += `
-            <div class="flex border-b border-gray-200 last:border-b-0">
-                <div class="w-24 md:w-32 flex-shrink-0 p-3 text-right text-sm text-gray-500">
-                    ${slot}
-                </div>
-                <div class="flex-1 grid grid-cols-${data.tables.length} divide-x divide-gray-200">
-        `;
-
-            data.tables.forEach(table => {
-                const slotData = data.schedule[table.id]?.[slot] || {};
-                const isAvailable = slotData.status === 'available';
-                const bookingStatus = slotData.booking?.status || 'Занято';
-
-                html += `
-                <div class="flex items-center justify-center p-2 min-h-12
-                    ${isAvailable ?
-                    'bg-green-100 hover:bg-green-200 cursor-pointer booking-slot-available' :
-                    'bg-red-100 hover:bg-red-200'}
-                    "
-                    data-date="${data.date}"
-                    data-time="${slot}"
-                    data-table="${table.id}"
-                    data-slot-id="${slotData.slot_id || ''}">
-                    <span class="text-sm ${isAvailable ? 'text-green-800' : 'text-red-800'}">
-                        ${isAvailable ? 'Свободно' : bookingStatus}
-                    </span>
-                </div>
-            `;
-            });
-
-            html += `
-                </div>
-            </div>
-        `;
-        });
-
-        html += '</div>';
-        return html;
+    if (!data.tables?.length || !data.time_slots?.length) {
+        return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
     }
 
+    let html = `
+    <div class="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+        <div class="flex border-b border-gray-200 bg-gray-50">
+            <div class="w-24 md:w-32 flex-shrink-0 p-3"></div>
+            ${data.tables.map(table => `
+                <div class="flex-1 p-3 text-center font-medium">
+                    Стол #${table.number}<br>
+                    <span class="text-sm text-gray-500">${table.type}</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    data.time_slots.forEach(slot => {
+        html += `
+        <div class="flex border-b border-gray-200 last:border-b-0">
+            <div class="w-24 md:w-32 flex-shrink-0 p-3 text-right text-sm text-gray-500">
+                ${slot}
+            </div>
+            <div class="flex-1 grid grid-cols-${data.tables.length} divide-x divide-gray-200">
+        `;
+
+        data.tables.forEach(table => {
+            const slotData = data.schedule[table.id]?.[slot] || {};
+            const isAvailable = slotData.status === 'available';
+            const bookingStatus = slotData.booking?.status || 'Занято';
+
+            html += `
+            <div class="flex items-center justify-center p-2 min-h-12
+                ${isAvailable ?
+                'bg-green-100 hover:bg-green-200 cursor-pointer booking-slot-available' :
+                'bg-red-100 hover:bg-red-200'}
+                "
+                data-date="${data.date}"
+                data-time="${slot}"
+                data-table="${table.id}"
+                data-slot-id="${slotData.slot_id || ''}">
+                <span class="text-sm ${isAvailable ? 'text-green-800' : 'text-red-800'}">
+                    ${isAvailable ? 'Свободно' : bookingStatus}
+                </span>
+            </div>
+            `;
+        });
+
+        html += `
+            </div>
+        </div>
+        `;
+    });
+
+    html += '</div>';
+    return html;
+}
     // Генерация недельного представления
 
     // Функция для генерации таблицы недели
@@ -729,7 +728,6 @@ function generateWeekView(data) {
     return html;
 }
     // Вставляем сгенерированную таблицу в контейнер
-    document.getElementById('week-view-container').innerHTML = generateWeekView(weekData);
     // Генерация месячного представления
     function generateMonthView(data) {
         if (!data.weeks?.length || !data.tables?.length || !data.weeks[0]?.length) {
