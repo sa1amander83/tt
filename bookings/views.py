@@ -629,6 +629,7 @@ def calendar_api(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 from collections import defaultdict
+@require_GET
 def month_calendar_api(request, selected_date, tables, status_filter):
     first_day = selected_date.replace(day=1)
     next_month = first_day.replace(month=first_day.month % 12 + 1, day=1) if first_day.month < 12 else first_day.replace(year=first_day.year + 1, month=1, day=1)
@@ -674,53 +675,74 @@ def month_calendar_api(request, selected_date, tables, status_filter):
         'schedule': schedule
     })
 
-def week_calendar_api(request, selected_date, tables, status_filter):
+@require_GET
+
+def week_calendar_api(request):
+    selected_date = datetime.today().date()
     start_of_week = selected_date - timedelta(days=selected_date.weekday())
     end_of_week = start_of_week + timedelta(days=6)
 
-    # Загружаем слоты на неделю
+    tables = Table.objects.filter(is_active=True).select_related('table_type')
+
     time_slots = TimeSlot.objects.filter(
         start_time__date__range=(start_of_week, end_of_week),
         is_available=True,
         is_blocked=False
-    ).order_by('start_time')
+    ).select_related('table')
 
-    # Загружаем бронирования
-    bookings = Booking.objects.filter(timeslot__start_time__date__range=(start_of_week, end_of_week))
-    if status_filter != 'all':
-        bookings = bookings.filter(status=status_filter)
+    bookings = Booking.objects.filter(
+        timeslot__start_time__date__range=(start_of_week, end_of_week)
+    ).select_related('timeslot', 'timeslot__table')
 
-    # Структура: { "table_id-date": [слоты] }
-    schedule = defaultdict(list)
+    booking_map = {b.timeslot_id: b for b in bookings}
 
-    for table in tables:
-        table_slots = time_slots.filter(table=table)
-        for slot in table_slots:
-            date_str = slot.start_time.date().isoformat()
-            booking = bookings.filter(timeslot=slot).first()
-            schedule[f"{table.id}-{date_str}"].append({
-                'start': slot.start_time.strftime('%H:%M'),
-                'end': slot.end_time.strftime('%H:%M'),
-                'booking_id': booking.id if booking else None,
-                'status': booking.status if booking else 'available',
-                'slot_id': slot.id
-            })
+    week_schedule = defaultdict(lambda: defaultdict(list))
 
-    return JsonResponse({
+    for slot in time_slots:
+        table_id = slot.table.id
+        date_str = slot.start_time.date().isoformat()
+        booking = booking_map.get(slot.id)
+
+        week_schedule[table_id][date_str].append({
+            'start': slot.start_time.strftime('%H:%M'),
+            'end': slot.end_time.strftime('%H:%M'),
+            'slot_id': slot.id,
+            'booking_id': booking.id if booking else None,
+            'status': booking.status if booking else 'available',
+        })
+
+    if request.user.is_authenticated:
+        user_bookings = Booking.objects.filter(
+            user=request.user,
+            timeslot__start_time__date__range=(start_of_week, end_of_week)
+        ).select_related('timeslot', 'timeslot__table')
+    else:
+        user_bookings = []
+
+    user_bookings_data = [{
+        'date': booking.timeslot.start_time.date().isoformat(),
+        'start': booking.timeslot.start_time.strftime('%H:%M'),
+        'end': booking.timeslot.end_time.strftime('%H:%M'),
+        'table_number': booking.timeslot.table.number,
+        'status': booking.get_status_display()
+    } for booking in user_bookings]
+
+    response_data = {
         'view': 'week',
         'start_of_week': start_of_week.isoformat(),
         'end_of_week': end_of_week.isoformat(),
         'tables': [{
-            'id': t.id,
-            'number': t.number,
-            'type': t.table_type.name,
-            'capacity': t.table_type.default_capacity
-        } for t in tables],
+            'id': table.id,
+            'number': table.number,
+            'table_type': table.table_type.name,
+            'capacity': table.table_type.default_capacity
+        } for table in tables],
         'days': [(start_of_week + timedelta(days=i)).isoformat() for i in range(7)],
-        'schedule': schedule
-    })
+        'week_schedule': week_schedule,
+        'user_bookings': user_bookings_data
+    }
 
-# def day_calendar_api(request, selected_date, tables, status_filter):
+    return JsonResponse(response_data, safe=False)# def day_calendar_api(request, selected_date, tables, status_filter):
 #     time_slots = TimeSlot.objects.filter(
 #         start_time__date=selected_date,
 #         is_available=True,

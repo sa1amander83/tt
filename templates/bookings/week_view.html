@@ -1,88 +1,29 @@
-{% load custom_tags %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Календарь на неделю</title>
+{#    <script defer src="{% static 'js/week_calendar.js' %}"></script>#}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css">
+</head>
+<body class="p-6 bg-gray-50 text-gray-800">
+    <h1 class="text-2xl font-bold mb-6">Расписание на неделю</h1>
 
-<div class="overflow-x-auto" id="week-view-container">
-    <div class="min-w-[800px]">
-        <!-- Заголовки дней недели -->
-        <div class="grid grid-cols-8 gap-1 mb-2">
-            <div class="p-2 font-medium"></div>
-            {% for day in days_of_week %}
-                {% with day_date=day|parse_date %}
-                <div class="p-2 text-center font-medium">
-                    <div>{{ day_date|date:"D" }}</div>
-                    <div>{{ day_date.day }}</div>
-                </div>
-                {% endwith %}
-            {% endfor %}
-        </div>
+    <div class="overflow-x-auto">
+        <div id="week-view-container" class="min-w-[800px]"></div>
+    </div>
 
-        <!-- Таблица доступности столов -->
-        <div class="grid grid-cols-8 gap-1">
-            <!-- Первый столбец - номера столов -->
-            <div class="flex flex-col">
-                {% for table in tables %}
-                <div class="p-2 border-b flex flex-col items-start">
-                    <span class="font-medium">Стол #{{ table.number }}</span>
-                    <span class="text-xs text-gray-500">{{ table.table_type }}</span>
-                </div>
-                {% endfor %}
-            </div>
-
-            <!-- Ячейки с доступностью -->
-            {% for day in days_of_week %}
-            <div class="flex flex-col">
-                {% for table in tables %}
-                    {% with availability=week_schedule|get_item:table.id|get_item:day %}
-                    <div class="p-2 border-b text-center text-sm min-h-12 flex items-center justify-center
-                        {% if not availability.is_working_day %}
-                            bg-gray-100 text-gray-400 cursor-not-allowed
-                        {% elif availability.total_slots == 0 %}
-                            bg-gray-200 text-gray-600 cursor-not-allowed
-                        {% elif availability.booked_slots == availability.total_slots %}
-                            bg-red-100 text-red-800
-                        {% elif availability.booked_slots > 0 %}
-                            bg-yellow-100 text-yellow-800 cursor-pointer slot-available
-                        {% else %}
-                            bg-green-100 text-green-800 cursor-pointer slot-available
-                        {% endif %}"
-                        {% if availability.is_working_day and availability.booked_slots < availability.total_slots %}
-                            data-date="{{ day }}"
-                            data-table="{{ table.id }}"
-                            title="Свободных: {{ availability.total_slots|add:"-availability.booked_slots" }} из {{ availability.total_slots }}"
-                        {% else %}
-                            title="{% if not availability.is_working_day %}Выходной{% else %}Нет свободных мест{% endif %}"
-                        {% endif %}>
-                        {% if availability.is_working_day %}
-                            {{ availability.booked_slots }}/{{ availability.total_slots }}
-                        {% else %}
-                            <span class="text-xs">Выходной</span>
-                        {% endif %}
-                    </div>
-                    {% endwith %}
-                {% endfor %}
-            </div>
-            {% endfor %}
-        </div>
+    <div class="mt-8">
+        <h2 class="text-lg font-medium mb-4">Ваши бронирования</h2>
+        <div id="user-bookings" class="overflow-x-auto"></div>
     </div>
 
     <!-- Легенда -->
-    <div class="mt-4 text-sm text-gray-500 flex space-x-4">
+    <div class="mt-6 text-sm text-gray-500 flex space-x-4">
         <div><span class="inline-block w-4 h-4 bg-green-100 mr-1 border rounded"></span> Доступно</div>
         <div><span class="inline-block w-4 h-4 bg-yellow-100 mr-1 border rounded"></span> Частично занято</div>
         <div><span class="inline-block w-4 h-4 bg-red-100 mr-1 border rounded"></span> Полностью занято</div>
         <div><span class="inline-block w-4 h-4 bg-gray-100 mr-1 border rounded"></span> Выходной</div>
     </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.slot-available').forEach(cell => {
-        cell.addEventListener('click', () => {
-            const date = cell.dataset.date;
-            const tableId = cell.dataset.table;
-
-            alert(`Вы выбрали: ${date}, стол #${tableId}`);
-            // Здесь можно отобразить модальное окно или отправить форму бронирования
-        });
-    });
-});
-</script>
+</body>
+</html>

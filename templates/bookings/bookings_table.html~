@@ -44,7 +44,16 @@
             </td>
           </tr>
         {% endfor %}
-          
+              <!-- Легенда -->
+    <div class="mt-4 text-sm text-gray-500 flex space-x-4">
+        <div><span class="inline-block w-4 h-4 bg-green-100 mr-1 border rounded"></span> Доступно</div>
+        <div><span class="inline-block w-4 h-4 bg-yellow-100 mr-1 border rounded"></span> Частично занято</div>
+        <div><span class="inline-block w-4 h-4 bg-red-100 mr-1 border rounded"></span> Полностью занято</div>
+        <div><span class="inline-block w-4 h-4 bg-gray-100 mr-1 border rounded"></span> Выходной</div>
+    </div>
+</div>
+
+
           
           
           

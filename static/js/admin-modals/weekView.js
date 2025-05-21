@@ -1,6 +1,3 @@
-// weekView.js
-
-// Функция рендера недели в контейнер с указанным ID
 export function renderWeekView(containerId, data) {
     const container = document.getElementById(containerId);
     if (!container) {
@@ -9,14 +6,14 @@ export function renderWeekView(containerId, data) {
     }
 
     // Если данные не пришли или нет необходимых полей
-    if (!data || !data.days_of_week || !data.tables || !data.week_schedule) {
+    if (!data || !data.days|| !data.tables || !data.week_schedule) {
         container.innerHTML = '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
         return;
     }
 
     // Проверяем, является ли день рабочим
     const today = new Date().toISOString().split('T')[0];
-    const isWorkingDay = data.days_of_week.some(day => {
+    const isWorkingDay = data.days.some(day => {
         const dayDate = day.split('T')[0];
         return dayDate === today && data.week_schedule[data.tables[0].id]?.[day]?.is_working_day;
     });
@@ -36,7 +33,7 @@ export function renderWeekView(containerId, data) {
         <div class="min-w-[800px]">
             <div class="grid grid-cols-8 gap-1 mb-2">
                 <div class="p-2 font-medium"></div>
-                ${data.days_of_week.map(day => {
+                ${data.days.map(day => {
                     const dayDate = new Date(day);
                     return `
                         <div class="p-2 text-center font-medium">
@@ -57,7 +54,7 @@ export function renderWeekView(containerId, data) {
                     `).join('')}
                 </div>
                 
-                ${data.days_of_week.map(day => `
+                ${data.days.map(day => `
                     <div class="flex flex-col">
                         ${data.tables.map(table => {
                             const availability = data.week_schedule[table.id]?.[day] || {};

@@ -18,6 +18,8 @@ urlpatterns = [
     path('api/rates/', views.booking_rates_api, name='api_rates'),
     path('api/tables/', views.tables_api, name='api_tables'),
     path('api/calendar/', views.calendar_api, name='api_calendar'),
+    path('api/week/', views.week_calendar_api, name='week_calendar'),
+
     path('api/user-bookings/', views.get_user_bookings, name='api_user_bookings'),
     path('api/calculate/', views.calculate_booking_api, name='api_calculate'),
     path('api/create/', views.create_booking_api, name='api_create'),

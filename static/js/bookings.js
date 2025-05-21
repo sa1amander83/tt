@@ -366,6 +366,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             showError(error.message);
         }
     }
+
     // Загрузка бронирований пользователя
     async function loadUserBookings() {
 
@@ -381,74 +382,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    // Отображение бронирований пользователя
-    function renderUserBookings() {
-        const container = document.getElementById('user-bookings-container');
-        if (!container) return;
-
-        if (state.bookings.length) {
-            container.innerHTML = `
-                <div class="overflow-x-auto">
-                    <table class="min-w-full bg-white">
-                        <thead>
-                            <tr>
-                                <th class="py-2 px-4 border-b">Дата</th>
-                                <th class="py-2 px-4 border-b">Время</th>
-                                <th class="py-2 px-4 border-b">Стол</th>
-                                <th class="py-2 px-4 border-b">Статус</th>
-                                <th class="py-2 px-4 border-b">Действия</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${state.bookings.map(booking => `
-                                <tr>
-                                    <td class="py-2 px-4 border-b">${booking.date}</td>
-                                    <td class="py-2 px-4 border-b">${booking.start_time}-${booking.end_time}</td>
-                                    <td class="py-2 px-4 border-b">Стол #${booking.table_number} (${booking.table_type})</td>
-                                    <td class="py-2 px-4 border-b">${booking.status}</td>
-                                    <td class="py-2 px-4 border-b">
-                                        ${booking.can_cancel ?
-                `<button class="cancel-booking text-red-600 hover:text-red-800 mr-2" 
-                                                data-id="${booking.id}">Отменить</button>` :
-                ''}
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-
-            // Добавляем обработчики для кнопок отмены
-            document.querySelectorAll('.cancel-booking').forEach(button => {
-                button.addEventListener('click', async () => {
-                    const bookingId = button.dataset.id;
-                    try {
-                        const response = await fetch(`/bookings/cancel/${bookingId}/`, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRFToken': getCSRFToken(),
-                                'Content-Type': 'application/json'
-                            }
-                        });
-
-                        const result = await response.json();
-                        if (result.success) {
-                            await loadUserBookings();
-                            await renderCalendar();
-                        } else {
-                            throw new Error(result.error || 'Ошибка отмены бронирования');
-                        }
-                    } catch (error) {
-                        console.error('Ошибка отмены бронирования:', error);
-                        showError(error.message);
-                    }
-                });
-            });
-        } else {
-            container.innerHTML = '<div class="text-center py-4 text-gray-500">У вас нет активных бронирований</div>';
-        }
-    }
 
     // Навигация по календарю
     function navigate(direction) {
@@ -585,7 +518,24 @@ document.addEventListener('DOMContentLoaded', async function () {
                 container.innerHTML = generateDayView(data);
                 break;
             case 'week':
-                container.innerHTML = generateWeekView(data);
+
+                fetch('/settings/api/week/')
+                    .then(res => res.json())
+                    .then(data => {
+                        const weekContainer = document.getElementById('week-view-container');
+                        const bookingContainer = document.getElementById('user-bookings');
+
+                        weekContainer.innerHTML = renderWeekView(data);
+                        bookingContainer.innerHTML = renderUserBookings(data.user_bookings);
+
+                        document.querySelectorAll('.slot-available').forEach(cell => {
+                            cell.addEventListener('click', () => {
+                                const date = cell.dataset.date;
+                                const tableId = cell.dataset.table;
+                                alert(`Вы выбрали: ${date}, стол #${tableId}`);
+                            });
+                        });
+                    });
                 break;
             case 'month':
                 container.innerHTML = generateMonthView(data);
@@ -594,21 +544,21 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // Генерация дневного представления
-function generateDayView(data) {
-    if (data.is_working_day === false) {
-        return `
+    function generateDayView(data) {
+        if (data.is_working_day === false) {
+            return `
             <div class="text-center py-8 bg-gray-100 rounded-lg">
                 <h3 class="text-lg font-medium text-gray-700">Сегодня выходной день</h3>
                 <p class="text-gray-500 mt-2">Бронирование столов недоступно</p>
             </div>
         `;
-    }
+        }
 
-    if (!data.tables?.length || !data.time_slots?.length) {
-        return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
-    }
+        if (!data.tables?.length || !data.time_slots?.length) {
+            return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
+        }
 
-    let html = `
+        let html = `
     <div class="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
         <div class="flex border-b border-gray-200 bg-gray-50">
             <div class="w-24 md:w-32 flex-shrink-0 p-3"></div>
@@ -621,8 +571,8 @@ function generateDayView(data) {
         </div>
     `;
 
-    data.time_slots.forEach(slot => {
-        html += `
+        data.time_slots.forEach(slot => {
+            html += `
         <div class="flex border-b border-gray-200 last:border-b-0">
             <div class="w-24 md:w-32 flex-shrink-0 p-3 text-right text-sm text-gray-500">
                 ${slot}
@@ -630,16 +580,16 @@ function generateDayView(data) {
             <div class="flex-1 grid grid-cols-${data.tables.length} divide-x divide-gray-200">
         `;
 
-        data.tables.forEach(table => {
-            const slotData = data.schedule[table.id]?.[slot] || {};
-            const isAvailable = slotData.status === 'available';
-            const bookingStatus = slotData.booking?.status || 'Занято';
+            data.tables.forEach(table => {
+                const slotData = data.schedule[table.id]?.[slot] || {};
+                const isAvailable = slotData.status === 'available';
+                const bookingStatus = slotData.booking?.status || 'Занято';
 
-            html += `
+                html += `
             <div class="flex items-center justify-center p-2 min-h-12
                 ${isAvailable ?
-                'bg-green-100 hover:bg-green-200 cursor-pointer booking-slot-available' :
-                'bg-red-100 hover:bg-red-200'}
+                    'bg-green-100 hover:bg-green-200 cursor-pointer booking-slot-available' :
+                    'bg-red-100 hover:bg-red-200'}
                 "
                 data-date="${data.date}"
                 data-time="${slot}"
@@ -650,83 +600,173 @@ function generateDayView(data) {
                 </span>
             </div>
             `;
-        });
+            });
 
-        html += `
+            html += `
             </div>
         </div>
         `;
-    });
+        });
 
-    html += '</div>';
-    return html;
-}
+        html += '</div>';
+        return html;
+    }
+
     // Генерация недельного представления
 
     // Функция для генерации таблицы недели
-function generateWeekView(data) {
-    if (!data.days_of_week?.length || !data.tables?.length) {
-        return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
+// function generateWeekView(data) {
+//     if (!data.days?.length || !data.tables?.length) {
+//         return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
+//     }
+//
+//     let html = `
+//     <div class="overflow-x-auto">
+//         <table class="min-w-full border-collapse" border="1" cellspacing="0" cellpadding="4">
+//             <thead>
+//                 <tr>
+//                     <th>Стол / День</th>
+//                     ${data.days.map(day => {
+//                         const date = new Date(day);
+//                         return `<th>${date.getDate()}</th>`;
+//                     }).join('')}
+//                 </tr>
+//             </thead>
+//             <tbody>
+//     `;
+//
+//     data.tables.forEach(table => {
+//         html += `
+//         <tr>
+//             <td>
+//                 Стол #${table.number}<br>
+//                 <small>${table.table_type || ''}</small>
+//             </td>
+//         `;
+//
+//         data.days.forEach(day => {
+//             const availability = data.week_schedule[table.id] ? data.week_schedule[table.id][day] : null;
+//
+//             if (!availability) {
+//                 html += `<td style="background:#eee; color:#999; text-align:center;">Нет данных</td>`;
+//                 return;
+//             }
+//
+//             // Здесь предполагается массив слотов на день
+//             const totalSlots = availability.length;
+//             const booked = availability.filter(s => s.status !== 'available').length;
+//
+//             if (!totalSlots) {
+//                 html += `<td style="background:#ddd; color:#555; text-align:center;">Нет слотов</td>`;
+//             } else if (booked === totalSlots) {
+//                 html += `<td style="background:#f8d7da; color:#721c24; text-align:center;">
+//                     ${booked}/${totalSlots}
+//                 </td>`;
+//             } else if (booked > 0) {
+//                 html += `<td style="background:#fff3cd; color:#856404; text-align:center;">
+//                     ${booked}/${totalSlots}
+//                 </td>`;
+//             } else {
+//                 html += `<td style="background:#d4edda; color:#155724; text-align:center;">
+//                     ${booked}/${totalSlots}
+//                 </td>`;
+//             }
+//         });
+//
+//         html += `</tr>`;
+//     });
+//
+//     html += `
+//             </tbody>
+//         </table>
+//     </div>
+//     `;
+//
+//     return html;
+// }
+
+    function renderWeekView(data) {
+        if (!data.days || !data.tables) {
+            return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
+        }
+
+        let html = `
+    <div class="grid grid-cols-${data.days.length + 1} gap-1 mb-2">
+        <div class="p-2 font-medium"></div>
+        ${data.days.map(day => {
+            const date = new Date(day);
+            return `<div class="p-2 text-center font-medium">
+                        <div>${date.toLocaleDateString('ru-RU', {weekday: 'short'})}</div>
+                        <div>${date.getDate()}</div>
+                    </div>`;
+        }).join('')}
+    </div>
+
+    <div class="grid grid-cols-${data.days.length + 1} gap-1">
+        <div class="flex flex-col">
+            ${data.tables.map(table => `
+                <div class="p-2 border-b flex flex-col items-start">
+                    <span class="font-medium">Стол #${table.number}</span>
+                    <span class="text-xs text-gray-500">${table.table_type}</span>
+                </div>
+            `).join('')}
+        </div>
+
+        ${data.days.map(day => `
+            <div class="flex flex-col">
+                ${data.tables.map(table => {
+            const slots = data.week_schedule?.[table.id]?.[day] || [];
+            const total = slots.length;
+            const booked = slots.filter(slot => slot.status !== 'available').length;
+
+            if (total === 0) {
+                return `<div class="p-2 border-b text-center bg-gray-100 text-gray-400">Выходной</div>`;
+            }
+
+            let cssClass = 'bg-green-100 text-green-800';
+            if (booked === total) cssClass = 'bg-red-100 text-red-800';
+            else if (booked > 0) cssClass = 'bg-yellow-100 text-yellow-800';
+
+            return `<div class="p-2 border-b text-center text-sm min-h-12 flex items-center justify-center ${cssClass} slot-available"
+                        data-date="${day}" data-table="${table.id}" title="Занято ${booked} из ${total}">
+                        ${booked}/${total}
+                    </div>`;
+        }).join('')}
+            </div>
+        `).join('')}
+    </div>`;
+
+        return html;
     }
 
-    let html = `
-    <div class="overflow-x-auto">
-        <table class="min-w-full border-collapse" border="1" cellspacing="0" cellpadding="4">
-            <thead>
+    function renderUserBookings(bookings) {
+        if (!bookings || bookings.length === 0) {
+            return `<div class="text-gray-400">Нет активных бронирований на этой неделе.</div>`;
+        }
+
+        return `
+    <table class="min-w-full border text-sm text-left">
+        <thead>
+            <tr class="bg-gray-100">
+                <th class="px-3 py-2 border">Дата</th>
+                <th class="px-3 py-2 border">Время</th>
+                <th class="px-3 py-2 border">Стол</th>
+                <th class="px-3 py-2 border">Статус</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${bookings.map(booking => `
                 <tr>
-                    <th>Стол / День</th>
-                    ${data.days_of_week.map(day => {
-                        const date = new Date(day);
-                        return `<th>${date.getDate()}</th>`;
-                    }).join('')}
+                    <td class="px-3 py-2 border">${new Date(booking.date).toLocaleDateString('ru-RU')}</td>
+                    <td class="px-3 py-2 border">${booking.start}–${booking.end}</td>
+                    <td class="px-3 py-2 border">#${booking.table_number}</td>
+                    <td class="px-3 py-2 border">${booking.status}</td>
                 </tr>
-            </thead>
-            <tbody>
-    `;
+            `).join('')}
+        </tbody>
+    </table>`;
+    }
 
-    data.tables.forEach(table => {
-        html += `
-        <tr>
-            <td>
-                Стол #${table.number}<br>
-                <small>${table.table_type || ''}</small>
-            </td>
-        `;
-
-        data.days_of_week.forEach(day => {
-            const availability = data.week_schedule[table.id] ? data.week_schedule[table.id][day] : null;
-
-            if (!availability) {
-                html += `<td style="background:#eee; color:#999; text-align:center;">Нет данных</td>`;
-                return;
-            }
-
-            if (!availability.is_working_day) {
-                html += `<td style="background:#f0f0f0; color:#777; text-align:center;">Выходной</td>`;
-            } else if (availability.total_slots === 0) {
-                html += `<td style="background:#ddd; color:#555; text-align:center;">Нет слотов</td>`;
-            } else if (availability.booked_slots === availability.total_slots) {
-                html += `<td style="background:#f8d7da; color:#721c24; text-align:center;">
-                    ${availability.booked_slots}/${availability.total_slots}
-                </td>`;
-            } else {
-                html += `<td style="background:#d4edda; color:#155724; text-align:center;">
-                    ${availability.booked_slots}/${availability.total_slots}
-                </td>`;
-            }
-        });
-
-        html += `</tr>`;
-    });
-
-    html += `
-            </tbody>
-        </table>
-    </div>
-    `;
-
-    return html;
-}
     // Вставляем сгенерированную таблицу в контейнер
     // Генерация месячного представления
     function generateMonthView(data) {
