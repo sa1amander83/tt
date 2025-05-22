@@ -17,7 +17,7 @@ urlpatterns = [
 
     path('api/rates/', views.booking_rates_api, name='api_rates'),
     path('api/tables/', views.tables_api, name='api_tables'),
-    path('api/calendar/', views.calendar_api, name='api_calendar'),
+    path('api/calendar/', views.CalendarAPIView.as_view(), name='api_calendar'),
     # path('api/week/', views.week_calendar_api, name='week_calendar'),
 
     path('api/user-bookings/', views.get_user_bookings, name='api_user_bookings'),

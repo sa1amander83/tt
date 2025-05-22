@@ -1,18 +1,26 @@
 <!-- calendar_controls.html -->
 
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
-    <div class="flex items-center space-x-2">
-        <button id="prev-btn" class="p-2 rounded-full hover:bg-gray-100">
-            <i class="fas fa-chevron-left"></i>
-        </button>
-        <h2 id="calendar-title" class="text-xl font-semibold">{{ current_date|date:"F Y" }}</h2>
-        <button id="next-btn" class="p-2 rounded-full hover:bg-gray-100">
-            <i class="fas fa-chevron-right"></i>
-        </button>
-        <button id="today-btn" class="ml-2 px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-300">
-            Сегодня
-        </button>
-    </div>
+<div class="flex items-center space-x-2">
+    <button id="prev-btn" class="p-2 rounded-full hover:bg-gray-100" data-date="{{ current_date|date:'Y-m-d' }}">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    <h2 id="calendar-title" class="text-xl font-semibold">
+        {% if view == 'day' %}
+            {{ current_date|date:"d E Y" }}
+        {% elif view == 'week' %}
+            Неделя {{ current_date|date:"W" }}, {{ current_date|date:"Y" }}
+        {% else %}
+            {{ current_date|date:"F Y" }}
+        {% endif %}
+    </h2>
+    <button id="next-btn" class="p-2 rounded-full hover:bg-gray-100" data-date="{{ current_date|date:'Y-m-d' }}">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+    <button id="today-btn" class="ml-2 px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-300">
+        Сегодня
+    </button>
+</div>
     
     <div class="flex flex-wrap gap-2">
         <div class="inline-flex rounded-md shadow-sm" role="group">
