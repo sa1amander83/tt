@@ -1,17 +1,7 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Календарь на неделю</title>
-{#    <script defer src="{% static 'js/week_calendar.js' %}"></script>#}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css">
-</head>
-<body class="p-6 bg-gray-50 text-gray-800">
+
+
     <h1 class="text-2xl font-bold mb-6">Расписание на неделю</h1>
 
-    <div class="overflow-x-auto">
-        <div id="week-view-container" class="min-w-[800px]"></div>
-    </div>
 
     <!-- Легенда -->
     <div class="mt-6 text-sm text-gray-500 flex space-x-4">
@@ -23,7 +13,6 @@
 
     <div class="mt-8">
         <h2 class="text-lg font-medium mb-4">Ваши бронирования</h2>
-        <div id="user-bookings" class="overflow-x-auto"></div>
+        <div id="user-bookings-container" class="overflow-x-auto"></div>
     </div>
-</body>
-</html>
+

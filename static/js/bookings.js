@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         dayContainer: document.getElementById('day-view-container'),
         weekContainer: document.getElementById('week-view-container'),
         monthContainer: document.getElementById('month-view-container'),
-
+        userBookingsContainer: document.getElementById('user-bookings-container'),
         // Фильтры
         tableFilter: document.getElementById('table-filter'),
         statusFilter: document.getElementById('status-filter'),
@@ -537,74 +537,58 @@ case 'week':
     }
 
     // Генерация дневного представления
-    function generateDayView(data) {
-        if (data.is_working_day === false) {
-            return `
-            <div class="text-center py-8 bg-gray-100 rounded-lg">
-                <h3 class="text-lg font-medium text-gray-700">Сегодня выходной день</h3>
-                <p class="text-gray-500 mt-2">Бронирование столов недоступно</p>
-            </div>
-        `;
-        }
-
-        if (!data.tables?.length || !data.time_slots?.length) {
-            return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
-        }
-
-        let html = `
-    <div class="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
-        <div class="flex border-b border-gray-200 bg-gray-50">
-            <div class="w-24 md:w-32 flex-shrink-0 p-3"></div>
-            ${data.tables.map(table => `
-                <div class="flex-1 p-3 text-center font-medium">
-                    Стол #${table.number}<br>
-                    <span class="text-sm text-gray-500">${table.type}</span>
-                </div>
-            `).join('')}
-        </div>
-    `;
-
-        data.time_slots.forEach(slot => {
-            html += `
-        <div class="flex border-b border-gray-200 last:border-b-0">
-            <div class="w-24 md:w-32 flex-shrink-0 p-3 text-right text-sm text-gray-500">
-                ${slot}
-            </div>
-            <div class="flex-1 grid grid-cols-${data.tables.length} divide-x divide-gray-200">
-        `;
-
-            data.tables.forEach(table => {
-                const slotData = data.schedule[table.id]?.[slot] || {};
-                const isAvailable = slotData.status === 'available';
-                const bookingStatus = slotData.booking?.status || 'Занято';
-
-                html += `
-            <div class="flex items-center justify-center p-2 min-h-12
-                ${isAvailable ?
-                    'bg-green-100 hover:bg-green-200 cursor-pointer booking-slot-available' :
-                    'bg-red-100 hover:bg-red-200'}
-                "
-                data-date="${data.date}"
-                data-time="${slot}"
-                data-table="${table.id}"
-                data-slot-id="${slotData.slot_id || ''}">
-                <span class="text-sm ${isAvailable ? 'text-green-800' : 'text-red-800'}">
-                    ${isAvailable ? 'Свободно' : bookingStatus}
-                </span>
-            </div>
-            `;
-            });
-
-            html += `
-            </div>
-        </div>
-        `;
-        });
-
-        html += '</div>';
-        return html;
+function generateDayView(data) {
+    if (!data.time_slots.length || !data.tables.length) {
+        return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
     }
 
+    let html = `
+        <div class="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+            <div class="flex border-b border-gray-200 bg-gray-50">
+                <div class="w-24 md:w-32 flex-shrink-0 p-3">Время</div>
+                ${data.tables.map(table => `
+                    <div class="flex-1 p-3 text-center font-medium">
+                        Стол #${table.number}<br>
+                        <span class="text-sm text-gray-500">${table.table_type}</span>
+                    </div>
+                `).join('')}
+            </div>
+    `;
+
+    data.time_slots.forEach(slotTime => {
+        html += `
+            <div class="flex border-b border-gray-200 last:border-b-0">
+                <div class="w-24 md:w-32 flex-shrink-0 p-3 text-right text-sm text-gray-500">
+                    ${slotTime}
+                </div>
+                <div class="flex-1 grid grid-cols-${data.tables.length} divide-x divide-gray-200">
+        `;
+
+        data.tables.forEach(table => {
+            const slotData = (data.day_schedule[table.id] && data.day_schedule[table.id][slotTime]) || null;
+            const isAvailable = slotData && slotData.status === 'available';
+            const bookingStatus = slotData ? (slotData.status === 'available' ? 'Свободно' : slotData.status) : 'Нет данных';
+
+            html += `
+                <div class="flex items-center justify-center p-2 min-h-12
+                    ${isAvailable ? 'bg-green-100 hover:bg-green-200 cursor-pointer' : 'bg-red-100 hover:bg-red-200'}"
+                    data-date="${data.date}"
+                    data-time="${slotTime}"
+                    data-table="${table.id}"
+                    data-slot-id="${slotData ? slotData.slot_id : ''}">
+                    <span class="text-sm ${isAvailable ? 'text-green-800' : 'text-red-800'}">
+                        ${bookingStatus}
+                    </span>
+                </div>
+            `;
+        });
+
+        html += `</div></div>`;
+    });
+
+    html += '</div>';
+    return html;
+}
     // Генерация недельного представления
 
     // Функция для генерации таблицы недели
