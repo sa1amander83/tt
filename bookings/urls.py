@@ -7,7 +7,7 @@ app_name = 'bookings'
 urlpatterns = [
     path('', views.booking_view, name='bookings'),
     path('day/', views.day_view, name='day_view'),
-    path('week/', views.week_view, name='week_view'),
+    path('week/', views.week_api_view, name='week_view'),
     path('month/', views.month_view, name='month_view'),
     path('user-bookings/', views.get_user_bookings, name='user_bookings'),
     path('create/', views.CreateBookingView.as_view(), name='create_booking'),
@@ -18,7 +18,7 @@ urlpatterns = [
     path('api/rates/', views.booking_rates_api, name='api_rates'),
     path('api/tables/', views.tables_api, name='api_tables'),
     path('api/calendar/', views.calendar_api, name='api_calendar'),
-    path('api/week/', views.week_calendar_api, name='week_calendar'),
+    # path('api/week/', views.week_calendar_api, name='week_calendar'),
 
     path('api/user-bookings/', views.get_user_bookings, name='api_user_bookings'),
     path('api/calculate/', views.calculate_booking_api, name='api_calculate'),

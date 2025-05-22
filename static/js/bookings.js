@@ -427,35 +427,34 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // Обновление заголовка календаря
-    function updateCalendarTitle() {
-        const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-            'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-        const date = state.currentDate;
+function updateCalendarTitle() {
+    const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+        'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+    const date = state.currentDate;
 
-        let title = '';
+    let title = '';
 
-        switch (state.currentView) {
-            case 'day':
-                title = `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
-                break;
-            case 'week':
-                const weekStart = new Date(date);
-                weekStart.setDate(date.getDate() - date.getDay());
-
-                const weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekStart.getDate() + 6);
-
-                title = `${weekStart.getDate()}-${weekEnd.getDate()} ${months[weekEnd.getMonth()]} ${weekEnd.getFullYear()}`;
-                break;
-            case 'month':
-                title = `${months[date.getMonth()]} ${date.getFullYear()}`;
-                break;
+    switch (state.currentView) {
+        case 'day':
+            title = `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+            break;
+        case 'week': {
+            const weekStart = new Date(date);
+            weekStart.setDate(date.getDate() - weekStart.getDay());
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            title = `${weekStart.getDate()}–${weekEnd.getDate()} ${months[weekEnd.getMonth()]} ${weekEnd.getFullYear()}`;
+            break;
         }
-
-        if (elements.calendarTitle) {
-            elements.calendarTitle.textContent = title;
-        }
+        case 'month':
+            title = `${months[date.getMonth()]} ${date.getFullYear()}`;
+            break;
     }
+
+    if (elements.calendarTitle) {
+        elements.calendarTitle.textContent = title;
+    }
+}
 
     // Обновление активного представления
     function updateActiveView() {
@@ -482,12 +481,12 @@ document.addEventListener('DOMContentLoaded', async function () {
             elements.monthContainer.classList.toggle('hidden', state.currentView !== 'month');
         }
     }
-
     // Рендеринг календаря
     async function renderCalendar() {
         try {
             const dateStr = state.currentDate.toISOString().split('T')[0];
             const params = new URLSearchParams({
+
                 date: dateStr,
                 view: state.currentView,
                 table: elements.tableFilter?.value || 'all',
@@ -517,27 +516,21 @@ document.addEventListener('DOMContentLoaded', async function () {
             case 'day':
                 container.innerHTML = generateDayView(data);
                 break;
-            case 'week':
+case 'week':
+    const weekContainer = elements.weekContainer;
+    const bookingContainer = elements.userBookingsContainer;
 
-                fetch('/settings/api/week/')
-                    .then(res => res.json())
-                    .then(data => {
-                        const weekContainer = document.getElementById('week-view-container');
-                        const bookingContainer = document.getElementById('user-bookings');
+    weekContainer.innerHTML = renderWeekView(data);
+    bookingContainer.innerHTML = renderUserBookings(data.user_bookings);
 
-                        weekContainer.innerHTML = renderWeekView(data);
-                        bookingContainer.innerHTML = renderUserBookings(data.user_bookings);
-
-                        document.querySelectorAll('.slot-available').forEach(cell => {
-                            cell.addEventListener('click', () => {
-                                const date = cell.dataset.date;
-                                const tableId = cell.dataset.table;
-                                alert(`Вы выбрали: ${date}, стол #${tableId}`);
-                            });
-                        });
-                    });
-                break;
-            case 'month':
+    document.querySelectorAll('.slot-available').forEach(cell => {
+        cell.addEventListener('click', () => {
+            const date = cell.dataset.date;
+            const tableId = cell.dataset.table;
+            alert(`Вы выбрали: ${date}, стол #${tableId}`);
+        });
+    });
+    break;              case 'month':
                 container.innerHTML = generateMonthView(data);
                 break;
         }
