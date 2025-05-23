@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
@@ -43,7 +45,19 @@ class PricingPlan(models.Model):
     is_default = models.BooleanField(default=False, verbose_name="Тариф по умолчанию")
     valid_from = models.DateField(verbose_name="Действует с")
     valid_to = models.DateField(blank=True, null=True, verbose_name="Действует до")
+    time_from = models.TimeField(null=True, blank=True, verbose_name="Начало действия")
+    time_to = models.TimeField(null=True, blank=True, verbose_name="Окончание действия")
+    weekdays = models.CharField(max_length=13, default="1234567", verbose_name="Дни недели")  # '1' = Пн ... '7' = Вс
 
+    def is_applicable(self, dt:     datetime) -> bool:
+        """Проверка, применим ли тариф в конкретное время"""
+        if str(dt.isoweekday()) not in self.weekdays:
+            return False
+        if self.time_from and self.time_to:
+            return self.time_from <= dt.time() < self.time_to
+        return True
+
+        
     class Meta:
         verbose_name = "Тарифный план"
         verbose_name_plural = "Тарифные планы"

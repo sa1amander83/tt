@@ -88,25 +88,6 @@ class CalendarAPIView(APIView):
         else:
             return Response({"error": "Invalid 'view' parameter"}, status=400)
 
-    def check_working_day(self, date):
-        """Проверяет, является ли день рабочим"""
-        try:
-            holiday = Holiday.objects.filter(date=date).first()
-            if holiday:
-                if holiday.status == 'closed':
-                    return False, None
-                return True, (holiday.open_time, holiday.close_time)
-        except Holiday.DoesNotExist:
-            pass
-
-        weekday = date.weekday()
-        try:
-            working_day = WorkingDay.objects.get(day=weekday)
-            if not working_day.is_open:
-                return False, None
-            return True, (working_day.open_time, working_day.close_time)
-        except WorkingDay.DoesNotExist:
-            return False, None
 
     def get_working_day_map(self, dates):
         """Возвращает словарь {date: (is_working_day, working_hours)} с кэшированной проверкой"""
@@ -115,8 +96,24 @@ class CalendarAPIView(APIView):
             results[d] = self.check_working_day(d)
         return results
 
-    def get_day_view(self, date, is_working_day, working_hours):
-        is_working, working_hours = self.get_working_day_map([date])[date]
+    def get_open_close_times(self, date):
+        holiday = Holiday.objects.filter(date=date).first()
+        if holiday:
+            if holiday.status == 'closed':
+                return False, None, None
+            elif holiday.status in ['shortened', 'normal']:
+                if holiday.open_time and holiday.close_time:
+                    return True, holiday.open_time, holiday.close_time
+
+        weekday = date.weekday()
+        working_day = WorkingDay.objects.filter(day=weekday, is_open=True).first()
+        if working_day:
+            return True, working_day.open_time, working_day.close_time
+
+        return False, None, None
+
+    def get_day_view(self, date):
+        is_working_day, open_time, close_time = self.get_open_close_times(date)
 
         if not is_working_day:
             return Response({
@@ -129,11 +126,10 @@ class CalendarAPIView(APIView):
             })
 
         tables = Table.objects.filter(is_active=True).order_by('number')
-        open_time, close_time = working_hours
+
         day_start = timezone.make_aware(datetime.combine(date, open_time))
         day_end = timezone.make_aware(datetime.combine(date, close_time))
 
-        # Пример: 60 минут шаг
         slot_step_minutes = 60
         slots = []
         current = day_start
@@ -141,7 +137,6 @@ class CalendarAPIView(APIView):
             slots.append((current, current + timedelta(minutes=slot_step_minutes)))
             current += timedelta(minutes=slot_step_minutes)
 
-        # Получаем все бронирования на день
         bookings = Booking.objects.filter(
             start_time__lt=day_end,
             end_time__gt=day_start
@@ -151,7 +146,9 @@ class CalendarAPIView(APIView):
         for b in bookings:
             booking_map[b.table_id].append((b.start_time, b.end_time))
 
-        # Получаем скидки
+        pricing_plans = PricingPlan.objects.all()
+        table_type_pricings = TableTypePricing.objects.select_related('pricing_plan', 'table_type')
+
         special_offers = SpecialOffer.objects.filter(
             is_active=True,
             valid_from__lte=date,
@@ -172,17 +169,27 @@ class CalendarAPIView(APIView):
             time_slots.append(slot_label)
 
             for table in tables:
-                # Проверка занятости
                 overlaps = any(
                     s < slot_end and e > slot_start
                     for s, e in booking_map.get(table.id, [])
                 )
                 slot_status = 'booked' if overlaps else 'available'
 
-                # Цена
-                pricing = TableTypePricing.objects.get(table_type=table.table_type)
-                duration = (slot_end - slot_start).total_seconds() / 3600
-                base_price = pricing.hour_rate * duration
+                applicable_pricing = None
+                for pricing in table_type_pricings:
+                    plan = pricing.pricing_plan
+                    if pricing.table_type != table.table_type:
+                        continue
+                    if plan.weekday is not None and int(plan.weekday) != slot_start.weekday():
+                        continue
+                    if plan.time_from and plan.time_to:
+                        if not (plan.time_from <= slot_start.time() < plan.time_to):
+                            continue
+                    applicable_pricing = pricing
+                    break
+
+                duration_hours = (slot_end - slot_start).total_seconds() / 3600
+                base_price = applicable_pricing.hour_rate * duration_hours if applicable_pricing else 0
                 discount = 0
 
                 for offer in offers_by_table.get(table.id, []):
@@ -220,22 +227,18 @@ class CalendarAPIView(APIView):
         days = [start_of_week + timedelta(days=i) for i in range(7)]
 
         tables = Table.objects.filter(is_active=True).order_by('number')
-        working_day_map = self.get_working_day_map(days)  # кэш
 
-        # Подготовим расписание недели в формате {день: {стол: {слот: данные}}}
         week_schedule = defaultdict(lambda: defaultdict(dict))
         time_slots_set = set()
 
         for day in days:
-            is_working, working_hours = working_day_map[day]
+            is_working, open_time, close_time = self.get_open_close_times(day)
             if not is_working:
                 continue
 
-            open_time, close_time = working_hours
             day_start = timezone.make_aware(datetime.combine(day, open_time))
             day_end = timezone.make_aware(datetime.combine(day, close_time))
 
-            # Генерируем слоты (60 мин шаг)
             slot_step_minutes = 60
             slots = []
             current = day_start
@@ -243,7 +246,6 @@ class CalendarAPIView(APIView):
                 slots.append((current, current + timedelta(minutes=slot_step_minutes)))
                 current += timedelta(minutes=slot_step_minutes)
 
-            # Получаем бронирования на этот день для всех столов
             bookings = Booking.objects.filter(
                 start_time__lt=day_end,
                 end_time__gt=day_start
@@ -253,7 +255,6 @@ class CalendarAPIView(APIView):
             for b in bookings:
                 booking_map[b.table_id].append((b.start_time, b.end_time))
 
-            # Получаем скидки на этот день
             special_offers = SpecialOffer.objects.filter(
                 is_active=True,
                 valid_from__lte=day,
@@ -299,20 +300,18 @@ class CalendarAPIView(APIView):
                         'discount_percent': discount
                     }
 
-        # Информация по дням недели (дата, рабочие часы)
         week_info = []
         for day in days:
-            is_working, working_hours = working_day_map[day]
+            is_working, open_time, close_time = self.get_open_close_times(day)
             week_info.append({
                 'date': day.isoformat(),
                 'is_working_day': is_working,
                 'working_hours': {
-                    'open': working_hours[0].strftime('%H:%M') if working_hours else None,
-                    'close': working_hours[1].strftime('%H:%M') if working_hours else None
+                    'open': open_time.strftime('%H:%M') if open_time else None,
+                    'close': close_time.strftime('%H:%M') if close_time else None
                 } if is_working else None
             })
 
-        # Получаем бронирования пользователя на неделю
         week_start_dt = timezone.make_aware(datetime.combine(days[0], time.min))
         week_end_dt = timezone.make_aware(datetime.combine(days[-1], time.max))
 
@@ -352,21 +351,18 @@ class CalendarAPIView(APIView):
         tables = Table.objects.filter(is_active=True).order_by('number')
 
         days_in_month = [start_of_month + timedelta(days=i) for i in range((end_of_month - start_of_month).days + 1)]
-        working_day_map = self.get_working_day_map(days_in_month)  # кэш
 
         month_schedule = defaultdict(lambda: defaultdict(dict))
         time_slots_set = set()
 
         for day in days_in_month:
-            is_working, working_hours = working_day_map[day]
+            is_working, open_time, close_time = self.get_open_close_times(day)
             if not is_working:
                 continue
 
-            open_time, close_time = working_hours
             day_start = timezone.make_aware(datetime.combine(day, open_time))
             day_end = timezone.make_aware(datetime.combine(day, close_time))
 
-            # Генерируем слоты (60 мин)
             slot_step_minutes = 60
             slots = []
             current = day_start
@@ -430,13 +426,13 @@ class CalendarAPIView(APIView):
 
         month_info = []
         for day in days_in_month:
-            is_working, working_hours = working_day_map[day]
+            is_working, open_time, close_time = self.get_open_close_times(day)
             month_info.append({
                 'date': day.isoformat(),
                 'is_working_day': is_working,
                 'working_hours': {
-                    'open': working_hours[0].strftime('%H:%M') if working_hours else None,
-                    'close': working_hours[1].strftime('%H:%M') if working_hours else None
+                    'open': open_time.strftime('%H:%M') if open_time else None,
+                    'close': close_time.strftime('%H:%M') if close_time else None
                 } if is_working else None
             })
 
