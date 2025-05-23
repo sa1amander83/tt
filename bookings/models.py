@@ -57,9 +57,10 @@ class TableTypePricing(models.Model):
     table_type = models.ForeignKey(TableType, on_delete=models.CASCADE, verbose_name="Тип стола")
     pricing_plan = models.ForeignKey(PricingPlan, on_delete=models.CASCADE, verbose_name="Тарифный план")
     hour_rate = models.PositiveIntegerField(verbose_name="Цена за час (стандарт)",default=400)
+    half_hour_rate = models.PositiveIntegerField(verbose_name="Цена за полчаса (стандарт)",default=250)
     hour_rate_group = models.PositiveIntegerField(verbose_name="Цена за час (группа)")
-    min_duration = models.PositiveIntegerField(default=1, verbose_name="Минимальная длительность (часы)")
-    max_duration = models.PositiveIntegerField(default=3, verbose_name="Максимальная длительность (часы)")
+    min_duration = models.PositiveIntegerField(default=30, verbose_name="Минимальная длительность (минуты)")
+    max_duration = models.PositiveIntegerField(default=180, verbose_name="Максимальная длительность (минуты)")
 
     class Meta:
         verbose_name = "Цена типа стола"

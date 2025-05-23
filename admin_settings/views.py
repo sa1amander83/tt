@@ -308,6 +308,7 @@ class TableTypePricingView(LoginRequiredMixin, UserPassesTestMixin, View):
                     'name': pricing.pricing_plan.name
                 },
                 'hour_rate': pricing.hour_rate,
+                'half_hour_rate': pricing.half_hour_rate,
                 'hour_rate_group': pricing.hour_rate_group,
                 'min_duration': pricing.min_duration,
                 'max_duration': pricing.max_duration,

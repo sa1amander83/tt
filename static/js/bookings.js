@@ -384,31 +384,31 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 
     // Навигация по календарю
-  function navigate(direction) {
-    const newDate = new Date(state.currentDate);
+    function navigate(direction) {
+        const newDate = new Date(state.currentDate);
 
-    switch (state.currentView) {
-        case 'day':
-            newDate.setDate(newDate.getDate() + direction);
-            break;
-        case 'week':
-            newDate.setDate(newDate.getDate() + (7 * direction));
-            break;
-        case 'month':
-            newDate.setMonth(newDate.getMonth() + direction);
-            // Корректировка даты, если вышли за пределы месяца
-            const originalDate = newDate.getDate();
-            newDate.setDate(1);
-            newDate.setMonth(newDate.getMonth() + direction);
-            const daysInMonth = new Date(newDate.getFullYear(), newDate.getMonth() + 1, 0).getDate();
-            newDate.setDate(Math.min(originalDate, daysInMonth));
-            break;
+        switch (state.currentView) {
+            case 'day':
+                newDate.setDate(newDate.getDate() + direction);
+                break;
+            case 'week':
+                newDate.setDate(newDate.getDate() + (7 * direction));
+                break;
+            case 'month':
+                newDate.setMonth(newDate.getMonth() + direction);
+                // Корректировка даты, если вышли за пределы месяца
+                const originalDate = newDate.getDate();
+                newDate.setDate(1);
+                newDate.setMonth(newDate.getMonth() + direction);
+                const daysInMonth = new Date(newDate.getFullYear(), newDate.getMonth() + 1, 0).getDate();
+                newDate.setDate(Math.min(originalDate, daysInMonth));
+                break;
+        }
+
+        state.currentDate = newDate;
+        updateUI();
+        renderCalendar();
     }
-
-    state.currentDate = newDate;
-    updateUI();
-    renderCalendar();
-}
 
     // Переход на сегодня
     function goToToday() {
@@ -427,23 +427,24 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // Обновление интерфейса
-function updateUI() {
-    updateCalendarTitle();
-    updateActiveView();
-    updateNavigationButtons();
-}
-
-function updateNavigationButtons() {
-    if (elements.prevBtn && elements.nextBtn) {
-        // Форматируем дату для передачи в атрибуты
-        const dateStr = formatDateForAPI(state.currentDate);
-        elements.prevBtn.dataset.date = dateStr;
-        elements.nextBtn.dataset.date = dateStr;
+    function updateUI() {
+        updateCalendarTitle();
+        updateActiveView();
+        updateNavigationButtons();
     }
-}
-function formatDateForAPI(date) {
-    return date.toISOString().split('T')[0]; // YYYY-MM-DD
-}
+
+    function updateNavigationButtons() {
+        if (elements.prevBtn && elements.nextBtn) {
+            // Форматируем дату для передачи в атрибуты
+            const dateStr = formatDateForAPI(state.currentDate);
+            elements.prevBtn.dataset.date = dateStr;
+            elements.nextBtn.dataset.date = dateStr;
+        }
+    }
+
+    function formatDateForAPI(date) {
+        return date.toISOString().split('T')[0]; // YYYY-MM-DD
+    }
 
     // Обновление заголовка календаря
     function updateCalendarTitle() {
@@ -502,30 +503,29 @@ function formatDateForAPI(date) {
     }
 
     // Рендеринг календаря
-async function renderCalendar() {
-    try {
-        const dateStr = formatDateForAPI(state.currentDate);
-        const params = new URLSearchParams({
-            date: dateStr,
-            view: state.currentView,
-            table: elements.tableFilter?.value || 'all',
-            status: elements.statusFilter?.value || 'all'
-        });
+    async function renderCalendar() {
+        try {
+            const dateStr = formatDateForAPI(state.currentDate);
+            const params = new URLSearchParams({
+                date: dateStr,
+                view: state.currentView,
+                table: elements.tableFilter?.value || 'all',
+                status: elements.statusFilter?.value || 'all'
+            });
 
-        const response = await fetch(`${API_ENDPOINTS.CALENDAR}?${params}`);
+            const response = await fetch(`${API_ENDPOINTS.CALENDAR}?${params}`);
 
-        if (!response.ok) {
-            throw new Error('Ошибка загрузки календаря');
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки календаря');
+            }
+
+            const data = await response.json();
+            renderView(data);
+        } catch (error) {
+            console.error('Ошибка рендеринга календаря:', error);
+            showError('Не удалось загрузить данные календаря');
         }
-
-        const data = await response.json();
-        renderView(data);
-    } catch (error) {
-        console.error('Ошибка рендеринга календаря:', error);
-        showError('Не удалось загрузить данные календаря');
     }
-}
-
 
 
     // Рендеринг конкретного представления
@@ -559,9 +559,9 @@ async function renderCalendar() {
     }
 
     // Генерация дневного представления
-function generateDayView(data) {
-    if (!data.is_working_day) {
-        return `
+    function generateDayView(data) {
+        if (!data.is_working_day) {
+            return `
             <div class="p-8 text-center">
                 <div class="inline-block p-6 bg-gray-100 rounded-lg">
                     <i class="fas fa-calendar-times text-4xl text-gray-400 mb-4"></i>
@@ -570,18 +570,18 @@ function generateDayView(data) {
                 </div>
             </div>
         `;
-    }
+        }
 
         let slots = data.time_slots;
-    if (slots.length === 0) {
-        // Можно взять рабочие часы из data.working_hours и сгенерировать интервалы
-        const open = data.working_hours.open; // например, "10:00"
-        const close = data.working_hours.close; // например, "18:00"
+        if (slots.length === 0) {
+            // Можно взять рабочие часы из data.working_hours и сгенерировать интервалы
+            const open = data.working_hours.open; // например, "10:00"
+            const close = data.working_hours.close; // например, "18:00"
 
-        slots = generateDefaultTimeSlots(open, close, 60); // 60 минутный интервал
-    }
+            slots = generateDefaultTimeSlots(open, close, 60); // 60 минутный интервал
+        }
 
- let html = `
+        let html = `
     <div class="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
         <div class="flex border-b border-gray-200 bg-gray-50">
             <div class="w-24 md:w-32 flex-shrink-0 p-3">Время</div>
@@ -594,8 +594,8 @@ function generateDayView(data) {
         </div>
     `;
 
-    slots.forEach(slotTime => {
-        html += `
+        slots.forEach(slotTime => {
+            html += `
         <div class="flex border-b border-gray-200 last:border-b-0">
             <div class="w-24 md:w-32 flex-shrink-0 p-3 text-right text-sm text-gray-500">
                 ${slotTime}
@@ -603,12 +603,12 @@ function generateDayView(data) {
             <div class="flex-1 grid grid-cols-${data.tables.length} divide-x divide-gray-200">
         `;
 
-        data.tables.forEach(table => {
-            const slotData = (data.day_schedule[table.id] && data.day_schedule[table.id][slotTime]) || null;
-            const isAvailable = slotData ? slotData.status === 'available' : true;
-            const bookingStatus = isAvailable ? 'Свободно' : (slotData ? slotData.status : 'Нет данных');
+            data.tables.forEach(table => {
+                const slotData = (data.day_schedule[table.id] && data.day_schedule[table.id][slotTime]) || null;
+                const isAvailable = slotData ? slotData.status === 'available' : true;
+                const bookingStatus = isAvailable ? 'Свободно' : (slotData ? slotData.status : 'Нет данных');
 
-            html += `
+                html += `
             <div class="flex items-center justify-center p-2 min-h-12
                 ${isAvailable ? 'bg-green-100 hover:bg-green-200 cursor-pointer' : 'bg-red-100 hover:bg-red-200'}"
                 data-date="${data.date}"
@@ -620,172 +620,111 @@ function generateDayView(data) {
                 </span>
             </div>
             `;
+            });
+
+            html += `</div></div>`;
         });
 
-        html += `</div></div>`;
-    });
-
-    html += '</div>';
-    return html;
-}
-function formatDate(dateStr) {
-    const date = new Date(dateStr);
-    if (isNaN(date)) return dateStr; // если невалидная дата, вернуть как есть
-
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-
-    return `${day}.${month}.${year}`;
-}
-// Пример функции генерации таймслотов по умолчанию
-function generateDefaultTimeSlots(openStr, closeStr, intervalMinutes) {
-    const slots = [];
-    const [openH, openM] = openStr.split(':').map(Number);
-    const [closeH, closeM] = closeStr.split(':').map(Number);
-
-    let current = new Date();
-    current.setHours(openH, openM, 0, 0);
-
-    const end = new Date();
-    end.setHours(closeH, closeM, 0, 0);
-
-    while (current < end) {
-        let h = current.getHours().toString().padStart(2, '0');
-        let m = current.getMinutes().toString().padStart(2, '0');
-        slots.push(`${h}:${m}`);
-
-        current = new Date(current.getTime() + intervalMinutes * 60000);
+        html += '</div>';
+        return html;
     }
-    return slots;
-}
 
-    // Генерация недельного представления
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        if (isNaN(date)) return dateStr; // если невалидная дата, вернуть как есть
 
-    // Функция для генерации таблицы недели
-// function generateWeekView(data) {
-//     if (!data.days?.length || !data.tables?.length) {
-//         return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
-//     }
-//
-//     let html = `
-//     <div class="overflow-x-auto">
-//         <table class="min-w-full border-collapse" border="1" cellspacing="0" cellpadding="4">
-//             <thead>
-//                 <tr>
-//                     <th>Стол / День</th>
-//                     ${data.days.map(day => {
-//                         const date = new Date(day);
-//                         return `<th>${date.getDate()}</th>`;
-//                     }).join('')}
-//                 </tr>
-//             </thead>
-//             <tbody>
-//     `;
-//
-//     data.tables.forEach(table => {
-//         html += `
-//         <tr>
-//             <td>
-//                 Стол #${table.number}<br>
-//                 <small>${table.table_type || ''}</small>
-//             </td>
-//         `;
-//
-//         data.days.forEach(day => {
-//             const availability = data.week_schedule[table.id] ? data.week_schedule[table.id][day] : null;
-//
-//             if (!availability) {
-//                 html += `<td style="background:#eee; color:#999; text-align:center;">Нет данных</td>`;
-//                 return;
-//             }
-//
-//             // Здесь предполагается массив слотов на день
-//             const totalSlots = availability.length;
-//             const booked = availability.filter(s => s.status !== 'available').length;
-//
-//             if (!totalSlots) {
-//                 html += `<td style="background:#ddd; color:#555; text-align:center;">Нет слотов</td>`;
-//             } else if (booked === totalSlots) {
-//                 html += `<td style="background:#f8d7da; color:#721c24; text-align:center;">
-//                     ${booked}/${totalSlots}
-//                 </td>`;
-//             } else if (booked > 0) {
-//                 html += `<td style="background:#fff3cd; color:#856404; text-align:center;">
-//                     ${booked}/${totalSlots}
-//                 </td>`;
-//             } else {
-//                 html += `<td style="background:#d4edda; color:#155724; text-align:center;">
-//                     ${booked}/${totalSlots}
-//                 </td>`;
-//             }
-//         });
-//
-//         html += `</tr>`;
-//     });
-//
-//     html += `
-//             </tbody>
-//         </table>
-//     </div>
-//     `;
-//
-//     return html;
-// }
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
 
-    function renderWeekView(data) {
-        if (!data.days || !data.tables) {
-            return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
+        return `${day}.${month}.${year}`;
+    }
+
+// Пример функции генерации таймслотов по умолчанию
+    function generateDefaultTimeSlots(openStr, closeStr, intervalMinutes) {
+        const slots = [];
+        const [openH, openM] = openStr.split(':').map(Number);
+        const [closeH, closeM] = closeStr.split(':').map(Number);
+
+        let current = new Date();
+        current.setHours(openH, openM, 0, 0);
+
+        const end = new Date();
+        end.setHours(closeH, closeM, 0, 0);
+
+        while (current < end) {
+            let h = current.getHours().toString().padStart(2, '0');
+            let m = current.getMinutes().toString().padStart(2, '0');
+            slots.push(`${h}:${m}`);
+
+            current = new Date(current.getTime() + intervalMinutes * 60000);
         }
+        return slots;
+    }
 
-        let html = `
-    <div class="grid grid-cols-${data.days.length + 1} gap-1 mb-2">
-        <div class="p-2 font-medium"></div>
+
+function renderWeekView(data) {
+    if (!data.days || !data.tables) {
+        return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
+    }
+
+    // Заголовок с днями
+    let html = `
+    <div class="grid grid-cols-${data.days.length + 1} gap-px bg-gray-200 mb-2 text-sm font-medium">
+        <div class="bg-white p-2"></div>
         ${data.days.map(day => {
-            const date = new Date(day);
-            return `<div class="p-2 text-center font-medium">
-                        <div>${date.toLocaleDateString('ru-RU', {weekday: 'short'})}</div>
-                        <div>${date.getDate()}</div>
-                    </div>`;
+            const date = new Date(day.date);
+            return `
+                <div class="bg-white p-2 text-center">
+                    <div>${date.toLocaleDateString('ru-RU', { weekday: 'short' })}</div>
+                    <div>${date.getDate()}</div>
+                </div>`;
         }).join('')}
-    </div>
+    </div>`;
 
-    <div class="grid grid-cols-${data.days.length + 1} gap-1">
-        <div class="flex flex-col">
-            ${data.tables.map(table => `
-                <div class="p-2 border-b flex flex-col items-start">
-                    <span class="font-medium">Стол #${table.number}</span>
-                    <span class="text-xs text-gray-500">${table.table_type}</span>
-                </div>
-            `).join('')}
-        </div>
+    // Основная таблица
+    html += `<div class="grid grid-cols-${data.days.length + 1} gap-px bg-gray-200 text-sm">`;
 
-        ${data.days.map(day => `
-            <div class="flex flex-col">
-                ${data.tables.map(table => {
-            const slots = data.week_schedule?.[table.id]?.[day] || [];
+    // Левая колонка — столы
+    html += `<div class="flex flex-col">`;
+    data.tables.forEach(table => {
+        html += `
+            <div class="bg-white p-2 h-14 border-b flex flex-col justify-center">
+                <div class="font-medium">Стол #${table.number}</div>
+                <div class="text-xs text-gray-500">${table.table_type}</div>
+            </div>`;
+    });
+    html += `</div>`;
+
+    // Сетки по дням и столам
+    html += data.days.map(day => {
+        return `<div class="flex flex-col">` + data.tables.map(table => {
+            const dayKey = day.date;
+            const slots = data.week_schedule?.[table.id]?.[dayKey] || [];
+
+            if (!day.is_working_day || !slots.length) {
+                return `<div class="bg-gray-100 text-gray-400 h-14 border-b flex items-center justify-center">–</div>`;
+            }
+
             const total = slots.length;
             const booked = slots.filter(slot => slot.status !== 'available').length;
-
-            if (total === 0) {
-                return `<div class="p-2 border-b text-center bg-gray-100 text-gray-400">Выходной</div>`;
-            }
 
             let cssClass = 'bg-green-100 text-green-800';
             if (booked === total) cssClass = 'bg-red-100 text-red-800';
             else if (booked > 0) cssClass = 'bg-yellow-100 text-yellow-800';
 
-            return `<div class="p-2 border-b text-center text-sm min-h-12 flex items-center justify-center ${cssClass} slot-available"
-                        data-date="${day}" data-table="${table.id}" title="Занято ${booked} из ${total}">
+            return `<div class="h-14 border-b flex items-center justify-center ${cssClass} cursor-pointer"
+                        title="Занято ${booked} из ${total}" 
+                        data-date="${dayKey}" 
+                        data-table="${table.id}">
                         ${booked}/${total}
                     </div>`;
-        }).join('')}
-            </div>
-        `).join('')}
-    </div>`;
+        }).join('') + `</div>`;
+    }).join('');
 
-        return html;
-    }
+    html += `</div>`;
+    return html;
+}
 
     function renderUserBookings(bookings) {
         if (!bookings || bookings.length === 0) {

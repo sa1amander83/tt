@@ -87,6 +87,16 @@ async function openTableTypePricingModal(pricingId = null) {
 
                     <div class="space-y-3">
                         <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Цена за полчаса(₽)*</label>
+                            <input type="number" name="half_hour_rate" id="halfHourRateInput" required min="0" class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg">
+                        </div>
+                        
+                    </div>
+
+
+
+                    <div class="space-y-3">
+                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Мин. время игры (мин)*</label>
                             <input type="number" name="min_duration" id="minDurationInput" required min="0" class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg">
                         </div>
@@ -143,6 +153,7 @@ function fillPricingForm(data) {
         'tableTypeSelect': data.table_type?.id || '',
         'pricingPlanSelect': data.pricing_plan?.id || '',
         'hourRateInput': data.hour_rate || '',
+        'halfHourRateInput': data.half_hour_rate || '',
         'hourRateGroupInput': data.hour_rate_group || '',
         'minDurationInput': data.min_duration || '',
         'maxDurationInput': data.max_duration || ''

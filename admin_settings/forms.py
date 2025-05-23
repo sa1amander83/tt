@@ -99,11 +99,12 @@ class PricingPlanForm(forms.ModelForm):
 class TableTypePricingForm(forms.ModelForm):
     class Meta:
         model = TableTypePricing
-        fields = ['table_type', 'pricing_plan', 'hour_rate', 'hour_rate_group', 'min_duration', 'max_duration']
+        fields = ['table_type', 'pricing_plan', 'hour_rate', 'half_hour_rate', 'hour_rate_group', 'min_duration', 'max_duration']
         labels = {
             'table_type': 'Тип стола',
             'pricing_plan': 'Тарифный план',
             'hour_rate': 'Почасовая ставка',
+            'half_hour_rate': 'Ставка за полчаса',
             'hour_rate_group': 'Групповая почасовая ставка',
             'min_duration': 'Минимальная продолжительность',
             'max_duration': 'Максимальная продолжительность',
@@ -116,6 +117,9 @@ class TableTypePricingForm(forms.ModelForm):
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'hour_rate': forms.NumberInput(attrs={
+                'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+            }),
+            'half_hour_rate': forms.NumberInput(attrs={
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'hour_rate_group': forms.NumberInput(attrs={
