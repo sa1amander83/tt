@@ -7,7 +7,7 @@ from accounts.models import User
 from yookassa import  Payment
 import logging
 
-from bookings.models import Table, TimeSlot, Booking
+from bookings.models import Table, Booking
 
 logger = logging.getLogger(__name__)
 
@@ -58,11 +58,11 @@ class EventManager(models.Manager):
     def available_slots(self, table, date):
         start = datetime.combine(date, datetime.min.time())
         end = start + timedelta(days=1)
-        return TimeSlot.objects.filter(
-            table=table,
-            start_time__range=(start, end),
-            is_available=True
-        )
+        # return TimeSlot.objects.filter(
+        #     table=table,
+        #     start_time__range=(start, end),
+        #     is_available=True
+        # )
 class EventAbstract(models.Model):
     """ Event abstract model """
 

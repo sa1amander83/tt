@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.http import JsonResponse
 from yookassa import Payment
 
-from bookings.models import Booking, Table, TimeSlot
+from bookings.models import Booking, Table
 
 
 class BookingListView(LoginRequiredMixin, ListView):
@@ -34,21 +34,21 @@ class CalendarView(LoginRequiredMixin, TemplateView):
         return context
 
 
-def available_slots(request):
-    table_id = request.GET.get('table')
-    date = request.GET.get('date')
-
-    try:
-        table = Table.objects.get(pk=table_id)
-        slots = TimeSlot.objects.available_slots(table, date)
-        data = [{
-            'start': slot.start_time.strftime('%H:%M'),
-            'end': slot.end_time.strftime('%H:%M'),
-            'price': str(slot.price)
-        } for slot in slots]
-        return JsonResponse(data, safe=False)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=400)
+# def available_slots(request):
+#     table_id = request.GET.get('table')
+#     date = request.GET.get('date')
+#
+#     try:
+#         table = Table.objects.get(pk=table_id)
+#         slots = TimeSlot.objects.available_slots(table, date)
+#         data = [{
+#             'start': slot.start_time.strftime('%H:%M'),
+#             'end': slot.end_time.strftime('%H:%M'),
+#             'price': str(slot.price)
+#         } for slot in slots]
+#         return JsonResponse(data, safe=False)
+#     except Exception as e:
+#         return JsonResponse({'error': str(e)}, status=400)
 
 
 class PaymentHandlerView(View):

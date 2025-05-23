@@ -87,78 +87,31 @@ class Equipment(models.Model):
         return self.name
 
 
-class TimeSlot(models.Model):
-    """Модель временных слотов столов"""
-    table = models.ForeignKey(Table, on_delete=models.CASCADE, verbose_name="Стол")
-    pricing_plan = models.ForeignKey(PricingPlan, on_delete=models.PROTECT, verbose_name="Тарифный план")
-    start_time = models.DateTimeField(verbose_name="Время начала")
-    end_time = models.DateTimeField(verbose_name="Время окончания")
-    is_available = models.BooleanField(default=True, verbose_name="Доступен для брони")
-    is_blocked = models.BooleanField(default=False, verbose_name="Заблокирован (тех. работы)")
-
-    class Meta:
-        verbose_name = "Временной слот"
-        verbose_name_plural = "Временные слоты"
-        ordering = ['start_time']
-        indexes = [
-            models.Index(fields=['table', 'start_time', 'end_time']),
-        ]
-        constraints = [
-            models.UniqueConstraint(
-                fields=['table', 'start_time', 'end_time'],
-                name='unique_table_timeslot'
-            )
-        ]
-
-    def __str__(self):
-        return f"{self.table} {self.start_time.strftime('%d.%m.%Y %H:%M')}-{self.end_time.strftime('%H:%M')}"
-
-    def clean(self):
-        if self.start_time >= self.end_time:
-            raise ValidationError("Время окончания должно быть позже времени начала")
-
-        # Проверка на пересечение с другими слотами
-        overlapping = TimeSlot.objects.filter(
-            table=self.table,
-            start_time__lt=self.end_time,
-            end_time__gt=self.start_time
-        ).exclude(pk=self.pk).exists()
-
-        if overlapping:
-            raise ValidationError("Слот пересекается с существующим бронированием")
-
-    @property
-    def duration_hours(self):
-        """Длительность слота в часах"""
-        return (self.end_time - self.start_time).total_seconds() / 3600
 
 User='accounts.User'
 class Booking(models.Model):
-    """Модель бронирования"""
     STATUS_CHOICES = (
         ('pending', 'Ожидает подтверждения'),
         ('confirmed', 'Подтверждено'),
         ('cancelled', 'Отменено'),
-        ('completed', 'Завершено')
+        ('completed', 'Завершено'),
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings', verbose_name="Пользователь")
-    timeslot = models.ForeignKey(TimeSlot, on_delete=models.PROTECT, related_name='bookings',
-                                 verbose_name="Временной слот")
-    pricing_plan = models.ForeignKey(PricingPlan, on_delete=models.PROTECT, verbose_name="Тарифный план")
+    table = models.ForeignKey(Table, on_delete=models.CASCADE, verbose_name="Стол")
+    pricing = models.ForeignKey(TableTypePricing, on_delete=models.PROTECT, verbose_name="Ценообразование")
+    start_time = models.DateTimeField(verbose_name="Время начала")
+    end_time = models.DateTimeField(verbose_name="Время окончания")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")
 
-    # Информация о бронировании
     participants = models.PositiveIntegerField(default=2, verbose_name="Количество участников")
     is_group = models.BooleanField(default=False, verbose_name="Групповое бронирование")
     equipment = models.ManyToManyField(Equipment, through='BookingEquipment', blank=True, verbose_name="Оборудование")
 
-    # Цены и стоимость
     base_price = models.PositiveIntegerField(verbose_name="Базовая стоимость", default=400)
     equipment_price = models.PositiveIntegerField(default=0, verbose_name="Стоимость оборудования")
     total_price = models.PositiveIntegerField(verbose_name="Итоговая стоимость")
 
-    # Дополнительная информация
     notes = models.TextField(blank=True, verbose_name="Примечания")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
@@ -171,43 +124,23 @@ class Booking(models.Model):
     def __str__(self):
         return f"Бронирование #{self.id} - {self.user} ({self.get_status_display()})"
 
-    def save(self, *args, **kwargs):
-        # Автоматическое заполнение полей при создании
-        if not self.pk:
-            self.start_time = self.timeslot.start_time
-            self.end_time = self.timeslot.end_time
-            self.table = self.timeslot.table
-            self.pricing_plan = self.timeslot.pricing_plan
-
-            # Расчет стоимости
-            self.calculate_prices()
-
-        super().save(*args, **kwargs)
-
     def calculate_prices(self):
-        """Расчет стоимости бронирования"""
-        pricing = TableTypePricing.objects.get(
-            table_type=self.timeslot.table.table_type,
-            pricing_plan=self.timeslot.pricing_plan
-        )
+        pricing = self.pricing
+        duration = (self.end_time - self.start_time).total_seconds() / 3600
 
-        duration = self.timeslot.duration_hours
-
-        # Базовая стоимость
         if self.is_group:
             self.base_price = pricing.hour_rate_group * duration
         else:
             self.base_price = pricing.hour_rate * duration
 
-        # Стоимость оборудования
-        equipment_price = sum(
-            eq.price_per_hour * duration
-            for eq in self.equipment.all()
-        )
+        equipment_price = sum(eq.price_per_hour * duration for eq in self.equipment.all())
         self.equipment_price = equipment_price
-
-        # Итоговая стоимость
         self.total_price = self.base_price + self.equipment_price
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.calculate_prices()
+        super().save(*args, **kwargs)
 
 
 class BookingEquipment(models.Model):

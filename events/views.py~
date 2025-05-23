@@ -6,9 +6,7 @@ from django.utils import timezone
 from django.http import JsonResponse
 from yookassa import Payment
 
-from bookings.models import Booking, TimeSlot
-from .models import  Tables
-
+from bookings.models import Booking, Table, TimeSlot
 
 
 class BookingListView(LoginRequiredMixin, ListView):
@@ -32,7 +30,7 @@ class CalendarView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['tables'] = Tables.objects.all()
+        context['tables'] = Table.objects.all()
         return context
 
 
@@ -41,7 +39,7 @@ def available_slots(request):
     date = request.GET.get('date')
 
     try:
-        table = Tables.objects.get(pk=table_id)
+        table = Table.objects.get(pk=table_id)
         slots = TimeSlot.objects.available_slots(table, date)
         data = [{
             'start': slot.start_time.strftime('%H:%M'),
