@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         bookings: [],
         pricingPlan: null,
         equipment: [],
+
         siteSettings: {
             open_time: "09:00",
             close_time: "22:00"
@@ -69,6 +70,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     async function init() {
         try {
             await loadInitialData();
+            // Пример - в момент инициализации:
+
             setupEventListeners();
             if (!state.siteSettings.close_time || !state.siteSettings.close_time.match(/^\d{1,2}:\d{2}$/)) {
                 state.siteSettings.close_time = "22:00"; // значение по умолчанию
@@ -144,25 +147,45 @@ document.addEventListener('DOMContentLoaded', async function () {
         updateBookingCost();
     }
 
+    elements.bookingDate?.addEventListener('change', async () => {
+        const selectedDate = elements.bookingDate.valueAsDate;
+        if (selectedDate) {
+            state.currentDate = selectedDate;
+            updateUI();
+            await loadSiteSettings(selectedDate);
+            await renderCalendar();
+        }
+    });
 
-async function loadSiteSettings(date) {
-    try {
-        const response = await fetch(`/bookings/api/site-settings/?date=${date.toISOString().split('T')[0]}`);
-        if (!response.ok) throw new Error('Ошибка получения настроек');
+    async function loadSiteSettings(date) {
+        try {
+            const dateStr = date.toISOString().split('T')[0];
+            const response = await fetch(`/bookings/api/site-settings/?date=${dateStr}`);
 
-        const data = await response.json();
+            if (!response.ok) throw new Error('Ошибка получения настроек');
+            const data = await response.json();
 
-        state.siteSettings = {
-            open_time: data.current_day.open_time || "09:00",
-            close_time: data.current_day.close_time || "22:00",
-            is_open: data.current_day.is_open
-        };
-    } catch (error) {
-        console.error('Ошибка загрузки настроек дня:', error);
-        state.siteSettings = { open_time: "09:00", close_time: "22:00", is_open: true };
+            // Обновляем state.siteSettings
+            state.siteSettings = {
+                open_time: data.current_day.open_time || "09:00",
+                close_time: data.current_day.close_time || "22:00",
+                is_open: data.current_day.is_open
+            };
+
+            // После обновления настроек обновляем временные слоты
+            initTimeSlots();
+
+        } catch (error) {
+            console.error('Ошибка загрузки настроек дня:', error);
+            // Устанавливаем значения по умолчанию в случае ошибки
+            state.siteSettings = {
+                open_time: "09:00",
+                close_time: "22:00",
+                is_open: true
+            };
+            initTimeSlots();
+        }
     }
-}
-
 
     // Инициализация временных слотов
     function initTimeSlots() {
@@ -170,22 +193,17 @@ async function loadSiteSettings(date) {
 
         elements.startTime.innerHTML = '';
 
-        const parseTime = (timeStr, defaultHour) => {
-            if (!timeStr) return defaultHour;
-            const [hours, minutes] = timeStr.split(':').map(Number);
-            return !isNaN(hours) ? hours : defaultHour;
-        };
+        let openHour = parseInt(state.siteSettings.open_time?.split(':')[0]) || 9;
+        let closeHour = parseInt(state.siteSettings.close_time?.split(':')[0]) || 22;
 
-        let startHour = parseTime(state.siteSettings.open_time, 9);
-        let endHour = parseTime(state.siteSettings.close_time, 22);
-
-        if (startHour >= endHour) {
-            console.warn('Время открытия должно быть раньше времени закрытия. Используются значения по умолчанию.');
-            startHour = 9;
-            endHour = 22;
+        // Проверка на валидность времени
+        if (isNaN(openHour) || isNaN(closeHour) || openHour >= closeHour) {
+            console.warn('Invalid opening hours, using defaults (9-22)');
+            openHour = 9;
+            closeHour = 22;
         }
 
-        for (let hour = startHour; hour < endHour; hour++) {
+        for (let hour = openHour; hour < closeHour; hour++) {
             const option = document.createElement('option');
             option.value = `${hour.toString().padStart(2, '0')}:00`;
             option.textContent = `${hour.toString().padStart(2, '0')}:00`;
@@ -197,15 +215,13 @@ async function loadSiteSettings(date) {
     function setupEventListeners() {
         // Навигация по календарю
         elements.prevBtn?.addEventListener('click', async () => {
-            navigate(-1);
-            await loadSiteSettings(state.currentDate);
-            renderCalendar();
+            await navigate(-1); // Добавляем await
         });
+
         elements.nextBtn?.addEventListener('click', async () => {
-            navigate(1);
-            await loadSiteSettings(state.currentDate);
-            renderCalendar();
+            await navigate(1); // Добавляем await
         });
+
 
         elements.todayBtn?.addEventListener('click', async () => {
             goToToday();
@@ -244,6 +260,26 @@ async function loadSiteSettings(date) {
                 updateUI();
 
                 await loadSiteSettings(selectedDate); // обязательно await
+                renderCalendar();
+            }
+        });
+        elements.weekContainer?.addEventListener('click', async function (event) {
+            const slotElement = event.target.closest('[data-date][data-table]');
+            if (slotElement) {
+                const selectedDate = new Date(slotElement.dataset.date);
+                const today = new Date();
+                const isPastDay = selectedDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+                // Если пользователь не админ и день прошёл — игнорируем клик
+                if (isPastDay && !state.userIsAdmin) {
+                    return;
+                }
+
+                state.currentDate = selectedDate;
+                state.currentView = 'day';
+                updateUI();
+
+                await loadSiteSettings(selectedDate);
                 renderCalendar();
             }
         });
@@ -413,8 +449,14 @@ async function loadSiteSettings(date) {
         }
     }
 
+    function updateDateInput() {
+        if (elements.bookingDate) {
+            elements.bookingDate.valueAsDate = state.currentDate;
+        }
+    }
+
     // Навигация по календарю
-    function navigate(direction) {
+    async function navigate(direction) {
         const newDate = new Date(state.currentDate);
 
         switch (state.currentView) {
@@ -425,21 +467,25 @@ async function loadSiteSettings(date) {
                 newDate.setDate(newDate.getDate() + (7 * direction));
                 break;
             case 'month':
-                // Сохраняем текущий день месяца
                 const originalDate = newDate.getDate();
-
-                // Переходим на 1 число следующего/предыдущего месяца
                 newDate.setDate(1);
                 newDate.setMonth(newDate.getMonth() + direction);
-
-                // Корректируем день, если в новом месяце меньше дней
                 const daysInNewMonth = new Date(newDate.getFullYear(), newDate.getMonth() + 1, 0).getDate();
                 newDate.setDate(Math.min(originalDate, daysInNewMonth));
                 break;
         }
 
         state.currentDate = newDate;
+        //  if (elements.bookingDate) {
+        //     elements.bookingDate.valueAsDate = newDate;
+        // }
+        updateDateInput();
         updateUI();
+
+        // Загружаем настройки и ждем завершения
+        await loadSiteSettings(newDate);
+
+        // Только после загрузки настроек рендерим календарь
         renderCalendar();
     }
 
@@ -551,12 +597,26 @@ async function loadSiteSettings(date) {
     }
 
     // Основной рендеринг календаря
+    function getMonday(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = (day === 0 ? -6 : 1) - day; // Если воскресенье (0), двигаем назад на 6 дней
+        d.setDate(d.getDate() + diff);
+        return d;
+    }
+
     async function renderCalendar() {
         try {
-            elements.monthContainer.innerHTML = '<div class="text-center py-4">Загрузка...</div>';
+            const container = elements[`${state.currentView}Container`];
+            container.innerHTML = '<div class="text-center py-4">Загрузка...</div>';
+
+            let dateForAPI = state.currentDate;
+            if (state.currentView === 'week') {
+                dateForAPI = getMonday(state.currentDate);
+            }
 
             const params = new URLSearchParams({
-                date: formatDateForAPI(state.currentDate),
+                date: formatDateForAPI(dateForAPI),
                 view: state.currentView,
                 table: elements.tableFilter?.value || 'all',
                 status: elements.statusFilter?.value || 'all'
@@ -567,18 +627,18 @@ async function loadSiteSettings(date) {
 
             const data = await response.json();
 
-
             renderView(data);
         } catch (error) {
             console.error('Ошибка рендеринга календаря:', error);
             showError('Не удалось загрузить данные календаря');
             elements.monthContainer.innerHTML = `
-            <div class="p-4 text-center text-red-500">
-                Ошибка загрузки: ${error.message}
-            </div>
-        `;
+      <div class="p-4 text-center text-red-500">
+        Ошибка загрузки: ${error.message}
+      </div>
+    `;
         }
     }
+
 
     // Рендеринг нужного представления
     function renderView(data) {
@@ -720,77 +780,91 @@ async function loadSiteSettings(date) {
         </div>
     `;
     }    // Недельное представление
-    function renderWeekView(data) {
-        if (!data.days || !data.tables) {
-            return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
-        }
-
-        const header = `
-            <div class="grid grid-cols-${data.days.length + 1} gap-px bg-gray-200 mb-2 text-sm font-medium">
-                <div class="bg-white p-2"></div>
-                ${data.days.map(day => `
-                    <div class="bg-white p-2 text-center">
-                        <div>${new Date(day.date).toLocaleDateString('ru-RU', {weekday: 'short'})}</div>
-                        <div>${new Date(day.date).getDate()}</div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-
-        const body = `
-            <div class="grid grid-cols-${data.days.length + 1} gap-px bg-gray-200 text-sm">
-                ${renderWeekTablesColumn(data.tables)}
-                ${data.days.map(day => renderWeekDayColumn(data, day)).join('')}
-            </div>
-        `;
-
-        return header + body;
+function renderWeekView(data) {
+    if (!data.days || !data.tables) {
+        return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
     }
 
-    function renderWeekTablesColumn(tables) {
-        return `
-            <div class="flex flex-col">
-                ${tables.map(table => `
-                    <div class="bg-white p-2 h-14 border-b flex flex-col justify-center">
-                        <div class="font-medium">Стол #${table.number}</div>
-                        <div class="text-xs text-gray-500">${table.table_type}</div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    }
+    const daysArray = Object.entries(data.days).map(([date, dayData]) => ({
+        date,
+        ...dayData
+    }));
 
-    function renderWeekDayColumn(data, day) {
-        return `
-            <div class="flex flex-col">
-                ${data.tables.map(table => {
-            const slots = data.week_schedule?.[day.date]?.[table.id] || {};
-            const slotValues = Object.values(slots);
+    const header = `
+        <div class="grid grid-cols-${daysArray.length + 1} gap-2 bg-gray-200 mb-2 text-sm font-medium">
+            <div class="bg-white p-2"></div>
+            ${daysArray.map(day => `
+                <div class="bg-white p-2 text-center rounded-xl">
+                    <div>${new Date(day.date).toLocaleDateString('ru-RU', { weekday: 'short' })}</div>
+                    <div>${new Date(day.date).getDate()}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
 
-            if (!day.is_working_day || !slotValues.length) {
-                return `<div class="bg-gray-100 text-gray-400 h-14 border-b flex items-center justify-center">–</div>`;
-            }
+    const body = `
+        <div class="grid grid-cols-${daysArray.length + 1} gap-2 bg-gray-200 text-sm">
+            ${renderWeekTablesColumn(data.tables)}
+            ${daysArray.map(day => renderWeekDayColumn(data, day)).join('')}
+        </div>
+    `;
 
-            const booked = slotValues.filter(s => s.status !== 'available').length;
-            const total = slotValues.length;
-            const statusClass = booked === total ? 'bg-red-100 text-red-800' :
-                booked > 0 ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-green-100 text-green-800';
+    return header + body;
+}
 
-            return `<div class="h-14 border-b flex items-center justify-center ${statusClass} cursor-pointer slot-available" 
-                                title="Занято ${booked} из ${total}" 
-                                data-date="${day.date}" 
-                                data-table="${table.id}">
-                                ${booked}/${total}
-                            </div>`;
-        }).join('')}
-            </div>
-        `;
-    }
+function renderWeekTablesColumn(tables) {
+    return `
+        <div class="flex flex-col gap-y-2">
+            ${tables.map(table => `
+                <div class="bg-white p-2 h-14 border-b rounded-xl flex flex-col items-center justify-center shadow-sm">
+                    <div class="font-medium">Стол #${table.number}</div>
+                    <div class="text-xs text-gray-500">${table.table_type}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
 
-    // Месячное представление
-// Месячное представление
-// Месячное представление
+function renderWeekDayColumn(data, day) {
+    const today = new Date();
+    const dayDate = new Date(day.date);
+    // Сравниваем только даты без времени
+    const isPastDay = dayDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    return `
+        <div class="flex flex-col gap-y-2">
+            ${data.tables.map(table => {
+                const tableSchedule = day.day_schedule?.[table.id] || {};
+                const slotEntries = Object.entries(tableSchedule).filter(([key]) => key !== '_meta');
+
+                if (!day.is_working_day || !slotEntries.length) {
+                    return `<div class="bg-gray-100 text-gray-400 h-14 border-b rounded-xl flex items-center justify-center shadow-sm">–</div>`;
+                }
+
+                const booked = slotEntries.filter(([_, slot]) => slot.status !== 'available').length;
+                const total = slotEntries.length;
+                const statusClass = booked === total ? 'bg-red-100 text-red-800' :
+                    booked > 0 ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800';
+
+                // Для прошедших дней и обычных пользователей делаем неактивный слот
+                const isDisabled = isPastDay && !state.userIsAdmin;
+                const disabledClass = isDisabled ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : statusClass;
+                const pointerEvents = isDisabled ? 'pointer-events-none' : '';
+
+                return `<div class="h-14 border-b flex items-center justify-center rounded-xl px-2 py-1 shadow-sm ${disabledClass} ${pointerEvents} slot-available"
+                             title="Занято ${booked} из ${total}"
+                             data-date="${day.date}"
+                             data-table="${table.id}">
+                             ${booked}/${total}
+                        </div>`;
+            }).join('')}
+        </div>
+    `;
+}
+
+
+
     function generateMonthView(data) {
         if (!data.weeks || !data.tables) {
             return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
@@ -799,7 +873,7 @@ async function loadSiteSettings(date) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const monthStart = data.month ? new Date(data.month + '-01') : new Date(state.currentDate.getFullYear(), state.currentDate.getMonth(), 1);
+        const monthStart = data.month ? new Date(data.month + '-01') : new Date();
 
         const bookingsByDate = {};
         if (data.user_bookings) {
@@ -811,15 +885,25 @@ async function loadSiteSettings(date) {
             });
         }
 
-        // Создаем карту дней с их статусами из данных
+        // Создаем карту дней из объекта days (если он объект, а не массив)
         const daysStatusMap = {};
         if (data.days) {
-            data.days.forEach(day => {
-                daysStatusMap[day.date] = {
-                    is_working_day: day.is_working_day,
-                    working_hours: day.working_hours
-                };
-            });
+            if (Array.isArray(data.days)) {
+                data.days.forEach(day => {
+                    daysStatusMap[day.date] = {
+                        is_working_day: day.is_working_day,
+                        working_hours: day.working_hours
+                    };
+                });
+            } else {
+                // Если days — объект, превращаем его в массив
+                Object.entries(data.days).forEach(([date, dayData]) => {
+                    daysStatusMap[date] = {
+                        is_working_day: dayData.is_working_day,
+                        working_hours: dayData.working_hours
+                    };
+                });
+            }
         }
 
         const getDayClasses = (dateStr, isCurrentMonth) => {
@@ -831,17 +915,15 @@ async function loadSiteSettings(date) {
             const isToday = date.toDateString() === today.toDateString();
             const isPast = date < today;
 
-            // Получаем статус дня из данных
             const dayStatus = daysStatusMap[dateStr];
             const isWorkingDay = dayStatus?.is_working_day ?? true;
             const workingHours = dayStatus?.working_hours;
 
-            // Проверяем, сокращенный ли день (только если есть данные о рабочих часах)
             let isShortenedDay = false;
-            if (workingHours && workingHours.open && workingHours.close) {
+            if (workingHours && workingHours.open_time && workingHours.close_time) {
                 const defaultOpen = "09:00";
                 const defaultClose = "22:00";
-                isShortenedDay = workingHours.open !== defaultOpen || workingHours.close !== defaultClose;
+                isShortenedDay = workingHours.open_time !== defaultOpen || workingHours.close_time !== defaultClose;
             }
 
             let classes = 'rounded p-2 text-sm';
@@ -851,19 +933,14 @@ async function loadSiteSettings(date) {
             }
 
             if (!isWorkingDay) {
-                // Выходные дни - красный
                 classes += ' bg-red-50 border border-red-100 text-red-800';
             } else if (isShortenedDay) {
-                // Сокращенные дни - желтый
                 classes += ' bg-yellow-50 border border-yellow-100 text-yellow-800';
             } else if (isToday) {
-                // Сегодня
                 classes += ' bg-blue-50 border border-blue-200 text-blue-800';
             } else if (isPast) {
-                // Прошедший день
                 classes += ' bg-gray-100 text-gray-500';
             } else {
-                // Обычный рабочий день
                 classes += ' bg-white border border-gray-200 hover:bg-gray-50';
             }
 
@@ -881,17 +958,15 @@ async function loadSiteSettings(date) {
             date.setHours(0, 0, 0, 0);
             const isPast = date < today;
 
-            // Получаем статус дня из данных
             const dayStatus = daysStatusMap[dateStr];
             const isWorkingDay = dayStatus?.is_working_day ?? true;
             const workingHours = dayStatus?.working_hours;
 
-            // Проверяем, сокращенный ли день (только если есть данные о рабочих часах)
             let isShortenedDay = false;
-            if (workingHours && workingHours.open && workingHours.close) {
+            if (workingHours && workingHours.open_time && workingHours.close_time) {
                 const defaultOpen = "09:00";
                 const defaultClose = "22:00";
-                isShortenedDay = workingHours.open !== defaultOpen || workingHours.close !== defaultClose;
+                isShortenedDay = workingHours.open_time !== defaultOpen || workingHours.close_time !== defaultClose;
             }
 
             if (!isWorkingDay) {
@@ -899,7 +974,7 @@ async function loadSiteSettings(date) {
             }
 
             if (isShortenedDay) {
-                return `<div class="text-xs text-yellow-600 mt-1">Сокращенный день (${workingHours.open}-${workingHours.close})</div>`;
+                return `<div class="text-xs text-yellow-600 mt-1">Сокращенный день (${workingHours.open_time}-${workingHours.close_time})</div>`;
             }
 
             const bookings = bookingsByDate[dateStr] || [];
@@ -910,7 +985,7 @@ async function loadSiteSettings(date) {
             }
 
             const textColor = isPast ? 'text-gray-400' : 'text-green-600';
-            return `<div class="text-xs ${textColor} mt-1">${count} бронирование</div>`;
+            return `<div class="text-xs ${textColor} mt-1">${count} бронирование${count > 1 ? 'й' : ''}</div>`;
         };
 
         const weekdaysHeader = `
@@ -938,12 +1013,11 @@ async function loadSiteSettings(date) {
                 const isCurrentMonth = date.getMonth() === monthStart.getMonth();
 
                 return `
-                        <div class="${getDayClasses(dayStr, isCurrentMonth)}" 
-                             data-date="${dayStr}">
-                            <div class="font-medium">${dayOfMonth}</div>
-                            ${renderBookingsInfo(dayStr)}
-                        </div>
-                    `;
+                    <div class="${getDayClasses(dayStr, isCurrentMonth)}" data-date="${dayStr}">
+                        <div class="font-medium">${dayOfMonth}</div>
+                        ${renderBookingsInfo(dayStr)}
+                    </div>
+                `;
             }).join('')}
             </div>
         `;

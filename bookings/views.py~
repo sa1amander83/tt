@@ -217,25 +217,18 @@ class CalendarAPIView(APIView):
         start -= timedelta(days=start.weekday())
         # Sunday after end
         end += timedelta(days=(6 - end.weekday()))
-        num_days = (end - start).days + 1
-
-        return self._get_calendar_range_view(start, num_days, user, 'month')
+        return self._get_calendar_range_view(start, (end - start).days + 1, user, 'month')
 
     def _get_calendar_range_view(self, start_date, num_days, user, view_type):
         days = [start_date + timedelta(days=i) for i in range(num_days)]
         tables = Table.objects.filter(is_active=True).order_by('number')
         slot_step = 60
-        calendar_schedule = defaultdict(dict)  # Изменено с defaultdict(lambda: defaultdict(dict))
+        calendar_schedule = defaultdict(lambda: defaultdict(dict))
         time_slots_set = set()
 
         for day in days:
             is_working, open_time, close_time = self.get_open_close_times(day)
             if not is_working:
-                calendar_schedule[day.isoformat()] = {
-                    'is_working_day': False,
-                    'working_hours': None,
-                    'day_schedule': {}
-                }
                 continue
 
             day_start = timezone.make_aware(datetime.combine(day, open_time))
@@ -252,21 +245,16 @@ class CalendarAPIView(APIView):
                 booking_map[b.table_id].append((b.start_time, b.end_time))
 
             pricing_data = TableTypePricing.objects.select_related('pricing_plan', 'table_type')
-            offers = SpecialOffer.objects.filter(is_active=True, valid_from__lte=day,
-                                                 valid_to__gte=day).prefetch_related('tables')
+            offers = SpecialOffer.objects.filter(is_active=True, valid_from__lte=day, valid_to__gte=day).prefetch_related('tables')
             offers_by_table = defaultdict(list)
             for offer in offers:
                 target_tables = tables if offer.apply_to_all else offer.tables.all()
                 for table in target_tables:
                     offers_by_table[table.id].append(offer)
 
-            time_slots_for_day = []
-            day_schedule = defaultdict(dict)
-
             for slot_start, slot_end in slots:
                 label = slot_start.strftime('%H:%M')
                 time_slots_set.add(label)
-                time_slots_for_day.append(label)
 
                 for table in tables:
                     overlaps = any(s < slot_end and e > slot_start for s, e in booking_map.get(table.id, []))
@@ -296,7 +284,7 @@ class CalendarAPIView(APIView):
 
                     final_price = base_price * (1 - discount / 100)
 
-                    day_schedule[table.id][label] = {
+                    calendar_schedule[day.isoformat()][table.id][label] = {
                         'status': slot_status,
                         'start': slot_start.strftime('%H:%M'),
                         'end': slot_end.strftime('%H:%M'),
@@ -305,23 +293,15 @@ class CalendarAPIView(APIView):
                         'discount_percent': discount
                     }
 
-            calendar_schedule[day.isoformat()] = {
-                'is_working_day': True,
-                'working_hours': {
-                    'open_time': open_time.strftime('%H:%M'),
-                    'close_time': close_time.strftime('%H:%M'),
-                },
-                'day_schedule': day_schedule
-            }
-
         return Response({
             'calendar_type': view_type,
             'start_date': start_date.isoformat(),
             'end_date': (start_date + timedelta(days=num_days - 1)).isoformat(),
             'tables': [{'id': t.id, 'number': t.number, 'table_type': str(t.table_type)} for t in tables],
             'time_slots': sorted(time_slots_set),
-            'days': calendar_schedule
+            f'{view_type}_schedule': calendar_schedule
         })
+
 
 
 @require_GET
