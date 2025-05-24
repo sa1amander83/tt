@@ -1,4 +1,7 @@
 import traceback
+from calendar import monthrange
+
+from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -20,7 +23,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, UpdateView
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 import json
 
 from admin_settings.models import WorkingDay, Holiday, SpecialOffer
@@ -60,61 +63,66 @@ def booking_view(request):
     return render(request, "bookings/bookings.html", context)
 
 
+from collections import defaultdict
+from datetime import datetime, timedelta, time
+from calendar import monthrange
+
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+
+
+
 class CalendarAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        view = request.query_params.get('view', 'day')
+    def get(self, request, *args, **kwargs):
+        view_type = request.query_params.get('view', 'day')
         date_str = request.query_params.get('date')
-        user = request.user
 
         if not date_str:
-            return Response({"error": "Missing 'date' parameter"}, status=400)
+            return Response({"error": "Parameter 'date' is required."}, status=400)
 
         date = parse_date(date_str)
-        if not date:
-            return Response({"error": "Invalid 'date' format, expected YYYY-MM-DD"}, status=400)
+        if date is None:
+            return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
 
-        # Для одиночной даты кэш не обязателен, но пусть будет
-        working_day_map = self.get_working_day_map([date])
-        is_working_day, working_hours = working_day_map[date]
+        user = request.user
 
-        if view == 'day':
-            return self.get_day_view(date, is_working_day, working_hours)
-        elif view == 'week':
+        if view_type == 'day':
+            return self.get_day_view(date, user)
+        elif view_type == 'week':
             return self.get_week_view(date, user)
-        elif view == 'month':
+        elif view_type == 'month':
             return self.get_month_view(date, user)
         else:
-            return Response({"error": "Invalid 'view' parameter"}, status=400)
-
-
-    def get_working_day_map(self, dates):
-        """Возвращает словарь {date: (is_working_day, working_hours)} с кэшированной проверкой"""
-        results = {}
-        for d in dates:
-            results[d] = self.check_working_day(d)
-        return results
+            return Response({"error": "Invalid view type. Must be 'day', 'week', or 'month'."}, status=400)
 
     def get_open_close_times(self, date):
         holiday = Holiday.objects.filter(date=date).first()
         if holiday:
             if holiday.status == 'closed':
                 return False, None, None
-            elif holiday.status in ['shortened', 'normal']:
-                if holiday.open_time and holiday.close_time:
-                    return True, holiday.open_time, holiday.close_time
+            return True, holiday.open_time, holiday.close_time
 
         weekday = date.weekday()
-        working_day = WorkingDay.objects.filter(day=weekday, is_open=True).first()
-        if working_day:
-            return True, working_day.open_time, working_day.close_time
+        wd = WorkingDay.objects.filter(day=weekday, is_open=True).first()
+        if wd:
+            return True, wd.open_time, wd.close_time
 
         return False, None, None
 
-    def get_day_view(self, date):
-        is_working_day, open_time, close_time = self.get_open_close_times(date)
+    def get_bookings(self, start, end, user):
+        qs = Booking.objects.filter(start_time__lt=end, end_time__gt=start).select_related('table')
+        if not user.is_staff and not user.is_superuser:
+            qs = qs.filter(user=user)
+        return qs
 
+    def get_day_view(self, date, user):
+        is_working_day, open_time, close_time = self.get_open_close_times(date)
         if not is_working_day:
             return Response({
                 "date": date.strftime('%Y-%m-%d'),
@@ -126,37 +134,28 @@ class CalendarAPIView(APIView):
             })
 
         tables = Table.objects.filter(is_active=True).order_by('number')
+        start_dt = timezone.make_aware(datetime.combine(date, open_time))
+        end_dt = timezone.make_aware(datetime.combine(date, close_time))
+        now = timezone.now()
 
-        day_start = timezone.make_aware(datetime.combine(date, open_time))
-        day_end = timezone.make_aware(datetime.combine(date, close_time))
-
-        slot_step_minutes = 60
+        slot_duration = 60
         slots = []
-        current = day_start
-        while current + timedelta(minutes=slot_step_minutes) <= day_end:
-            slots.append((current, current + timedelta(minutes=slot_step_minutes)))
-            current += timedelta(minutes=slot_step_minutes)
+        current = start_dt
+        while current + timedelta(minutes=slot_duration) <= end_dt:
+            slots.append((current, current + timedelta(minutes=slot_duration)))
+            current += timedelta(minutes=slot_duration)
 
-        bookings = Booking.objects.filter(
-            start_time__lt=day_end,
-            end_time__gt=day_start
-        ).select_related('table')
+        bookings = self.get_bookings(start_dt, end_dt, user)
 
         booking_map = defaultdict(list)
         for b in bookings:
             booking_map[b.table_id].append((b.start_time, b.end_time))
 
-        pricing_plans = PricingPlan.objects.all()
-        table_type_pricings = TableTypePricing.objects.select_related('pricing_plan', 'table_type')
-
-        special_offers = SpecialOffer.objects.filter(
-            is_active=True,
-            valid_from__lte=date,
-            valid_to__gte=date
-        ).prefetch_related('tables')
+        pricing_data = TableTypePricing.objects.select_related('pricing_plan', 'table_type')
+        offers = SpecialOffer.objects.filter(is_active=True, valid_from__lte=date, valid_to__gte=date).prefetch_related('tables')
 
         offers_by_table = defaultdict(list)
-        for offer in special_offers:
+        for offer in offers:
             target_tables = tables if offer.apply_to_all else offer.tables.all()
             for table in target_tables:
                 offers_by_table[table.id].append(offer)
@@ -165,33 +164,29 @@ class CalendarAPIView(APIView):
         day_schedule = defaultdict(dict)
 
         for slot_start, slot_end in slots:
-            slot_label = slot_start.strftime('%H:%M')
-            time_slots.append(slot_label)
+            label = slot_start.strftime('%H:%M')
+            time_slots.append(label)
 
             for table in tables:
-                overlaps = any(
-                    s < slot_end and e > slot_start
-                    for s, e in booking_map.get(table.id, [])
-                )
-                slot_status = 'booked' if overlaps else 'available'
+                overlaps = any(s < slot_end and e > slot_start for s, e in booking_map.get(table.id, []))
+                slot_status = 'past' if slot_end <= now else ('booked' if overlaps else 'available')
 
-                applicable_pricing = None
-                for pricing in table_type_pricings:
-                    plan = pricing.pricing_plan
-                    if pricing.table_type != table.table_type:
+                pricing = None
+                for p in pricing_data:
+                    if p.table_type != table.table_type:
                         continue
-                    if plan.weekday is not None and int(plan.weekday) != slot_start.weekday():
+                    plan = p.pricing_plan
+                    if plan.weekdays and str(slot_start.isoweekday()) not in plan.weekdays:
                         continue
                     if plan.time_from and plan.time_to:
                         if not (plan.time_from <= slot_start.time() < plan.time_to):
                             continue
-                    applicable_pricing = pricing
+                    pricing = p
                     break
 
                 duration_hours = (slot_end - slot_start).total_seconds() / 3600
-                base_price = applicable_pricing.hour_rate * duration_hours if applicable_pricing else 0
+                base_price = pricing.hour_rate * duration_hours if pricing else 0
                 discount = 0
-
                 for offer in offers_by_table.get(table.id, []):
                     if str(slot_start.isoweekday()) in offer.weekdays:
                         if not offer.time_from or not offer.time_to or (
@@ -200,7 +195,7 @@ class CalendarAPIView(APIView):
 
                 final_price = base_price * (1 - discount / 100)
 
-                day_schedule[table.id][slot_label] = {
+                day_schedule[table.id][label] = {
                     'status': slot_status,
                     'start': slot_start.strftime('%H:%M'),
                     'end': slot_end.strftime('%H:%M'),
@@ -209,204 +204,90 @@ class CalendarAPIView(APIView):
                     'discount_percent': discount
                 }
 
-        response = {
+        return Response({
             'date': date.strftime('%Y-%m-%d'),
             'is_working_day': True,
             'working_hours': {
-                'open': open_time.strftime('%H:%M'),
-                'close': close_time.strftime('%H:%M')
+                'open_time': open_time.strftime('%H:%M'),
+                'close_time': close_time.strftime('%H:%M'),
             },
             'tables': [{'id': t.id, 'number': t.number, 'table_type': str(t.table_type)} for t in tables],
             'time_slots': time_slots,
             'day_schedule': day_schedule
-        }
-        return Response(response)
+        })
 
     def get_week_view(self, date, user):
-        start_of_week = date - timedelta(days=date.weekday())
-        days = [start_of_week + timedelta(days=i) for i in range(7)]
-
-        tables = Table.objects.filter(is_active=True).order_by('number')
-
-        week_schedule = defaultdict(lambda: defaultdict(dict))
-        time_slots_set = set()
-
-        for day in days:
-            is_working, open_time, close_time = self.get_open_close_times(day)
-            if not is_working:
-                continue
-
-            day_start = timezone.make_aware(datetime.combine(day, open_time))
-            day_end = timezone.make_aware(datetime.combine(day, close_time))
-
-            slot_step_minutes = 60
-            slots = []
-            current = day_start
-            while current + timedelta(minutes=slot_step_minutes) <= day_end:
-                slots.append((current, current + timedelta(minutes=slot_step_minutes)))
-                current += timedelta(minutes=slot_step_minutes)
-
-            bookings = Booking.objects.filter(
-                start_time__lt=day_end,
-                end_time__gt=day_start
-            ).select_related('table')
-
-            booking_map = defaultdict(list)
-            for b in bookings:
-                booking_map[b.table_id].append((b.start_time, b.end_time))
-
-            special_offers = SpecialOffer.objects.filter(
-                is_active=True,
-                valid_from__lte=day,
-                valid_to__gte=day
-            ).prefetch_related('tables')
-
-            offers_by_table = defaultdict(list)
-            for offer in special_offers:
-                target_tables = tables if offer.apply_to_all else offer.tables.all()
-                for table in target_tables:
-                    offers_by_table[table.id].append(offer)
-
-            for slot_start, slot_end in slots:
-                slot_label = slot_start.strftime('%H:%M')
-                time_slots_set.add(slot_label)
-
-                for table in tables:
-                    overlaps = any(
-                        s < slot_end and e > slot_start
-                        for s, e in booking_map.get(table.id, [])
-                    )
-                    slot_status = 'booked' if overlaps else 'available'
-
-                    pricing = TableTypePricing.objects.get(table_type=table.table_type)
-                    duration = (slot_end - slot_start).total_seconds() / 3600
-                    base_price = pricing.hour_rate * duration
-                    discount = 0
-
-                    for offer in offers_by_table.get(table.id, []):
-                        if str(slot_start.isoweekday()) in offer.weekdays:
-                            if not offer.time_from or not offer.time_to or (
-                                    offer.time_from <= slot_start.time() < offer.time_to):
-                                discount = max(discount, offer.discount_percent)
-
-                    final_price = base_price * (1 - discount / 100)
-
-                    week_schedule[day.isoformat()][table.id][slot_label] = {
-                        'status': slot_status,
-                        'start': slot_start.strftime('%H:%M'),
-                        'end': slot_end.strftime('%H:%M'),
-                        'price': int(final_price),
-                        'discount_applied': discount > 0,
-                        'discount_percent': discount
-                    }
-
-        week_info = []
-        for day in days:
-            is_working, open_time, close_time = self.get_open_close_times(day)
-            week_info.append({
-                'date': day.isoformat(),
-                'is_working_day': is_working,
-                'working_hours': {
-                    'open': open_time.strftime('%H:%M') if open_time else None,
-                    'close': close_time.strftime('%H:%M') if close_time else None
-                } if is_working else None
-            })
-
-        week_start_dt = timezone.make_aware(datetime.combine(days[0], time.min))
-        week_end_dt = timezone.make_aware(datetime.combine(days[-1], time.max))
-
-        user_bookings = Booking.objects.filter(
-            user=user,
-            start_time__gte=week_start_dt,
-            end_time__lte=week_end_dt
-        ).select_related('table').order_by('start_time')
-
-        user_bookings_data = [{
-            'id': b.id,
-            'date': b.start_time.date().isoformat(),
-            'start': b.start_time.strftime('%H:%M'),
-            'end': b.end_time.strftime('%H:%M'),
-            'table_number': b.table.number,
-            'status': b.get_status_display()
-        } for b in user_bookings]
-
-        response = {
-            'start_of_week': start_of_week.strftime('%Y-%m-%d'),
-            'days': week_info,
-            'tables': [{'id': t.id, 'number': t.number, 'table_type': str(t.table_type)} for t in tables],
-            'time_slots': sorted(time_slots_set),
-            'week_schedule': week_schedule,
-            'user_bookings': user_bookings_data
-        }
-        return Response(response)
+        start = date - timedelta(days=date.weekday())
+        return self._get_calendar_range_view(start, 7, user, 'week')
 
     def get_month_view(self, date, user):
-        start_of_month = date.replace(day=1)
-        if start_of_month.month == 12:
-            next_month = start_of_month.replace(year=start_of_month.year + 1, month=1, day=1)
-        else:
-            next_month = start_of_month.replace(month=start_of_month.month + 1, day=1)
-        end_of_month = next_month - timedelta(days=1)
+        start = date.replace(day=1)
+        _, last_day = monthrange(start.year, start.month)
+        end = start.replace(day=last_day)
 
+        # Monday before start
+        start -= timedelta(days=start.weekday())
+        # Sunday after end
+        end += timedelta(days=(6 - end.weekday()))
+        return self._get_calendar_range_view(start, (end - start).days + 1, user, 'month')
+
+    def _get_calendar_range_view(self, start_date, num_days, user, view_type):
+        days = [start_date + timedelta(days=i) for i in range(num_days)]
         tables = Table.objects.filter(is_active=True).order_by('number')
-
-        days_in_month = [start_of_month + timedelta(days=i) for i in range((end_of_month - start_of_month).days + 1)]
-
-        month_schedule = defaultdict(lambda: defaultdict(dict))
+        slot_step = 60
+        calendar_schedule = defaultdict(lambda: defaultdict(dict))
         time_slots_set = set()
 
-        for day in days_in_month:
+        for day in days:
             is_working, open_time, close_time = self.get_open_close_times(day)
             if not is_working:
                 continue
 
             day_start = timezone.make_aware(datetime.combine(day, open_time))
             day_end = timezone.make_aware(datetime.combine(day, close_time))
-
-            slot_step_minutes = 60
             slots = []
             current = day_start
-            while current + timedelta(minutes=slot_step_minutes) <= day_end:
-                slots.append((current, current + timedelta(minutes=slot_step_minutes)))
-                current += timedelta(minutes=slot_step_minutes)
+            while current + timedelta(minutes=slot_step) <= day_end:
+                slots.append((current, current + timedelta(minutes=slot_step)))
+                current += timedelta(minutes=slot_step)
 
-            bookings = Booking.objects.filter(
-                start_time__lt=day_end,
-                end_time__gt=day_start
-            ).select_related('table')
-
+            bookings = self.get_bookings(day_start, day_end, user)
             booking_map = defaultdict(list)
             for b in bookings:
                 booking_map[b.table_id].append((b.start_time, b.end_time))
 
-            special_offers = SpecialOffer.objects.filter(
-                is_active=True,
-                valid_from__lte=day,
-                valid_to__gte=day
-            ).prefetch_related('tables')
-
+            pricing_data = TableTypePricing.objects.select_related('pricing_plan', 'table_type')
+            offers = SpecialOffer.objects.filter(is_active=True, valid_from__lte=day, valid_to__gte=day).prefetch_related('tables')
             offers_by_table = defaultdict(list)
-            for offer in special_offers:
+            for offer in offers:
                 target_tables = tables if offer.apply_to_all else offer.tables.all()
                 for table in target_tables:
                     offers_by_table[table.id].append(offer)
 
             for slot_start, slot_end in slots:
-                slot_label = slot_start.strftime('%H:%M')
-                time_slots_set.add(slot_label)
+                label = slot_start.strftime('%H:%M')
+                time_slots_set.add(label)
 
                 for table in tables:
-                    overlaps = any(
-                        s < slot_end and e > slot_start
-                        for s, e in booking_map.get(table.id, [])
-                    )
+                    overlaps = any(s < slot_end and e > slot_start for s, e in booking_map.get(table.id, []))
                     slot_status = 'booked' if overlaps else 'available'
 
-                    pricing = TableTypePricing.objects.get(table_type=table.table_type)
-                    duration = (slot_end - slot_start).total_seconds() / 3600
-                    base_price = pricing.hour_rate * duration
-                    discount = 0
+                    pricing = None
+                    for p in pricing_data:
+                        if p.table_type != table.table_type:
+                            continue
+                        plan = p.pricing_plan
+                        if plan.weekdays and str(slot_start.isoweekday()) not in plan.weekdays:
+                            continue
+                        if plan.time_from and plan.time_to:
+                            if not (plan.time_from <= slot_start.time() < plan.time_to):
+                                continue
+                        pricing = p
+                        break
 
+                    duration = (slot_end - slot_start).total_seconds() / 3600
+                    base_price = pricing.hour_rate * duration if pricing else 0
+                    discount = 0
                     for offer in offers_by_table.get(table.id, []):
                         if str(slot_start.isoweekday()) in offer.weekdays:
                             if not offer.time_from or not offer.time_to or (
@@ -415,7 +296,7 @@ class CalendarAPIView(APIView):
 
                     final_price = base_price * (1 - discount / 100)
 
-                    month_schedule[day.isoformat()][table.id][slot_label] = {
+                    calendar_schedule[day.isoformat()][table.id][label] = {
                         'status': slot_status,
                         'start': slot_start.strftime('%H:%M'),
                         'end': slot_end.strftime('%H:%M'),
@@ -424,45 +305,15 @@ class CalendarAPIView(APIView):
                         'discount_percent': discount
                     }
 
-        month_info = []
-        for day in days_in_month:
-            is_working, open_time, close_time = self.get_open_close_times(day)
-            month_info.append({
-                'date': day.isoformat(),
-                'is_working_day': is_working,
-                'working_hours': {
-                    'open': open_time.strftime('%H:%M') if open_time else None,
-                    'close': close_time.strftime('%H:%M') if close_time else None
-                } if is_working else None
-            })
-
-        month_start_dt = timezone.make_aware(datetime.combine(days_in_month[0], time.min))
-        month_end_dt = timezone.make_aware(datetime.combine(days_in_month[-1], time.max))
-
-        user_bookings = Booking.objects.filter(
-            user=user,
-            start_time__gte=month_start_dt,
-            end_time__lte=month_end_dt
-        ).select_related('table').order_by('start_time')
-
-        user_bookings_data = [{
-            'id': b.id,
-            'date': b.start_time.date().isoformat(),
-            'start': b.start_time.strftime('%H:%M'),
-            'end': b.end_time.strftime('%H:%M'),
-            'table_number': b.table.number,
-            'status': b.get_status_display()
-        } for b in user_bookings]
-
-        response = {
-            'month': start_of_month.strftime('%Y-%m'),
-            'days': month_info,
+        return Response({
+            'calendar_type': view_type,
+            'start_date': start_date.isoformat(),
+            'end_date': (start_date + timedelta(days=num_days - 1)).isoformat(),
             'tables': [{'id': t.id, 'number': t.number, 'table_type': str(t.table_type)} for t in tables],
             'time_slots': sorted(time_slots_set),
-            'month_schedule': month_schedule,
-            'user_bookings': user_bookings_data
-        }
-        return Response(response)
+            f'{view_type}_schedule': calendar_schedule
+        })
+
 
 
 @require_GET
@@ -475,14 +326,14 @@ class CalendarAPIView(APIView):
 #     # определяем рабочий день
 #     weekday = selected_date.weekday()
 #     is_working_day = False
-#     opening_time = time(9, 0)
-#     closing_time = time(22, 0)
+#     open_time = time(9, 0)
+#     close_time = time(22, 0)
 #
 #     try:
 #         working_day = WorkingDay.objects.get(day=weekday)
 #         is_working_day = working_day.is_open
-#         opening_time = working_day.open_time
-#         closing_time = working_day.close_time
+#         open_time = working_day.open_time
+#         close_time = working_day.close_time
 #     except WorkingDay.DoesNotExist:
 #         pass
 #
@@ -492,9 +343,9 @@ class CalendarAPIView(APIView):
 #             is_working_day = False
 #         elif holiday.status == "shortened":
 #             if holiday.open_time:
-#                 opening_time = holiday.open_time
+#                 open_time = holiday.open_time
 #             if holiday.close_time:
-#                 closing_time = holiday.close_time
+#                 close_time = holiday.close_time
 #
 #     if not is_working_day:
 #         return render(request, "bookings/day_view.html", {
@@ -514,8 +365,8 @@ class CalendarAPIView(APIView):
 #
 #     # строим временные слоты
 #     time_slots = []
-#     current = opening_time
-#     while current < closing_time:
+#     current = open_time
+#     while current < close_time:
 #         time_slots.append(current)
 #         current = (datetime.combine(date.today(), current) + timedelta(hours=1)).time()
 #
@@ -556,25 +407,25 @@ class CalendarAPIView(APIView):
 # def day_calendar_api(request, selected_date, tables, status_filter):
 #     weekday = selected_date.weekday()
 #     is_working_day = False
-#     opening_time, closing_time = time(9, 0), time(22, 0)
+#     open_time, close_time = time(9, 0), time(22, 0)
 #
 #     working_day = WorkingDay.objects.filter(day=weekday).first()
 #     holiday = Holiday.objects.filter(date=selected_date).first()
 #
 #     if working_day:
 #         is_working_day = working_day.is_open
-#         opening_time, closing_time = working_day.open_time, working_day.close_time
+#         open_time, close_time = working_day.open_time, working_day.close_time
 #
 #     if holiday:
 #         if holiday.status == 'closed':
 #             is_working_day = False
 #         elif holiday.status == 'shortened':
-#             opening_time = holiday.open_time or opening_time
-#             closing_time = holiday.close_time or closing_time
+#             open_time = holiday.open_time or open_time
+#             close_time = holiday.close_time or close_time
 #
 #     time_slots = []
-#     current_dt = datetime.combine(selected_date, opening_time)
-#     closing_dt = datetime.combine(selected_date, closing_time)
+#     current_dt = datetime.combine(selected_date, open_time)
+#     closing_dt = datetime.combine(selected_date, close_time)
 #     while current_dt < closing_dt:
 #         time_slots.append(current_dt.time())
 #         current_dt += timedelta(hours=1)
@@ -849,21 +700,21 @@ def get_site_settings(request):
         if holiday:
             # Если сегодня праздник с особым режимом работы
             if holiday.status == 'closed':
-                opening_time = None
-                closing_time = None
+                open_time = None
+                close_time = None
             elif holiday.status == 'shortened' and holiday.open_time and holiday.close_time:
-                opening_time = holiday.open_time.strftime('%H:%M')
-                closing_time = holiday.close_time.strftime('%H:%M')
+                open_time = holiday.open_time.strftime('%H:%M')
+                close_time = holiday.close_time.strftime('%H:%M')
             else:
                 # Обычный режим в праздник - берем стандартное время
                 working_day = WorkingDay.objects.get(day=weekday)
-                opening_time = working_day.open_time.strftime('%H:%M')
-                closing_time = working_day.close_time.strftime('%H:%M')
+                open_time = working_day.open_time.strftime('%H:%M')
+                close_time = working_day.close_time.strftime('%H:%M')
         else:
             # Обычный рабочий день
             working_day = WorkingDay.objects.get(day=weekday)
-            opening_time = working_day.open_time.strftime('%H:%M')
-            closing_time = working_day.close_time.strftime('%H:%M')
+            open_time = working_day.open_time.strftime('%H:%M')
+            close_time = working_day.close_time.strftime('%H:%M')
 
         # Получаем все рабочие дни для календаря
         workdays = WorkingDay.objects.all().order_by('day')
@@ -898,8 +749,8 @@ def get_site_settings(request):
         return JsonResponse({
             'current_day': {
                 'is_holiday': bool(holiday),
-                'opening_time': opening_time,
-                'closing_time': closing_time,
+                'open_time': open_time,
+                'close_time': close_time,
                 'is_open': False if holiday and holiday.status == 'closed' else True
             },
             'workdays': workdays_data,
@@ -919,27 +770,39 @@ def get_site_settings(request):
         }, status=500)@require_GET
 from django.http import JsonResponse
 
+
+@login_required
 def get_user_bookings(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Not authenticated'}, status=401)
+    try:
+        # Получаем все брони пользователя, отсортированные по времени начала
+        bookings = (
+            Booking.objects
+            .select_related('table', 'table__table_type')  # Оптимизация JOIN'ов
+            .filter(user=request.user)
+            .order_by('start_time')
+        )
 
-    bookings = Booking.objects.filter(user=request.user).order_by('start_time')
+        bookings_data = [
+            {
+                'id': booking.id,
+                'date': booking.start_time.date().isoformat(),
+                'start_time': booking.start_time.strftime('%H:%M'),
+                'end_time': booking.end_time.strftime('%H:%M'),
+                'table': booking.table.number,
+                'table_type': booking.table.table_type.name,
+                'status': booking.get_status_display(),
+                'can_cancel': booking.status in ['pending', 'confirmed']
+            }
+            for booking in bookings
+        ]
 
-    bookings_data = []
-    for booking in bookings:
-        bookings_data.append({
-            'id': booking.id,
-            'date': booking.start_time.date().isoformat(),
-            'start_time': booking.start_time.strftime('%H:%M'),
-            'end_time': booking.end_time.strftime('%H:%M'),
-            'table': booking.table.number,
-            'table_type': booking.table.table_type.name,
-            'status': booking.get_status_display(),
-            'can_cancel': booking.status in ['pending', 'confirmed']
-        })
+        return JsonResponse({'bookings': bookings_data})
 
-    return JsonResponse({'bookings': bookings_data})
+    except ObjectDoesNotExist:
+        return JsonResponse({'bookings': []})
 
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 class CreateBookingView(LoginRequiredMixin, CreateView):
     model = Booking
@@ -1032,15 +895,21 @@ def cancel_booking(request, booking_id):
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 
-# API views
+
+
 @require_GET
 def booking_rates_api(request):
     try:
         today = date.today()
-        pricing_plan = PricingPlan.objects.filter(
-            valid_from__lte=today,
-            valid_to__gte=today
-        ).first() or PricingPlan.objects.filter(is_default=True).first()
+
+        # Поиск актуального тарифного плана (с поддержкой open-ended valid_to)
+        pricing_plan = (
+            PricingPlan.objects.filter(
+                Q(valid_from__lte=today),
+                Q(valid_to__gte=today) | Q(valid_to__isnull=True)
+            ).first()
+            or PricingPlan.objects.filter(is_default=True).first()
+        )
 
         if not pricing_plan:
             return JsonResponse({'error': 'Тарифный план не найден'}, status=404)
@@ -1048,20 +917,23 @@ def booking_rates_api(request):
         prices = TableTypePricing.objects.filter(pricing_plan=pricing_plan)
         equipment = Equipment.objects.filter(is_available=True)
 
+        # Формируем ответ
         response_data = {
             'pricing_plan': pricing_plan.name,
-            'table_types': {},
+            'table_types': [],
             'equipment': [],
             'status': 'success'
         }
 
         for price in prices:
-            response_data['table_types'][price.table_type.name] = {
+            response_data['table_types'].append({
+                'id': price.table_type.id,
+                'name': price.table_type.name,
                 'hour_rate': price.hour_rate,
                 'hour_rate_group': price.hour_rate_group,
                 'min_duration': price.min_duration,
                 'max_duration': price.max_duration
-            }
+            })
 
         for item in equipment:
             response_data['equipment'].append({
@@ -1078,6 +950,7 @@ def booking_rates_api(request):
             'status': 'error'
         }, status=500)
 
+
 @require_GET
 
 def tables_api(request):
@@ -1090,9 +963,7 @@ def tables_api(request):
         'capacity': table.table_type.default_capacity
     } for table in tables]
     return JsonResponse(tables_data, safe=False)
-from datetime import date, timedelta
-from collections import defaultdict
-from django.http import JsonResponse
+
 from django.db.models import Prefetch
 
 # def calendar_api(request):
@@ -1625,10 +1496,11 @@ def calculate_booking_api(request):
 
         today = date.today()
         pricing_plan = PricingPlan.objects.filter(
-            valid_from__lte=today,
-            valid_to__gte=today
+            Q(valid_from__lte=today),
+            Q(valid_to__gte=today) | Q(valid_to__isnull=True)
         ).first() or PricingPlan.objects.filter(is_default=True).first()
-
+        if not isinstance(equipment_ids, list):
+            return JsonResponse({'error': 'Equipment must be a list'}, status=400)
         if not pricing_plan:
             return JsonResponse({'error': 'Pricing plan not found'}, status=404)
 
@@ -1749,3 +1621,6 @@ def create_booking_api(request):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+
+

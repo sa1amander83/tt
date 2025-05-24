@@ -1,0 +1,206 @@
+import random
+from datetime import datetime, timedelta, time, date
+
+from django.core.management import BaseCommand
+from django.utils import timezone
+from faker import Faker
+
+from accounts.models import User
+from bookings.models import Table, TableTypePricing, Equipment, Booking, PricingPlan, BookingEquipment
+
+fake = Faker('ru_RU')
+
+def get_valid_booking_datetime(pricing_plans, year, month):
+    """Генерируем случайную дату и время, подходящее под расписание тарифных планов клуба"""
+    valid_days = []
+    valid_times = []
+    # Сначала выбираем тарифный план, который действует в этот месяц (можно усложнить)
+    for plan in pricing_plans:
+        if plan.valid_from <= date(year, month, 1) and (plan.valid_to is None or plan.valid_to >= date(year, month, 28)):
+            valid_days.append(plan.weekdays)  # строки с числами дней недели
+            # Проверим время работы
+            if plan.time_from and plan.time_to:
+                valid_times.append((plan.time_from, plan.time_to))
+            else:
+                valid_times.append((time(8,0), time(22,0)))  # дефолтные часы если не указаны
+
+    if not valid_days:
+        # Если не нашли, возвращаем None
+        return None
+
+    # Объединим строки с днями недели
+    all_days = set()
+    for days_str in valid_days:
+        all_days.update(days_str)
+
+    all_days = sorted(list(all_days))
+
+    # Выбираем случайный день месяца, который совпадает с одним из рабочих дней недели
+    possible_dates = []
+    for day in range(1, 29):  # ограничимся 28 днями для простоты
+        dt = date(year, month, day)
+        if str(dt.isoweekday()) in all_days:
+            possible_dates.append(dt)
+
+    if not possible_dates:
+        return None
+
+    selected_date = random.choice(possible_dates)
+
+    # Выбираем случайное время в рабочем интервале
+    time_from, time_to = random.choice(valid_times)
+    start_hour = random.randint(time_from.hour, time_to.hour - 1)
+    start_minute = random.choice([0, 30])  # либо ровно час, либо 30 мин
+
+    start_time = datetime.combine(selected_date, time(start_hour, start_minute))
+    return start_time
+
+def create_fake_users_and_bookings(num_users=10):
+    tables = list(Table.objects.filter(is_active=True))
+    pricings = list(TableTypePricing.objects.select_related('pricing_plan', 'table_type').all())
+    equipment_list = list(Equipment.objects.filter(is_available=True))
+
+    for i in range(num_users):
+        phone = f'+7{random.randint(9000000000, 9999999999)}'
+        email = fake.email()
+        username = fake.first_name()
+        age = random.randint(10, 60)
+
+        user = User.objects.create_user(
+            phone=phone,
+            password='123',
+            user_name=username,
+            email=email,
+            user_age=age
+        )
+        print(f"Создан пользователь: {user}")
+
+
+
+
+
+
+
+
+
+
+
+    tables = list(Table.objects.filter(is_active=True))
+    pricings = list(TableTypePricing.objects.select_related('pricing_plan', 'table_type').all())
+    equipment_list = list(Equipment.objects.filter(is_available=True))
+    pricing_plans = list(PricingPlan.objects.all())
+
+    users = list(User.objects.all())
+
+    for user in users:
+        bookings_created_per_day = {}
+
+        # 2 брони в прошлом месяце
+        last_month_date = timezone.now().date().replace(day=1) - timedelta(days=1)
+        last_month = last_month_date.month
+        last_month_year = last_month_date.year
+
+        for _ in range(2):
+            for attempt in range(10):
+                start_time = get_valid_booking_datetime(pricing_plans, last_month_year, last_month)
+                if not start_time:
+                    continue
+                day_key = start_time.date()
+                if bookings_created_per_day.get(day_key, 0) < 2:
+                    break
+            else:
+                continue
+
+            duration_minutes = random.choice([30, 60, 90, 120])
+            end_time = start_time + timedelta(minutes=duration_minutes)
+
+            table = random.choice(tables)
+            pricing = random.choice(pricings)
+
+            booking = Booking.objects.create(
+                user=user,
+                table=table,
+                pricing=pricing,
+                start_time=start_time,
+                end_time=end_time,
+                is_group=random.choice([True, False]),
+                participants=random.randint(1, 5),
+                status=random.choice(['pending', 'confirmed']),
+                base_price=0,
+                equipment_price=0,
+                total_price=0,
+            )
+
+            # Добавление оборудования через промежуточную модель с количеством
+            if equipment_list and random.choice([True, False]):
+                selected_equipment = random.sample(equipment_list, k=random.randint(1, min(3, len(equipment_list))))
+                for eq in selected_equipment:
+                    quantity = random.randint(1, 3)
+                    BookingEquipment.objects.create(
+                        booking=booking,
+                        equipment=eq,
+                        quantity=quantity
+                    )
+
+            booking.calculate_prices()
+            booking.save()
+            bookings_created_per_day[day_key] = bookings_created_per_day.get(day_key, 0) + 1
+
+            print(f"Создано бронирование в прошлом месяце для {user.phone} на {start_time}")
+
+        # 3 брони в мае или июне 2025
+        for _ in range(3):
+            for attempt in range(10):
+                month = random.choice([5, 6])
+                year = 2025
+                start_time = get_valid_booking_datetime(pricing_plans, year, month)
+                if not start_time:
+                    continue
+                day_key = start_time.date()
+                if bookings_created_per_day.get(day_key, 0) < 2:
+                    break
+            else:
+                continue
+
+            duration_minutes = random.choice([30, 60, 90, 120])
+            end_time = start_time + timedelta(minutes=duration_minutes)
+
+            table = random.choice(tables)
+            pricing = random.choice(pricings)
+
+            booking = Booking.objects.create(
+                user=user,
+                table=table,
+                pricing=pricing,
+                start_time=start_time,
+                end_time=end_time,
+                is_group=random.choice([True, False]),
+                participants=random.randint(1, 5),
+                status=random.choice(['pending', 'confirmed']),
+                base_price=0,
+                equipment_price=0,
+                total_price=0,
+            )
+
+            if equipment_list and random.choice([True, False]):
+                selected_equipment = random.sample(equipment_list, k=random.randint(1, min(3, len(equipment_list))))
+                for eq in selected_equipment:
+                    quantity = random.randint(1, 3)
+                    BookingEquipment.objects.create(
+                        booking=booking,
+                        equipment=eq,
+                        quantity=quantity
+                    )
+
+            booking.calculate_prices()
+            booking.save()
+            bookings_created_per_day[day_key] = bookings_created_per_day.get(day_key, 0) + 1
+
+            print(f"Создано бронирование в мае-июне 2025 для {user.phone} на {start_time}")
+
+
+class Command(BaseCommand):
+    help = 'Создаёт фейковых пользователей и бронирования'
+
+    def handle(self, *args, **options):
+        create_fake_users_and_bookings()

@@ -9,7 +9,7 @@ urlpatterns = [
     # path('day/', views.day_view, name='day_view'),
     # path('week/', views.week_api_view, name='week_view'),
     # path('month/', views.month_view, name='month_view'),
-    path('user-bookings/', views.get_user_bookings, name='user_bookings'),
+    # path('user-bookings/', views.get_user_bookings, name='user_bookings'),
     path('create/', views.CreateBookingView.as_view(), name='create_booking'),
     path('update/<int:pk>/', views.UpdateBookingView.as_view(), name='update_booking'),
 
@@ -25,5 +25,8 @@ urlpatterns = [
     path('api/create/', views.create_booking_api, name='api_create'),
 
     path('api/site-settings/', views.get_site_settings, name='site-settings'),
+
+
+
 
 ]

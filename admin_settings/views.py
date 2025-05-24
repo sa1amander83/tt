@@ -9,7 +9,7 @@ from django.views.generic import DetailView
 from admin_settings.forms import TableForm, TableTypeForm, PricingPlanForm, TableTypePricingForm, SpecialOfferForm, \
     MembershipTypeForm, HolidayForm, ClubSettingsForm, WorkingHoursForm
 from admin_settings.models import ClubSettings, SpecialOffer, MembershipType, Holiday, WorkingDay, NotificationSettings
-from bookings.models import Table, TableType, PricingPlan, TableTypePricing
+from bookings.models import Table, TableType, PricingPlan, TableTypePricing, Equipment
 
 
 class IsAdminMixin(UserPassesTestMixin):
@@ -99,7 +99,7 @@ class ClubSettingsView(LoginRequiredMixin, View):
         elif active_tab == 'pricing':
             table_types = TableType.objects.all()
             pricing_plans = PricingPlan.objects.all()
-
+            equipment_pricings= Equipment.objects.all()
 
             context.update({
 
@@ -108,7 +108,7 @@ class ClubSettingsView(LoginRequiredMixin, View):
                     'pricing_plans': pricing_plans,
                 'pricing_plans_json': serializers.serialize('json', pricing_plans),
 
-
+                'equipment_pricings': equipment_pricings,
                 'pricing_plan_form': PricingPlanForm(),
                 'table_type_pricing': TableTypePricing.objects.all(),
                 'table_type_pricing_form': TableTypePricingForm(),
@@ -737,3 +737,94 @@ class HolidayDeleteView(LoginRequiredMixin, View):
                 'status': 'error',
                 'message': str(e)
             }, status=500)
+
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def create_equipment(request):
+    try:
+        data = json.loads(request.body)
+        equipment = Equipment.objects.create(
+            name=data.get('name'),
+            description=data.get('description', ''),
+            price_per_hour=data.get('price_per_hour', 200),
+            price_per_half_hour=data.get('price_per_half_hour', 200),
+            is_available=data.get('is_available', True)
+        )
+        return JsonResponse({
+            'id': equipment.id,
+            'name': equipment.name,
+            'description': equipment.description,
+            'price_per_hour': equipment.price_per_hour,
+            'price_per_half_hour': equipment.price_per_half_hour,
+            'is_available': equipment.is_available,
+            'status': 'success'
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def update_equipment(request, equip_id):
+    try:
+        data = json.loads(request.body)
+        equipment = Equipment.objects.get(id=equip_id)
+        equipment.name = data.get('name', equipment.name)
+        equipment.description = data.get('description', equipment.description)
+        equipment.price_per_hour = data.get('price_per_hour', equipment.price_per_hour)
+        equipment.price_per_half_hour = data.get('price_per_half_hour', equipment.price_per_half_hour)
+        equipment.is_available = data.get('is_available', equipment.is_available)
+        equipment.save()
+
+        return JsonResponse({
+            'id': equipment.id,
+            'name': equipment.name,
+            'description': equipment.description,
+            'price_per_hour': equipment.price_per_hour,
+            'price_per_half_hour': equipment.price_per_half_hour,
+            'is_available': equipment.is_available,
+            'status': 'success'
+        })
+    except Equipment.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Equipment not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_equipment(request, equip_id):
+    try:
+        equipment = Equipment.objects.get(id=equip_id)
+        equipment.delete()
+        return JsonResponse({'status': 'success'})
+    except Equipment.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Equipment not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@require_http_methods(["GET"])
+def get_equipment(request, equip_id):
+    try:
+        equipment = Equipment.objects.get(id=equip_id)
+        return JsonResponse({
+            'id': equipment.id,
+            'name': equipment.name,
+            'description': equipment.description,
+            'price_per_hour': equipment.price_per_hour,
+            'price_per_half_hour': equipment.price_per_half_hour,
+            'is_available': equipment.is_available,
+            'status': 'success'
+        })
+    except Equipment.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Equipment not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)

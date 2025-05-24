@@ -338,6 +338,7 @@ class WorkingDay(models.Model):
     day = models.PositiveSmallIntegerField(choices=DAYS_OF_WEEK, unique=True)
     open_time = models.TimeField(default='09:00')
     close_time = models.TimeField(default='22:00')
+    slot_duration = models.PositiveIntegerField(default=30)
     is_open = models.BooleanField(default=True)
 
     class Meta:

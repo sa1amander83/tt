@@ -81,3 +81,13 @@ input:focus, select:focus, textarea:focus {
 .alert {
     animation: fadeIn 0.3s ease-out;
 }
+
+
+.bg-red-50 { background-color: #fef2f2; }
+.border-red-100 { border-color: #fee2e2; }
+.text-red-800 { color: #991b1b; }
+
+/* Сокращенные дни */
+.bg-yellow-50 { background-color: #fffbeb; }
+.border-yellow-100 { border-color: #fef3c7; }
+.text-yellow-800 { color: #92400e; }

@@ -58,6 +58,10 @@ urlpatterns = [
     path('holidays/<int:pk>/update/', HolidayUpdateView.as_view(), name='holiday_update'),
     path('holidays/<int:pk>/delete/', HolidayDeleteView.as_view(), name='holiday_delete'),
 
+    path('api/equipment/create/', create_equipment, name='create_equipment'),
+    path('api/equipment/<int:equip_id>/update/', update_equipment, name='update_equipment'),
+    path('api/equipment/<int:equip_id>/delete/', delete_equipment, name='delete_equipment'),
+    path('api/equipment/<int:equip_id>/', get_equipment, name='get_equipment'),
 
 
 

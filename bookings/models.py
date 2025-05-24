@@ -90,6 +90,7 @@ class Equipment(models.Model):
     """Оборудование для аренды"""
     name = models.CharField(max_length=100, verbose_name="Название")
     description = models.TextField(blank=True, verbose_name="Описание")
+    price_per_half_hour = models.PositiveIntegerField(verbose_name="Цена за полчаса аренды", default=200)
     price_per_hour = models.PositiveIntegerField(verbose_name="Цена за час аренды", default=200)
     is_available = models.BooleanField(default=True, verbose_name="Доступно для аренды")
 
@@ -147,14 +148,30 @@ class Booking(models.Model):
         else:
             self.base_price = pricing.hour_rate * duration
 
-        equipment_price = sum(eq.price_per_hour * duration for eq in self.equipment.all())
-        self.equipment_price = equipment_price
-        self.total_price = self.base_price + self.equipment_price
+        # Получаем связанные BookingEquipment записи
+        booking_equipments = self.bookingequipment_set.all()
+
+        equipment_price = 0
+        for be in booking_equipments:
+            equipment_price += be.equipment.price_per_hour * duration * be.quantity
+
+        self.equipment_price = int(equipment_price)
+        self.total_price = int(self.base_price + self.equipment_price)
 
     def save(self, *args, **kwargs):
-        if not self.pk:
-            self.calculate_prices()
+        # Сначала сохраняем объект, если он новый
+        is_new = self.pk is None
         super().save(*args, **kwargs)
+
+        # Если объект уже сохранён и есть id, тогда можно вычислять цены
+        if not is_new:
+            self.calculate_prices()
+            # Чтобы не попасть в бесконечный цикл, при пересчёте цен можно сделать update напрямую:
+            Booking.objects.filter(pk=self.pk).update(
+                base_price=self.base_price,
+                equipment_price=self.equipment_price,
+                total_price=self.total_price,
+            )
 
 
 class BookingEquipment(models.Model):
