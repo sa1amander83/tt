@@ -22,3 +22,16 @@ def parse_date(date_str):
         return datetime.strptime(date_str, "%Y-%m-%d").date()
     except (ValueError, TypeError):
         return None
+
+@register.filter
+def short_ru_day(value):
+    days = {
+        0: 'Пн',
+        1: 'Вт',
+        2: 'Ср',
+        3: 'Чт',
+        4: 'Пт',
+        5: 'Сб',
+        6: 'Вс',
+    }
+    return days.get(value.weekday(), '')

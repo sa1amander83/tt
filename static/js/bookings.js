@@ -537,38 +537,43 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // Обновление заголовка календаря
-    function updateCalendarTitle() {
-        const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-            'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-        const date = state.currentDate;
+function updateCalendarTitle() {
+    const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+        'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 
-        let title = '';
+    const daysShort = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
 
-        switch (state.currentView) {
-            case 'day':
-                title = `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
-                break;
-            case 'week': {
-                const weekStart = new Date(date);
+    const date = state.currentDate;
 
-                let day = weekStart.getDay();
-                if (day === 0) day = 7;
-                weekStart.setDate(weekStart.getDate() - (day - 1));
+    let title = '';
 
-                const weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekStart.getDate() + 6);
-                title = `${weekStart.getDate()}–${weekEnd.getDate()} ${months[weekEnd.getMonth()]} ${weekEnd.getFullYear()}`;
-                break;
-            }
-            case 'month':
-                title = `${months[date.getMonth()]} ${date.getFullYear()}`;
-                break;
+    switch (state.currentView) {
+        case 'day': {
+            const dayShort = daysShort[date.getDay()]; // getDay: 0=Вс,1=Пн,...6=Сб
+            title = `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()} ${dayShort}`;
+            break;
         }
+        case 'week': {
+            const weekStart = new Date(date);
 
-        if (elements.calendarTitle) {
-            elements.calendarTitle.textContent = title;
+            let day = weekStart.getDay();
+            if (day === 0) day = 7; // В JS неделя начинается с Вс=0, поправим на Пн=1
+            weekStart.setDate(weekStart.getDate() - (day - 1));
+
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            title = `${weekStart.getDate()}–${weekEnd.getDate()} ${months[weekEnd.getMonth()]} ${weekEnd.getFullYear()}`;
+            break;
         }
+        case 'month':
+            title = `${months[date.getMonth()]} ${date.getFullYear()}`;
+            break;
     }
+
+    if (elements.calendarTitle) {
+        elements.calendarTitle.textContent = title;
+    }
+}
 
     // Обновление активного представления
     function updateActiveView() {
@@ -663,107 +668,133 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // Дневное представление
-    function generateDayView(data) {
-        if (!data.is_working_day) {
-            return `
-                <div class="p-8 text-center">
-                    <div class="inline-block p-6 bg-gray-100 rounded-lg">
-                        <i class="fas fa-calendar-times text-4xl text-gray-400 mb-4"></i>
-                        <h3 class="text-xl font-medium text-gray-700">Выходной день</h3>
-                        <p class="text-gray-500 mt-2">${formatDate(data.date)}</p>
-                    </div>
-                </div>
-            `;
-        }
-
+function generateDayView(data) {
+    if (!data.is_working_day) {
         return `
-            <div class="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
-                ${renderDayHeader(data.tables)}
-                ${data.time_slots.map(slot => renderDayRow(slot, data)).join('')}
+            <div class="p-8 text-center">
+                <div class="inline-block p-6 bg-gray-100 rounded-lg">
+                    <i class="fas fa-calendar-times text-4xl text-gray-400 mb-4"></i>
+                    <h3 class="text-xl font-medium text-gray-700">Выходной день</h3>
+                    <p class="text-gray-500 mt-2">${formatDate(data.date)}</p>
+                </div>
             </div>
         `;
     }
+
+    const grouped = groupTimeSlots(data.time_slots);
+    const rows = Object.entries(grouped).map(([hour, slots]) => {
+        return `
+            ${renderDayRow(hour, slots.full, data)}
+            ${slots.half ? renderHalfHourRow(slots.half, data) : ''}
+        `;
+    }).join('');
+
+    return `
+        <div class="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+            ${renderDayHeader(data.tables)}
+            ${rows}
+        </div>
+    `;
+}
+
+function groupTimeSlots(slots) {
+    const grouped = {};
+
+    // Гарантируем все часы от 08:00 до 21:30 (т.е. до последнего половинчатого слота)
+    for (let h = 8; h <= 21; h++) {
+        const hour = h.toString().padStart(2, '0');
+        grouped[`${hour}:00`] = { full: null, half: null };
+    }
+
+    for (const slot of slots) {
+        const [hour, minute] = slot.split(':').map(Number);
+        const key = `${hour.toString().padStart(2, '0')}:00`;
+        if (!grouped[key]) grouped[key] = { full: null, half: null };
+        if (minute === 0) grouped[key].full = slot;
+        else if (minute === 30) grouped[key].half = slot;
+    }
+
+    return grouped;
+}
+
+function renderDayRow(hour, slotTime, data) {
+    const hasHalf = data.time_slots.includes(`${hour.split(':')[0]}:30`);
+    return `
+        <div class="flex border-b border-gray-200 hover:bg-gray-50 cursor-pointer" onclick="toggleHalfHourRow('${hour}')">
+            <div class="w-24 md:w-32 p-3 text-right text-sm font-semibold text-gray-700">${hour}</div>
+            <div class="flex-1 grid grid-cols-${data.tables.length} divide-x divide-gray-200">
+                ${data.tables.map(table => renderSlotCell(data, table.id, slotTime || hour)).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderHalfHourRow(slotTime, data) {
+    const hour = slotTime.split(':')[0];
+    const id = `half-row-${hour}`;
+
+    return `
+        <div id="${id}" class="hidden transition-all">
+            <div class="flex border-b border-gray-100 bg-gray-50">
+                <div class="w-24 md:w-32 p-3 text-right text-sm text-gray-500">${hour}:30</div>
+                <div class="flex-1 grid grid-cols-${data.tables.length} divide-x divide-gray-200">
+                    ${data.tables.map(table => renderSlotCell(data, table.id, `${hour}:30`)).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+}
 
     function renderDayHeader(tables) {
         return `
-            <div class="flex border-b border-gray-200 bg-gray-50">
-                <div class="w-24 md:w-32 p-3">Время</div>
-                ${tables.map(table => `
-                    <div class="flex-1 p-3 text-center font-medium">
-                        Стол #${table.number}<br>
-                        <span class="text-sm text-gray-500">${table.table_type}</span>
-                    </div>
-                `).join('')}
-            </div>
-        `;
+        <div class="flex border-b border-gray-200 bg-gray-50">
+            <div class="w-24 md:w-32 p-3">Время</div>
+            ${tables.map(table => `
+                <div class="flex-1 p-3 text-center font-medium">
+                    Стол #${table.number}<br>
+                    <span class="text-sm text-gray-500">${table.table_type}</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
     }
 
-    function renderDayRow(slotTime, data) {
-        return `
-            <div class="flex border-b border-gray-200 last:border-b-0">
-                <div class="w-24 md:w-32 p-3 text-right text-sm text-gray-500">${slotTime}</div>
-                <div class="flex-1 grid grid-cols-${data.tables.length} divide-x divide-gray-200">
-                    ${data.tables.map(table => renderSlotCell(data, table.id, slotTime)).join('')}
-                </div>
-            </div>
-        `;
-    }
+
+
 
     function renderSlotCell(data, tableId, slotTime) {
         const slot = data.day_schedule[tableId]?.[slotTime] || null;
-        const isWorkingDay = data.is_working_day;
 
-        // Если это не рабочий день - все слоты недоступны
-        if (!isWorkingDay) {
-            return `
-            <div class="flex items-center justify-center p-2 min-h-12 bg-gray-100">
-                <span class="text-sm text-gray-500">Выходной</span>
-            </div>
-        `;
-        }
-
-        // Получаем текущую дату и время
         const now = new Date();
-        const today = new Date(now.toISOString().split('T')[0]); // Только дата без времени
+        const today = new Date(now.toISOString().split('T')[0]);
         const selectedDate = new Date(data.date);
-
-        // Парсим время слота (формат "HH:MM")
         const [slotHour, slotMinute] = slotTime.split(':').map(Number);
         const slotDate = new Date(selectedDate);
         slotDate.setHours(slotHour, slotMinute, 0, 0);
 
-        // Получаем время закрытия из настроек
         const closingTime = state.siteSettings.close_time || "22:00";
         const [closingHour, closingMinute] = closingTime.split(':').map(Number);
         const closingDate = new Date(selectedDate);
         closingDate.setHours(closingHour, closingMinute, 0, 0);
 
-        // Проверяем разные состояния слота
         let status, isAvailable, cellClass, textClass;
 
-        // Если слот уже занят
         if (slot && slot.status !== 'available') {
             status = slot.status || 'Занято';
             isAvailable = false;
             cellClass = 'bg-red-100';
             textClass = 'text-red-800';
-        }
-        // Если это сегодня и время слота уже прошло
-        else if (selectedDate.toISOString() === today.toISOString() && slotDate < now) {
+        } else if (selectedDate.toISOString() === today.toISOString() && slotDate < now) {
             status = 'Прошло';
             isAvailable = false;
             cellClass = 'bg-gray-100';
             textClass = 'text-gray-500';
-        }
-        // Если время слота позже времени закрытия
-        else if (slotDate >= closingDate) {
+        } else if (slotDate >= closingDate) {
             status = 'После закрытия';
             isAvailable = false;
             cellClass = 'bg-gray-100';
             textClass = 'text-gray-500';
-        }
-        // Если слот доступен
-        else {
+        } else {
             status = 'Свободно';
             isAvailable = true;
             cellClass = 'bg-green-100 hover:bg-green-200 cursor-pointer';
@@ -779,41 +810,59 @@ document.addEventListener('DOMContentLoaded', async function () {
             <span class="text-sm ${textClass}">${status}</span>
         </div>
     `;
-    }    // Недельное представление
-function renderWeekView(data) {
-    if (!data.days || !data.tables) {
-        return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
     }
 
-    const daysArray = Object.entries(data.days).map(([date, dayData]) => ({
-        date,
-        ...dayData
-    }));
+// Аккордеон: разворачивает / сворачивает половинные слоты
+window.toggleHalfHourRow =function(id){
+        const el = document.getElementById(id);
+        if (!el) return;
 
-    const header = `
+        const isOpen = el.style.maxHeight && el.style.maxHeight !== '0px';
+
+        if (isOpen) {
+            el.style.maxHeight = '0px';
+            el.parentElement.classList.remove('group-[.open]');
+        } else {
+            el.style.maxHeight = el.scrollHeight + 'px';
+            el.parentElement.classList.add('group-[.open]');
+        }
+    }
+
+
+    function renderWeekView(data) {
+        if (!data.days || !data.tables) {
+            return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
+        }
+
+        const daysArray = Object.entries(data.days).map(([date, dayData]) => ({
+            date,
+            ...dayData
+        }));
+
+        const header = `
         <div class="grid grid-cols-${daysArray.length + 1} gap-2  mb-2 text-sm font-medium">
             <div class="bg-white p-2"></div>
             ${daysArray.map(day => `
                 <div class="bg-white p-2 text-center rounded-xl">
-                    <div>${new Date(day.date).toLocaleDateString('ru-RU', { weekday: 'short' })}</div>
+                    <div>${new Date(day.date).toLocaleDateString('ru-RU', {weekday: 'short'})}</div>
                     <div>${new Date(day.date).getDate()}</div>
                 </div>
             `).join('')}
         </div>
     `;
 
-    const body = `
+        const body = `
         <div class="grid grid-cols-${daysArray.length + 1} gap-2 bg-gray-200 text-sm">
             ${renderWeekTablesColumn(data.tables)}
             ${daysArray.map(day => renderWeekDayColumn(data, day)).join('')}
         </div>
     `;
 
-    return header + body;
-}
+        return header + body;
+    }
 
-function renderWeekTablesColumn(tables) {
-    return `
+    function renderWeekTablesColumn(tables) {
+        return `
         <div class="flex flex-col gap-y-2">
             ${tables.map(table => `
                 <div class="bg-white p-2 h-14 mt-1  border-b rounded-xl flex flex-col items-center justify-center shadow-sm">
@@ -823,46 +872,52 @@ function renderWeekTablesColumn(tables) {
             `).join('')}
         </div>
     `;
-}
+    }
 
-function renderWeekDayColumn(data, day) {
-    const today = new Date();
-    const dayDate = new Date(day.date);
-    // Сравниваем только даты без времени
-    const isPastDay = dayDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    function renderWeekDayColumn(data, day) {
+        const today = new Date();
+        const dayDate = new Date(day.date);
+        // Сравниваем только даты без времени
+        const isPastDay = dayDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-    return `
+        return `
         <div class="flex flex-col gap-y-2">
             ${data.tables.map(table => {
-                const tableSchedule = day.day_schedule?.[table.id] || {};
-                const slotEntries = Object.entries(tableSchedule).filter(([key]) => key !== '_meta');
+            const tableSchedule = day.day_schedule?.[table.id] || {};
+            const slotEntries = Object.entries(tableSchedule).filter(([key]) => key !== '_meta');
 
-                if (!day.is_working_day || !slotEntries.length) {
-                    return `<div class="bg-gray-100 mt-1 text-gray-400 h-14 border-b rounded-xl flex items-center justify-center shadow-sm">–</div>`;
-                }
+            if (!day.is_working_day || !slotEntries.length) {
+                return `<div class="bg-gray-100 mt-1 text-gray-400 h-14 border-b rounded-xl flex items-center justify-center shadow-sm">–</div>`;
+            }
 
-                const booked = slotEntries.filter(([_, slot]) => slot.status !== 'available').length;
-                const total = slotEntries.length;
-                const statusClass = booked === total ? 'bg-red-100 text-red-800' :
-                    booked > 0 ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800';
+            const booked = slotEntries.filter(([_, slot]) => slot.status !== 'available').length;
+            const total = slotEntries.length;
+            const statusClass = booked === total ? 'bg-red-100 text-red-800' :
+                booked > 0 ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-green-100 text-green-800';
 
-                // Для прошедших дней и обычных пользователей делаем неактивный слот
-                const isDisabled = isPastDay && !state.userIsAdmin;
-                const disabledClass = isDisabled ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : statusClass;
-                const pointerEvents = isDisabled ? 'pointer-events-none' : '';
+            // Для прошедших дней и обычных пользователей делаем неактивный слот
+            const isDisabled = isPastDay && !state.userIsAdmin;
+            const disabledClass = isDisabled ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : statusClass;
+            const pointerEvents = isDisabled ? 'pointer-events-none' : '';
 
-                return `<div class="h-14 border-b flex mt-1  items-center justify-center rounded-xl cursor-pointer px-2 py-1 shadow-sm ${disabledClass} ${pointerEvents} slot-available"
+            return `<div class="h-14 border-b flex mt-1  items-center justify-center rounded-xl cursor-pointer px-2 py-1 shadow-sm ${disabledClass} ${pointerEvents} slot-available"
                              title="Занято ${booked} из ${total}"
                              data-date="${day.date}"
                              data-table="${table.id}">
                              ${booked}/${total}
                         </div>`;
-            }).join('')}
+        }).join('')}
         </div>
     `;
-}
+    }
 
+    const isShortenedfn = (workingHours) => {
+        if (!workingHours) return false;
+        const open = workingHours.open_time || "09:00";
+        const close = workingHours.close_time || "22:00";
+        return open !== "09:00" || close !== "22:00";
+    };
 
 
     function generateMonthView(data) {
@@ -885,29 +940,10 @@ function renderWeekDayColumn(data, day) {
             });
         }
 
-        // Создаем карту дней из объекта days (если он объект, а не массив)
-        const daysStatusMap = {};
-        if (data.days) {
-            if (Array.isArray(data.days)) {
-                data.days.forEach(day => {
-                    daysStatusMap[day.date] = {
-                        is_working_day: day.is_working_day,
-                        working_hours: day.working_hours
-                    };
-                });
-            } else {
-                // Если days — объект, превращаем его в массив
-                Object.entries(data.days).forEach(([date, dayData]) => {
-                    daysStatusMap[date] = {
-                        is_working_day: dayData.is_working_day,
-                        working_hours: dayData.working_hours
-                    };
-                });
-            }
-        }
+        const getDayClasses = (dayObj, isCurrentMonth) => {
+            if (!dayObj || !dayObj.date) return 'bg-gray-100 text-gray-400 rounded p-2 text-sm';
 
-        const getDayClasses = (dateStr, isCurrentMonth) => {
-            const date = new Date(dateStr);
+            const date = new Date(dayObj.date);
             if (isNaN(date.getTime())) return 'bg-gray-100 text-gray-400 rounded p-2 text-sm';
 
             date.setHours(0, 0, 0, 0);
@@ -915,16 +951,8 @@ function renderWeekDayColumn(data, day) {
             const isToday = date.toDateString() === today.toDateString();
             const isPast = date < today;
 
-            const dayStatus = daysStatusMap[dateStr];
-            const isWorkingDay = dayStatus?.is_working_day ?? true;
-            const workingHours = dayStatus?.working_hours;
-
-            let isShortenedDay = false;
-            if (workingHours && workingHours.open_time && workingHours.close_time) {
-                const defaultOpen = "09:00";
-                const defaultClose = "22:00";
-                isShortenedDay = workingHours.open_time !== defaultOpen || workingHours.close_time !== defaultClose;
-            }
+            const isWorkingDay = dayObj.is_working_day ?? true;
+            const isShortenedDay = dayObj.shortened ?? false;
 
             let classes = 'rounded p-2 text-sm';
 
@@ -951,33 +979,28 @@ function renderWeekDayColumn(data, day) {
             return classes;
         };
 
-        const renderBookingsInfo = (dateStr) => {
-            const date = new Date(dateStr);
+        const renderBookingsInfo = (dayObj) => {
+            if (!dayObj || !dayObj.date) return '';
+
+            const date = new Date(dayObj.date);
             if (isNaN(date.getTime())) return '';
 
             date.setHours(0, 0, 0, 0);
             const isPast = date < today;
 
-            const dayStatus = daysStatusMap[dateStr];
-            const isWorkingDay = dayStatus?.is_working_day ?? true;
-            const workingHours = dayStatus?.working_hours;
-
-            let isShortenedDay = false;
-            if (workingHours && workingHours.open_time && workingHours.close_time) {
-                const defaultOpen = "09:00";
-                const defaultClose = "22:00";
-                isShortenedDay = workingHours.open_time !== defaultOpen || workingHours.close_time !== defaultClose;
-            }
+            const isWorkingDay = dayObj.is_working_day ?? true;
+            const isShortenedDay = dayObj.shortened ?? false;
+            const workingHours = dayObj.working_hours;
 
             if (!isWorkingDay) {
                 return '<div class="text-xs text-red-600 mt-1">Выходной</div>';
             }
 
             if (isShortenedDay) {
-                return `<div class="text-xs text-yellow-600 mt-1">Сокращенный день (${workingHours.open_time}-${workingHours.close_time})</div>`;
+                return `<div class="text-xs text-yellow-600 mt-1">Сокращенный день (${workingHours?.open_time ?? '?'}-${workingHours?.close_time ?? '?'})</div>`;
             }
 
-            const bookings = bookingsByDate[dateStr] || [];
+            const bookings = bookingsByDate[dayObj.date] || [];
             const count = bookings.length;
 
             if (count === 0) {
@@ -1003,21 +1026,21 @@ function renderWeekDayColumn(data, day) {
         const calendarDays = data.weeks.map(week => {
             return `
             <div class="grid grid-cols-7 gap-2">
-                ${week.map(dayStr => {
-                if (!dayStr) return '<div class="p-2"></div>';
+                ${week.map(dayObj => {
+                if (!dayObj || !dayObj.date) return '<div class="p-2"></div>';
 
-                const date = new Date(dayStr);
+                const date = new Date(dayObj.date);
                 if (isNaN(date.getTime())) return '<div class="p-2"></div>';
 
                 const dayOfMonth = date.getDate();
                 const isCurrentMonth = date.getMonth() === monthStart.getMonth();
 
                 return `
-                    <div class="${getDayClasses(dayStr, isCurrentMonth)}" data-date="${dayStr}">
-                        <div class="font-medium">${dayOfMonth}</div>
-                        ${renderBookingsInfo(dayStr)}
-                    </div>
-                `;
+                        <div class="${getDayClasses(dayObj, isCurrentMonth)}" data-date="${dayObj.date}">
+                            <div class="font-medium">${dayOfMonth}</div>
+                            ${renderBookingsInfo(dayObj)}
+                        </div>
+                    `;
             }).join('')}
             </div>
         `;
@@ -1144,6 +1167,7 @@ function renderWeekDayColumn(data, day) {
     function showError(message) {
         alert(`Ошибка: ${message}`);
     }
+
 
     // Запуск приложения
     init();

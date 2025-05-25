@@ -116,6 +116,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(_("Зарегистрирован"), auto_now_add=True)
     last_updated = models.DateTimeField(_("Был в последний раз"), auto_now=True)
     loyalty=models.ForeignKey(LoyaltyProfile, on_delete=models.SET_NULL, blank=True, null=True)
+    slot_view_mode = models.PositiveSmallIntegerField(
+        default=60,
+        validators=[MinValueValidator(30), MaxValueValidator(60)])
     photo = models.ImageField(
         upload_to=user_photo_upload_path,
         blank=True,

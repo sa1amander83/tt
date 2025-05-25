@@ -8,6 +8,8 @@ from django.http import JsonResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
+from rest_framework.utils import json
+
 from .forms import ProfileUpdateForm, PasswordChangeForm, ProfilePhotoForm
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
@@ -95,7 +97,7 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         context['user'] = user
         context['profile_form'] = ProfileUpdateForm(instance=user)
         context['password_form'] = PasswordChangeForm(user=user)
-
+        context['slot_view_mode'] = user.slot_view_mode or 60
         # Пример данных для бронирований (замените на реальные данные из вашей модели)
         context['bookings'] = [
             {
@@ -202,3 +204,40 @@ def upload_profile_photo(request):
         'success': False,
         'errors': form.errors.get_json_data()
     }, status=400)
+
+
+# views.py
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+@login_required
+@require_POST
+def update_slot_view_mode(request):
+    try:
+        data = json.loads(request.body)
+        view_mode = int(data.get('slot_view_mode', 60))
+        logger.info(f"Получен запрос на обновление режима: {view_mode} для пользователя {request.user}")
+
+        if view_mode not in [30, 60]:
+            raise ValueError("Invalid view mode")
+
+        request.user.slot_view_mode = view_mode
+        request.user.save()
+        logger.info(f"Сохранено значение: {request.user.slot_view_mode}")
+
+        return JsonResponse({
+            'status': 'success',
+            'refresh_required': True
+        })
+    except Exception as e:
+        logger.error(f"Ошибка: {str(e)}")
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=400)

@@ -2,7 +2,14 @@ from django.http import JsonResponse
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-
+from collections import defaultdict
+from calendar import monthrange
+from datetime import datetime, timedelta
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.shortcuts import render, get_object_or_404
 from datetime import date
 from django.urls import reverse_lazy
@@ -49,21 +56,13 @@ def booking_view(request):
     return render(request, "bookings/bookings.html", context)
 
 
-from collections import defaultdict
-from datetime import datetime, timedelta, time
-from calendar import monthrange
 
-from django.utils import timezone
-from django.utils.dateparse import parse_date
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
 
 
 
 class CalendarAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]  # Доступ для всех, в том числе анонимных
 
     def get(self, request, *args, **kwargs):
         view_type = request.query_params.get('view', 'day')
@@ -76,14 +75,28 @@ class CalendarAPIView(APIView):
         if date is None:
             return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
 
-        user = request.user
+        user = request.user if request.user.is_authenticated else None
+
+        # Получаем slot_view_mode: из пользователя, если есть, иначе из query params, иначе 60
+        slot_view_mode_param = request.query_params.get('slot_view_mode')
+        if slot_view_mode_param:
+            try:
+                slot_duration = int(slot_view_mode_param)
+                if slot_duration <= 0:
+                    slot_duration = 60
+            except ValueError:
+                slot_duration = 60
+        else:
+            slot_duration = getattr(user, 'slot_view_mode', 60) if user else 60
+            if not slot_duration or slot_duration <= 0:
+                slot_duration = 60
 
         if view_type == 'day':
-            return self.get_day_view(date, user)
+            return self.get_day_view(date, user, slot_duration)
         elif view_type == 'week':
-            return self.get_week_view(date, user)
+            return self.get_week_view(date, user, slot_duration)
         elif view_type == 'month':
-            return self.get_month_view(date, user)
+            return self.get_month_view(date, user, slot_duration)
         else:
             return Response({"error": "Invalid view type. Must be 'day', 'week', or 'month'."}, status=400)
 
@@ -91,28 +104,30 @@ class CalendarAPIView(APIView):
         holiday = Holiday.objects.filter(date=date).first()
         if holiday:
             if holiday.status == 'closed':
-                return False, None, None
-            return True, holiday.open_time, holiday.close_time
+                return False, None, None, False
+            shortened = (holiday.status == 'shortened')
+            return True, holiday.open_time, holiday.close_time, shortened
 
         weekday = date.weekday()
         wd = WorkingDay.objects.filter(day=weekday, is_open=True).first()
         if wd:
-            return True, wd.open_time, wd.close_time
+            return True, wd.open_time, wd.close_time, False
 
-        return False, None, None
+        return False, None, None, False
 
     def get_bookings(self, start, end, user):
         qs = Booking.objects.filter(start_time__lt=end, end_time__gt=start).select_related('table')
-        if not user.is_staff and not user.is_superuser:
+        if user and not (user.is_staff or user.is_superuser):
             qs = qs.filter(user=user)
         return qs
 
-    def get_day_view(self, date, user):
-        is_working_day, open_time, close_time = self.get_open_close_times(date)
+    def get_day_view(self, date, user, slot_duration):
+        is_working_day, open_time, close_time, shortened = self.get_open_close_times(date)
         if not is_working_day:
             return Response({
                 "date": date.strftime('%Y-%m-%d'),
                 "is_working_day": False,
+                "shortened": False,
                 "working_hours": None,
                 'weekday': date.weekday(),
                 "tables": [],
@@ -125,7 +140,6 @@ class CalendarAPIView(APIView):
         end_dt = timezone.make_aware(datetime.combine(date, close_time))
         now = timezone.now()
 
-        slot_duration = 60
         slots = []
         current = start_dt
         while current + timedelta(minutes=slot_duration) <= end_dt:
@@ -194,6 +208,7 @@ class CalendarAPIView(APIView):
         return Response({
             'date': date.strftime('%Y-%m-%d'),
             'is_working_day': True,
+            'shortened': shortened,
             'weekday': date.weekday(),
             'working_hours': {
                 'open_time': open_time.strftime('%H:%M'),
@@ -204,25 +219,24 @@ class CalendarAPIView(APIView):
             'day_schedule': day_schedule
         })
 
-    def get_week_view(self, date, user):
+    def get_week_view(self, date, user, slot_duration):
         start = date - timedelta(days=date.weekday())
-        return self._get_calendar_range_view(start, 7, user, 'week')
+        return self._get_calendar_range_view(start, 7, user, slot_duration, 'week')
 
-    from collections import OrderedDict
-
-    def get_month_view(self, date, user):
+    def get_month_view(self, date, user, slot_duration):
         start = date.replace(day=1)
         _, last_day = monthrange(start.year, start.month)
         end = start.replace(day=last_day)
 
+        # Коррекция начала и конца по неделям
         start -= timedelta(days=start.weekday())
         end += timedelta(days=(6 - end.weekday()))
         num_days = (end - start).days + 1
 
-        raw_response = self._get_calendar_range_view(start, num_days, user, 'month')
+        raw_response = self._get_calendar_range_view(start, num_days, user, slot_duration, 'month')
         days_data = raw_response.data["days"]
 
-        # Сгруппировать по неделям
+        # Группируем по неделям
         sorted_dates = sorted(days_data.keys())
         weeks = []
         current_week = []
@@ -236,28 +250,27 @@ class CalendarAPIView(APIView):
                 weeks.append(current_week)
                 current_week = []
 
-        if current_week:  # Если вдруг последняя неделя не полная
+        if current_week:  # Последняя неполная неделя
             weeks.append(current_week)
 
-        raw_response = self._get_calendar_range_view(start, num_days, user, 'month')
         raw_response.data["month"] = date.strftime('%Y-%m')
         raw_response.data["year"] = date.year
         raw_response.data["weeks"] = weeks
 
         return raw_response
 
-    def _get_calendar_range_view(self, start_date, num_days, user, view_type):
+    def _get_calendar_range_view(self, start_date, num_days, user, slot_duration, view_type):
         days = [start_date + timedelta(days=i) for i in range(num_days)]
         tables = Table.objects.filter(is_active=True).order_by('number')
-        slot_step = 60
-        calendar_schedule = defaultdict(dict)  # Изменено с defaultdict(lambda: defaultdict(dict))
+        calendar_schedule = defaultdict(dict)
         time_slots_set = set()
 
         for day in days:
-            is_working, open_time, close_time = self.get_open_close_times(day)
+            is_working, open_time, close_time, shortened = self.get_open_close_times(day)
             if not is_working:
                 calendar_schedule[day.isoformat()] = {
                     'is_working_day': False,
+                    'shortened': False,
                     'working_hours': None,
                     'day_schedule': {}
                 }
@@ -267,9 +280,9 @@ class CalendarAPIView(APIView):
             day_end = timezone.make_aware(datetime.combine(day, close_time))
             slots = []
             current = day_start
-            while current + timedelta(minutes=slot_step) <= day_end:
-                slots.append((current, current + timedelta(minutes=slot_step)))
-                current += timedelta(minutes=slot_step)
+            while current + timedelta(minutes=slot_duration) <= day_end:
+                slots.append((current, current + timedelta(minutes=slot_duration)))
+                current += timedelta(minutes=slot_duration)
 
             bookings = self.get_bookings(day_start, day_end, user)
             booking_map = defaultdict(list)
@@ -332,6 +345,7 @@ class CalendarAPIView(APIView):
 
             calendar_schedule[day.isoformat()] = {
                 'is_working_day': True,
+                'shortened': shortened,
                 'working_hours': {
                     'open_time': open_time.strftime('%H:%M'),
                     'close_time': close_time.strftime('%H:%M'),
