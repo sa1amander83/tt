@@ -208,18 +208,43 @@ class CalendarAPIView(APIView):
         start = date - timedelta(days=date.weekday())
         return self._get_calendar_range_view(start, 7, user, 'week')
 
+    from collections import OrderedDict
+
     def get_month_view(self, date, user):
         start = date.replace(day=1)
         _, last_day = monthrange(start.year, start.month)
         end = start.replace(day=last_day)
 
-        # Monday before start
         start -= timedelta(days=start.weekday())
-        # Sunday after end
         end += timedelta(days=(6 - end.weekday()))
         num_days = (end - start).days + 1
 
-        return self._get_calendar_range_view(start, num_days, user, 'month')
+        raw_response = self._get_calendar_range_view(start, num_days, user, 'month')
+        days_data = raw_response.data["days"]
+
+        # Сгруппировать по неделям
+        sorted_dates = sorted(days_data.keys())
+        weeks = []
+        current_week = []
+
+        for d in sorted_dates:
+            current_week.append({
+                "date": d,
+                **days_data[d]
+            })
+            if len(current_week) == 7:
+                weeks.append(current_week)
+                current_week = []
+
+        if current_week:  # Если вдруг последняя неделя не полная
+            weeks.append(current_week)
+
+        raw_response = self._get_calendar_range_view(start, num_days, user, 'month')
+        raw_response.data["month"] = date.strftime('%Y-%m')
+        raw_response.data["year"] = date.year
+        raw_response.data["weeks"] = weeks
+
+        return raw_response
 
     def _get_calendar_range_view(self, start_date, num_days, user, view_type):
         days = [start_date + timedelta(days=i) for i in range(num_days)]
