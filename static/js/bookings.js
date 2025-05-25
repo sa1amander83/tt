@@ -771,7 +771,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         return `
-        <div class="flex items-center justify-center p-2 min-h-12 ${cellClass} ${isAvailable ? 'booking-slot-available' : ''}"
+        <div class="flex items-center justify-center border-b mt-1 ml-1 rounded-xl p-2 min-h-12 ${cellClass} ${isAvailable ? 'booking-slot-available' : ''}"
              data-date="${data.date}" 
              data-time="${slotTime}" 
              data-table="${tableId}" 
@@ -791,7 +791,7 @@ function renderWeekView(data) {
     }));
 
     const header = `
-        <div class="grid grid-cols-${daysArray.length + 1} gap-2 bg-gray-200 mb-2 text-sm font-medium">
+        <div class="grid grid-cols-${daysArray.length + 1} gap-2  mb-2 text-sm font-medium">
             <div class="bg-white p-2"></div>
             ${daysArray.map(day => `
                 <div class="bg-white p-2 text-center rounded-xl">
@@ -816,7 +816,7 @@ function renderWeekTablesColumn(tables) {
     return `
         <div class="flex flex-col gap-y-2">
             ${tables.map(table => `
-                <div class="bg-white p-2 h-14 border-b rounded-xl flex flex-col items-center justify-center shadow-sm">
+                <div class="bg-white p-2 h-14 mt-1  border-b rounded-xl flex flex-col items-center justify-center shadow-sm">
                     <div class="font-medium">Стол #${table.number}</div>
                     <div class="text-xs text-gray-500">${table.table_type}</div>
                 </div>
@@ -838,7 +838,7 @@ function renderWeekDayColumn(data, day) {
                 const slotEntries = Object.entries(tableSchedule).filter(([key]) => key !== '_meta');
 
                 if (!day.is_working_day || !slotEntries.length) {
-                    return `<div class="bg-gray-100 text-gray-400 h-14 border-b rounded-xl flex items-center justify-center shadow-sm">–</div>`;
+                    return `<div class="bg-gray-100 mt-1 text-gray-400 h-14 border-b rounded-xl flex items-center justify-center shadow-sm">–</div>`;
                 }
 
                 const booked = slotEntries.filter(([_, slot]) => slot.status !== 'available').length;
@@ -852,7 +852,7 @@ function renderWeekDayColumn(data, day) {
                 const disabledClass = isDisabled ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : statusClass;
                 const pointerEvents = isDisabled ? 'pointer-events-none' : '';
 
-                return `<div class="h-14 border-b flex items-center justify-center rounded-xl px-2 py-1 shadow-sm ${disabledClass} ${pointerEvents} slot-available"
+                return `<div class="h-14 border-b flex mt-1  items-center justify-center rounded-xl cursor-pointer px-2 py-1 shadow-sm ${disabledClass} ${pointerEvents} slot-available"
                              title="Занято ${booked} из ${total}"
                              data-date="${day.date}"
                              data-table="${table.id}">
