@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const originalText = btn.textContent;
 
         btn.disabled = true;
-       
+
 
         fetch('/accounts/update-slot-view-mode/', {
             method: 'POST',
@@ -68,22 +68,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 // Функция для показа уведомлений
-function showNotification(message, type = 'success') {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-md shadow-lg text-white font-medium z-50 animate-fade-in 
-                            ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-        notification.classList.remove('animate-fade-in');
-        notification.classList.add('animate-fade-out');
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
-}
 
 // Вспомогательная функция для получения CSRF токена
-function getCookie(name) {
+window.getCookie = function(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
         const cookies = document.cookie.split(';');

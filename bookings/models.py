@@ -102,6 +102,12 @@ class Equipment(models.Model):
         return self.name
 
 
+    @property
+    def quantity_range(self):
+        return range(1, self.quantity_available + 1)
+
+
+
 
 User='accounts.User'
 class Booking(models.Model):

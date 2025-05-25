@@ -58,28 +58,3 @@ document.querySelectorAll('input[type="time"]').forEach(input => {
         locale: "ru"
     });
 });
-
-function showNotification(message, type) {
-    const notification = document.createElement('div');
-
-    // Установка базовых классов
-    notification.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded shadow-lg text-white transition-opacity duration-500 opacity-100 ${
-        type === 'success' ? 'bg-green-500' : 'bg-red-500'
-    }`;
-
-    // Установка текста
-    notification.textContent = message;
-
-    // Добавление в DOM
-    document.body.appendChild(notification);
-
-    // Исчезновение (плавно)
-    setTimeout(() => {
-        notification.style.opacity = '0'; // исчезает плавно
-    }, 2500); // 2.5 сек виден
-
-    // Полное удаление
-    setTimeout(() => {
-        notification.remove();
-    }, 3000); // через 3 сек удаляется
-}

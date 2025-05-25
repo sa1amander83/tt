@@ -229,7 +229,7 @@ function closeModal(modalId) {
     }, 300);
 }
 
-function showNotification(message, type = 'success') {
+window.showNotification = function(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium flex items-center transform transition-all duration-300 ${
         type === 'success' ? 'bg-green-500' : 'bg-red-500'

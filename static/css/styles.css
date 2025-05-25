@@ -125,3 +125,4 @@ input:focus, select:focus, textarea:focus {
 .animate-fade-out {
   animation: fade-out 0.3s ease-in forwards;
 }
+
