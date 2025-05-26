@@ -146,7 +146,7 @@ class SignUpForm(forms.ModelForm):
     terms = forms.BooleanField(
         required=True,
         widget=forms.CheckboxInput(attrs={
-            "class": "h-4 w-4 text-green-600 focus:ring-green-500 border-2 border-gray-300 rounded mt-1"
+            "class": "h-4 w-4 text-green-600 focus:ring-green-500 border-2 border border-gray-300 rounded mt-1"
         })
     )
 

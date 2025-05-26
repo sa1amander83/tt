@@ -634,6 +634,8 @@ function saveTableChanges() {
     .finally(() => {
         saveBtn.disabled = false;
         saveBtn.innerHTML = 'Сохранить';
+          document.getElementById('edit-table-modal').classList.add('hidden');
+
     });
 }
 

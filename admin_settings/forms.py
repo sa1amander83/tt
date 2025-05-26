@@ -1,6 +1,6 @@
 from django import forms
 
-from admin_settings.models import MembershipType, SpecialOffer, Holiday, ClubSettings,  WorkingDay
+from admin_settings.models import MembershipType, SpecialOffer, Holiday, ClubSettings, WorkingDay
 from bookings.models import Table, TableType, PricingPlan, TableTypePricing
 
 
@@ -26,7 +26,7 @@ class TableForm(forms.ModelForm):
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'is_active': forms.CheckboxInput(attrs={
-                'class': 'mt-2 rounded border-2 border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
+                'class': 'mt-2 rounded border-2 border border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
             }),
         }
 
@@ -83,7 +83,7 @@ class PricingPlanForm(forms.ModelForm):
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'is_default': forms.CheckboxInput(attrs={
-                'class': 'mt-2 rounded border-2 border-2 border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
+                'class': 'mt-2 rounded border-2 border border-2 border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
             }),
             'valid_from': forms.DateInput(attrs={
                 'type': 'date',
@@ -99,7 +99,8 @@ class PricingPlanForm(forms.ModelForm):
 class TableTypePricingForm(forms.ModelForm):
     class Meta:
         model = TableTypePricing
-        fields = ['table_type', 'pricing_plan', 'hour_rate', 'half_hour_rate', 'hour_rate_group', 'min_duration', 'max_duration']
+        fields = ['table_type', 'pricing_plan', 'hour_rate', 'half_hour_rate', 'hour_rate_group', 'min_duration',
+                  'max_duration']
         labels = {
             'table_type': 'Тип стола',
             'pricing_plan': 'Тарифный план',
@@ -128,9 +129,9 @@ class TableTypePricingForm(forms.ModelForm):
             'min_duration': forms.NumberInput(attrs={
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
-            'max_duration': forms.NumberInput(attrs={
-                'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
-            }),
+            'max_duration': forms.NumberInput(attrs={'step': '30',
+                                                     'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+                                                     }),
         }
 
 
@@ -165,19 +166,19 @@ class MembershipTypeForm(forms.ModelForm):
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'is_active': forms.CheckboxInput(attrs={
-                'class': 'mt-2 rounded border-2 border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
+                'class': 'mt-2 rounded border-2 border border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
             }),
             'includes_booking': forms.CheckboxInput(attrs={
-                'class': 'mt-2 rounded border-2 border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
+                'class': 'mt-2 rounded border-2border border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
             }),
             'includes_discount': forms.CheckboxInput(attrs={
-                'class': 'mt-2 rounded border-2 border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
+                'class': 'mt-2 rounded border-2 border  border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
             }),
             'includes_tournaments': forms.CheckboxInput(attrs={
-                'class': 'mt-2 rounded border-2 border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
+                'class': 'mt-2 rounded border-2 border  border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
             }),
             'includes_training': forms.CheckboxInput(attrs={
-                'class': 'mt-2 rounded border-2 border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
+                'class': 'mt-2 rounded border-2 border  border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
             }),
         }
 
@@ -212,7 +213,7 @@ class SpecialOfferForm(forms.ModelForm):
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'is_active': forms.CheckboxInput(attrs={
-                'class': 'mt-2 rounded border-2 border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
+                'class': 'mt-2 rounded border border-2 border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
             }),
             'valid_from': forms.DateInput(attrs={
                 'type': 'date',
@@ -223,7 +224,7 @@ class SpecialOfferForm(forms.ModelForm):
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'apply_to_all': forms.CheckboxInput(attrs={
-                'class': 'mt-2 rounded border-2 border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
+                'class': 'mt-2 rounded border border-2 border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500'
             }),
             'tables': forms.SelectMultiple(attrs={
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
@@ -318,25 +319,28 @@ class ClubSettingsForm(forms.ModelForm):
                 'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'notify_bookings': forms.CheckboxInput(attrs={
-                'class': "h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                'class': "h-4 w-4 text-green-600 border  focus:ring-green-500 border-gray-300 rounded"
             }),
             'notify_payments': forms.CheckboxInput(attrs={
                 'class': "h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"}),
             'notify_cancellations': forms.CheckboxInput(attrs={
-                'class': "h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"}),
+                'class': "h-4 w-4 text-green-600 focus:ring-green-500 border border-gray-300 rounded"}),
             'notify_registrations': forms.CheckboxInput(attrs={
-                'class': "h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"}),
+                'class': "h-4 w-4 text-green-600 focus:ring-green-500 border border-gray-300 rounded"}),
 
             'auto_backup': forms.CheckboxInput(attrs={
                 'class': "h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"}),
             'backup_frequency': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'}),
+                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm '
+                'focus:border-indigo-500 focus:ring-indigo-500'}),
             'backup_time': forms.TimeInput(attrs={
                 'type': 'time',
-                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'}),
+                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm '
+                'focus:border-indigo-500 focus:ring-indigo-500'}),
 
             'backup_retention': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'})
+                'class': 'w-full px-3 py-2 sm:w-1/2 mt-1 block rounded-md border-2 border-gray-300 shadow-sm '
+                'focus:border-indigo-500 focus:ring-indigo-500'})
         }
 
 
@@ -355,7 +359,7 @@ class WorkingHoursForm(forms.ModelForm):
                 'class': 'w-full rounded-md border-2 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
             }),
             'is_open': forms.CheckboxInput(attrs={
-                'class': 'rounded border-2 border-gray-300 text-indigo-600 focus:ring-indigo-500'
+                'class': 'rounded border-2 border-gray-300 border  text-indigo-600 focus:ring-indigo-500'
             }),
             'open_time': forms.TimeInput(attrs={
                 'type': 'time',

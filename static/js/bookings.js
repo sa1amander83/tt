@@ -1,7 +1,3 @@
-
-
-
-
 document.addEventListener('DOMContentLoaded', async function () {
 
 
@@ -346,7 +342,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         const formattedTime = time.includes(':') ? time : `${time}:00`;
 
         try {
-
             const response = await fetch(`/bookings/api/get-booking-info/?date=${date}&time=${formattedTime}&table_id=${tableId}`);
             const data = await response.json();
 
@@ -368,7 +363,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     const option = document.createElement('option');
                     option.value = t.id;
                     option.textContent = `Стол #${t.number} (${t.table_type})`;
-                    option.dataset.maxPlayers = t.default_capacity || 4;
+                    option.dataset.maxPlayers = t.max_players || 4;
                     tableSelect.appendChild(option);
                 });
 
@@ -379,13 +374,15 @@ document.addEventListener('DOMContentLoaded', async function () {
             // Найти текущий выбранный стол
             const selectedTable = data.tables.find(t => t.id === parseInt(tableId));
             const tableTypeName = selectedTable?.table_type || '';
-            const maxPlayers = selectedTable?.default_capacity || 4;
+            const maxPlayers = selectedTable?.max_players || 4;
 
             // Обновляем тип стола
             const tableTypeElement = document.getElementById('table-type-name');
             if (tableTypeElement) {
                 tableTypeElement.textContent = tableTypeName;
             }
+
+            // Обновляем длительность бронирования
             const select = document.getElementById('booking-duration');
             select.innerHTML = '';
 
@@ -403,13 +400,57 @@ document.addEventListener('DOMContentLoaded', async function () {
                 option.textContent = label;
                 select.appendChild(option);
             }
+
             // Обновляем стоимость
             document.getElementById('table-cost').textContent = `${data.base_price} ₽`;
             document.getElementById('total-cost').textContent = `${data.final_price} ₽`;
 
-            // Обновляем длительность, если нужно
-            if (typeof updateDurationOptions === "function") {
-                updateDurationOptions(data.min_duration, data.max_duration);
+            // ОБРАБОТКА ОБОРУДОВАНИЯ
+            const equipmentContainer = document.getElementById('equipment-container');
+            if (equipmentContainer && data.equipment) {
+                equipmentContainer.innerHTML = ''; // Очищаем контейнер
+
+                data.equipment.forEach(equip => {
+                    const equipmentItem = document.createElement('div');
+                    equipmentItem.className = 'equipment-item mb-4 p-3 border rounded';
+
+                    equipmentItem.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="equipment" value="${equip.id}" 
+                                   class="equipment-checkbox mr-2" 
+                                   data-price-hour="${equip.price_per_hour}"
+                                   data-price-half-hour="${equip.price_per_half_hour}">
+                            <span class="font-medium">${equip.name}</span>
+                        </label>
+                        <span class="text-gray-600">${equip.price_per_hour} ₽/час</span>
+                    </div>
+                    <div class="equipment-quantity hidden ml-6">
+                        <label class="block text-sm text-gray-600 mb-1">Количество:</label>
+                        <select name="equipment_quantity_${equip.id}" class="border rounded px-2 py-1 w-20">
+                            ${[1, 2, 3, 4, 5].map(q => `<option value="${q}">${q}</option>`).join('')}
+                        </select>
+                    </div>
+                    ${equip.description ? `<p class="text-sm text-gray-500 mt-1">${equip.description}</p>` : ''}
+                `;
+
+                    equipmentContainer.appendChild(equipmentItem);
+                });
+
+                // Добавляем обработчики событий для чекбоксов оборудования
+                document.querySelectorAll('.equipment-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', function () {
+                        const quantityEl = this.closest('.equipment-item').querySelector('.equipment-quantity');
+                        if (this.checked) {
+                            quantityEl.classList.remove('hidden');
+                        } else {
+                            quantityEl.classList.add('hidden');
+                        }
+                        if (typeof updateBookingCost === "function") {
+                            updateBookingCost();
+                        }
+                    });
+                });
             }
 
             // Сброс остальных полей формы
@@ -417,21 +458,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             elements.notes.value = '';
             document.getElementById('is-group').checked = false;
 
-            // Сброс оборудования
-            elements.equipmentCheckboxes.forEach(cb => {
-                cb.checked = false;
-                const quantityEl = document.querySelector(`select[name="equipment_quantity_${cb.value}"]`);
-                if (quantityEl) {
-                    quantityEl.classList.add('hidden');
-                    quantityEl.value = '1';
-                }
-            });
-
             // Обновляем список участников
             const participantsSelect = document.getElementById('participants');
             if (participantsSelect) {
                 participantsSelect.innerHTML = '';
-                for (let i = 1; i <= maxPlayers; i++) {
+                for (let i = 2; i <= maxPlayers; i++) {
                     const option = document.createElement('option');
                     option.value = i;
                     option.textContent = `${i} игрок${i > 1 ? 'а' : ''}`;

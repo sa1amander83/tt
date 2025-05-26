@@ -68,7 +68,7 @@
                 <div class="flex items-end">
                     <div class="flex items-center h-10">
                         <input id="is-group" name="is_group" type="checkbox"
-                               class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                               class="h-4 w-4 text-green-600 focus:ring-green-500 border border-gray-300 rounded">
                         <label for="is-group" class="ml-2 block text-sm text-gray-900">
                             Групповое бронирование
                         </label>
@@ -79,7 +79,7 @@
             <!-- Оборудование -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Оборудование</label>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-3" id="equipment-container">
                     {% for equipment in equipment_list %}
                         <div class="flex items-center">
                             <input id="equipment-{{ equipment.id }}" name="equipment" type="checkbox"

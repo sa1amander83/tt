@@ -101,10 +101,10 @@ class Equipment(models.Model):
     def __str__(self):
         return self.name
 
-
-    @property
-    def quantity_range(self):
-        return range(1, self.quantity_available + 1)
+    #
+    # @property
+    # def quantity_range(self):
+    #     return range(1, self.quanavailable + 1)
 
 
 

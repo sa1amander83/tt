@@ -102,7 +102,7 @@ async function openTableTypePricingModal(pricingId = null) {
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Макс. время игры (мин)*</label>
-                            <input type="number" name="max_duration" id="maxDurationInput" required min="0" class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg">
+                            <input type="number" name="max_duration" id="maxDurationInput" required min="0"  step="30" class="w-full px-3 py-1.5 text-sm border-2 border-gray-300 rounded-lg">
                         </div>
                     </div>
                 </form>
