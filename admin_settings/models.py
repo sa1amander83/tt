@@ -289,11 +289,16 @@ class MembershipType(models.Model):
     description = models.TextField(blank=True, verbose_name="Описание")
     duration_days = models.PositiveIntegerField(default=30, verbose_name="Длительность (дней)")
     price = models.PositiveIntegerField(verbose_name="Стоимость")
+    discount_percent = models.PositiveIntegerField(default=0)
+    included_hours = models.PositiveIntegerField(default=0)  # 0 = не ограничено
+
     is_active = models.BooleanField(default=True, verbose_name="Активен")
     includes_booking = models.BooleanField(default=True, verbose_name="Включает бронирование")
     includes_discount = models.BooleanField(default=False, verbose_name="Включает скидки")
     includes_tournaments = models.BooleanField(default=False, verbose_name="Включает турниры")
     includes_training = models.BooleanField(default=False, verbose_name="Включает тренировки")
+    is_group_plan = models.BooleanField(default=False)
+    is_unlimited = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Тип абонемента"
@@ -308,6 +313,7 @@ class Membership(models.Model):
     start_date = models.DateField(verbose_name="Дата начала")
     end_date = models.DateField(verbose_name="Дата окончания")
     is_active = models.BooleanField(default=True, verbose_name="Активен")
+    used_minutes = models.PositiveIntegerField(default=0)  # сколько уже потрачено
 
     class Meta:
         verbose_name = "Абонемент"
@@ -319,8 +325,6 @@ class Membership(models.Model):
     def is_valid(self):
         today = date.today()
         return self.is_active and self.start_date <= today <= self.end_date
-
-
 
 class SpecialOffer(models.Model):
     """Специальные предложения и скидки"""
@@ -343,6 +347,27 @@ class SpecialOffer(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.discount_percent}%)"
+
+class BookingPackage(models.Model):
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    total_minutes = models.PositiveIntegerField()
+    used_minutes = models.PositiveIntegerField(default=0)
+    valid_until = models.DateField()
+    is_active = models.BooleanField(default=True)
+
+    def remaining_minutes(self):
+        return max(self.total_minutes - self.used_minutes, 0)
+
+    def is_valid(self):
+        return self.is_active and self.valid_until >= timezone.now().date()
+
+    def consume(self, minutes):
+        if self.remaining_minutes() >= minutes:
+            self.used_minutes += minutes
+            self.save()
+            return True
+        return False
 
 
 class WorkingDay(models.Model):

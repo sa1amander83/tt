@@ -59,12 +59,14 @@
                                     </a>
                                 </li>
 
-                                <li>
+                                  <li>
                                     <a href="#my-memberships"
                                        class="block py-2 px-4 rounded-md hover:bg-gray-50 transition duration-200">
                                         <i class="fa-solid fa-percent mr-2"></i> Мои абонементы
                                     </a>
                                 </li>
+
+
 
 
                                 <li>
@@ -155,14 +157,13 @@
                                                 class="slot-view-btn px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
                    {% if user.slot_view_mode == 30 %}bg-white shadow-md text-green-600{% else %}text-gray-500 hover:text-gray-700{% endif %}">
                                             30 мин
-                                        </button>
+                                        </button>  
                                         <button type="button"
                                                 data-value="60"
                                                 class="slot-view-btn px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
                    {% if user.slot_view_mode == 60 or not user.slot_view_mode %}bg-white shadow-md text-green-600{% else %}text-gray-500 hover:text-gray-700{% endif %}">
                                             60 мин
-                                            <input type="hidden" name="slot_view_mode"
-                                                   value="{{ user.slot_view_mode|default:60 }}">
+                                        <input type="hidden" name="slot_view_mode" value="{{ user.slot_view_mode|default:60 }}">
                                         </button>
                                     </div>
 
@@ -248,7 +249,7 @@
                 </section>
 
 
-                <!-- My Memberships Section -->
+             <!-- My Memberships Section -->
                 <section id="my-memberships" class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
                     <div class="bg-green-600 text-white p-4">
                         <h2 class="text-xl font-bold">Мои абонементы</h2>
@@ -287,7 +288,7 @@
 
                                     <th scope="col"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Осталось бронирований
+                                       Осталось бронирований
                                     </th>
 
                                     <th scope="col"
@@ -315,6 +316,9 @@
 
                     </div>
                 </section>
+
+
+
 
 
                 <section id="my-loyalty" class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
@@ -850,7 +854,7 @@
 
 {% block extrascripts %}
 
-    <script src="{% static 'js/user.js' %}"></script>
+<script src="{% static 'js/user.js' %}"></script>
     {{ block.super }}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -1035,21 +1039,21 @@
     </script>
 
     <script>
-        document.querySelectorAll('.slot-view-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                // Удаляем активный стиль у всех кнопок
-                document.querySelectorAll('.slot-view-btn').forEach(b => {
-                    b.classList.remove('bg-white', 'shadow-md', 'text-green-600');
-                    b.classList.add('text-gray-500', 'hover:text-gray-700');
-                });
+document.querySelectorAll('.slot-view-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    // Удаляем активный стиль у всех кнопок
+    document.querySelectorAll('.slot-view-btn').forEach(b => {
+      b.classList.remove('bg-white', 'shadow-md', 'text-green-600');
+      b.classList.add('text-gray-500', 'hover:text-gray-700');
+    });
 
-                // Добавляем активный стиль к выбранной кнопке
-                this.classList.add('bg-white', 'shadow-md', 'text-green-600');
-                this.classList.remove('text-gray-500', 'hover:text-gray-700');
+    // Добавляем активный стиль к выбранной кнопке
+    this.classList.add('bg-white', 'shadow-md', 'text-green-600');
+    this.classList.remove('text-gray-500', 'hover:text-gray-700');
 
-                // Устанавливаем значение в скрытом поле (если нужно)
-                document.querySelector('input[name="slot_view_mode"]').value = this.dataset.value;
-            });
-        });
-    </script>
+    // Устанавливаем значение в скрытом поле (если нужно)
+    document.querySelector('input[name="slot_view_mode"]').value = this.dataset.value;
+  });
+});
+</script>
 {% endblock %}

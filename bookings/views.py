@@ -21,10 +21,12 @@ from django.core.exceptions import ObjectDoesNotExist
 import json
 from admin_settings.models import WorkingDay, Holiday, SpecialOffer
 from events.forms import BookingForm
+from .BookingEngine import BookingEngine
 from .models import Table, Booking, BookingEquipment, Equipment, PricingPlan, TableTypePricing
 
 
 from .models import Equipment  # не забудь импортировать
+from .utils import calculate_booking_price
 
 
 def booking_view(request):
@@ -487,85 +489,115 @@ class CalendarAPIView(APIView):
 def get_booking_info(request):
     table_id = request.GET.get('table_id')
     date_str = request.GET.get('date')
-    time_str = request.GET.get('time')  # e.g. "08:30"
+    time_str = request.GET.get('time')
+    duration_minutes = request.GET.get('duration', '60')
+    is_group = request.GET.get('is_group', 'false').lower() == 'true'
 
+    # Проверяем обязательные параметры
+    if not table_id or not date_str or not time_str:
+        return JsonResponse({'error': 'Отсутствуют обязательные параметры'}, status=400)
+
+    # Парсим duration_minutes в int с защитой
     try:
-        dt = make_aware(datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M"))
+        duration_minutes = int(duration_minutes)
     except ValueError:
+        return JsonResponse({'error': 'Неверный формат длительности'}, status=400)
+
+    # Парсим equipment JSON, если есть
+    equipment_raw = []
+    equipment_param = request.GET.get('equipment')
+    if equipment_param:
+        try:
+            equipment_raw = json.loads(equipment_param)
+            if not isinstance(equipment_raw, list):
+                raise ValueError()
+        except (json.JSONDecodeError, ValueError):
+            return JsonResponse({'error': 'Неверный формат оборудования'}, status=400)
+
+    # Парсим дату и время в datetime
+    try:
+        dt_naive = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
+        dt = make_aware(dt_naive)
+    except (ValueError, TypeError):
         return JsonResponse({'error': 'Неверный формат даты или времени'}, status=400)
 
-    # Стол
-    table = Table.objects.select_related('table_type').get(id=table_id)
-    table_type = table.table_type
-    tables = Table.objects.filter(is_active=True).order_by('number')
-    # Абонемент
-    active_membership = request.user.memberships.filter(is_active=True, start_date__lte=date.today(),
-                                                        end_date__gte=date.today()).first()
-    has_membership = bool(active_membership)
-    membership_name = active_membership.membership_type.name if has_membership else None
+    # Получаем стол
 
-    # Подходящий тарифный план
-    pricing_plans = PricingPlan.objects.filter(valid_from__lte=dt.date()).order_by('-valid_from')
-    if pricing_plans:
-        applicable_plan = next((plan for plan in pricing_plans if plan.is_applicable(dt)), None)
-    else:
-        applicable_plan = PricingPlan.objects.filter(is_default=True).first()
+    try:
+        table = Table.objects.select_related('table_type').get(id=table_id)
+    except Table.DoesNotExist:
+        return JsonResponse({'error': 'Стол не найден'}, status=404)
 
-    #оборудование
+    # Подготавливаем оборудование для BookingEngine
+    equipment_items = []
+    for item in equipment_raw:
+        eq_id = item.get('id')
+        if not isinstance(eq_id, int):
+            continue
+        eq = Equipment.objects.filter(id=eq_id, is_available=True).first()
+        if eq:
+            quantity = item.get('quantity', 1)
+            try:
+                quantity = int(quantity)
+                if quantity < 1:
+                    quantity = 1
+            except Exception:
+                quantity = 1
+            equipment_items.append({'equipment': eq, 'quantity': quantity})
 
-    equipment = Equipment.objects.filter(is_available=True).order_by('name')
-    # Ценообразование
-    pricing = None
-    if applicable_plan:
-        pricing = TableTypePricing.objects.filter(table_type=table_type, pricing_plan=applicable_plan).first()
+    # Импорт BookingEngine
+   # замените yourapp на свое приложение
 
-    base_price = pricing.hour_rate if pricing else 0
-    min_duration = pricing.min_duration if pricing else 30  # в минутах
-    max_duration = pricing.max_duration if pricing else 180
-
-    # Применим спецпредложение
-    discount = 0
-    special_offers = SpecialOffer.objects.filter(
-        is_active=True,
-        valid_from__lte=dt.date(),
-        valid_to__gte=dt.date(),
+    engine = BookingEngine(
+        user=request.user,
+        table=table,
+        start_time=dt,
+        duration_minutes=duration_minutes,
+        participants=table.table_type.default_capacity if not is_group else (table.table_type.default_capacity + 1),
+        equipment_items=equipment_items
     )
 
-    for offer in special_offers:
-        if str(dt.isoweekday()) not in offer.weekdays:
-            continue
-        if offer.time_from and offer.time_to and not (offer.time_from <= dt.time() <= offer.time_to):
-            continue
-        if not offer.apply_to_all and table not in offer.tables.all():
-            continue
+    engine.calculate_total_price()
 
-        discount = offer.discount_percent
-        break
-
-    discounted_price = int(base_price * (1 - discount / 100))
-
-    return JsonResponse({
-        'has_membership': has_membership,
-        'membership_name': membership_name,
-        'base_price': base_price,
-        'discount': discount,
-        'final_price': discounted_price,
-        'pricing_plan': applicable_plan.name if applicable_plan else 'Не найден',
+    # Формируем ответ
+    response = {
+        'has_membership': bool(engine.membership),
+        'membership_name': engine.membership.membership_type.name if engine.membership else None,
+        'base_price': engine.base_price,
+        'equipment_price': engine.equipment_price,
+        'discount': engine.special_offer.discount_percent if engine.special_offer else 0,
+        'final_price': engine.total_price,
+        'pricing_plan': engine.pricing_plan.name if engine.pricing_plan else 'Не найден',
         'table_number': table.number,
-        'table_type_id': table_type.id,
-        'min_duration': min_duration,
-        'max_duration': max_duration,
-        'equipment': [{'id': e.id, 'name': e.name} for e in equipment],
+        'table_type_id': table.table_type.id,
+        'min_duration': engine.pricing.min_duration if engine.pricing else 30,
+        'max_duration': engine.pricing.max_duration if engine.pricing else 180,
+        'equipment': [
+            {
+                'id': e.id,
+                'name': e.name,
+                'price_per_hour': float(e.price_per_hour),
+                'price_per_half_hour': float(e.price_per_half_hour),
+                'is_available': e.is_available,
+                'description': getattr(e, 'description', '')  # если есть описание
+            }
+            for e in Equipment.objects.filter(is_available=True).order_by('name')
+        ],
         'tables': [
             {
                 'id': t.id,
                 'number': t.number,
-                'table_type_display': str(t.table_type),  # что выводится в селекте
-                'table_type': t.table_type.name,  # короткое имя
-                'max_players': t.table_type.default_capacity,
-            } for t in tables
+                'table_type_display': str(t.table_type),
+                'table_type': t.table_type.name,
+                'default_capacity': t.table_type.default_capacity,
+            }
+            for t in Table.objects.filter(is_active=True).order_by('number')
         ],
-    })
+        'is_group': is_group,
+        'duration_minutes': duration_minutes,
+    }
+
+    return JsonResponse(response)
 
 
 @require_GET
@@ -674,6 +706,70 @@ def get_user_bookings(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+def create_booking_view(request):
+    try:
+        table_id = request.GET.get('table_id')
+        date_str = request.GET.get('date')
+        time_str = request.GET.get('time')  # "08:30"
+        duration_minutes = int(request.GET.get('duration', 60))
+        participants = int(request.GET.get('participants', 2))
+        is_group = participants > 1  # или логика твоего проекта
+
+        equipment_param = request.GET.get('equipment')
+        equipment_raw = json.loads(equipment_param) if equipment_param else []
+
+        start_time = make_aware(datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M"))
+    except (ValueError, TypeError, json.JSONDecodeError):
+        return JsonResponse({'error': 'Неверные входные данные'}, status=400)
+
+    # Получаем объект стола
+    try:
+        table = Table.objects.select_related('table_type').get(id=table_id)
+    except Table.DoesNotExist:
+        return JsonResponse({'error': 'Стол не найден'}, status=404)
+
+    end_time = start_time + timedelta(minutes=duration_minutes)
+
+    # Проверка пересечения бронирований
+    conflicts = Booking.objects.filter(
+        table=table,
+        start_time__lt=end_time,
+        end_time__gt=start_time,
+        status__in=['confirmed', 'pending']  # или нужные статусы
+    )
+    if conflicts.exists():
+        return JsonResponse({'error': 'Стол уже забронирован в это время'}, status=409)
+
+    # Подготовка оборудования для BookingEngine
+    equipment_items = []
+    for item in equipment_raw:
+        try:
+            eq = Equipment.objects.get(id=item['id'])
+            quantity = int(item.get('quantity', 1))
+            equipment_items.append({'equipment': eq, 'quantity': quantity})
+        except (Equipment.DoesNotExist, KeyError, ValueError):
+            continue  # можно добавить логику обработки ошибки
+
+    # Создаём Booking через BookingEngine
+    engine = BookingEngine(
+        user=request.user,
+        table=table,
+        start_time=start_time,
+        duration_minutes=duration_minutes,
+        participants=participants,
+        equipment_items=equipment_items
+    )
+    booking = engine.create_booking()
+
+    return JsonResponse({
+        'success': True,
+        'booking_id': booking.id,
+        'status': booking.status,
+        'total_price': booking.total_price,
+        'start_time': booking.start_time.isoformat(),
+        'end_time': booking.end_time.isoformat(),
+    })
 
 
 class CreateBookingView(LoginRequiredMixin, CreateView):

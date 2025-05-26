@@ -350,6 +350,15 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return;
             }
 
+            // Получаем время закрытия клуба
+            const [closeHour, closeMinute] = state.siteSettings.close_time.split(':').map(Number);
+            const closeTime = new Date(`${date}T${state.siteSettings.close_time}:00`);
+            const bookingStartTime = new Date(`${date}T${formattedTime}:00`);
+
+            // Рассчитываем максимально возможную длительность (в минутах)
+            const maxPossibleDuration = Math.floor((closeTime - bookingStartTime) / (1000 * 60));
+            const actualMaxDuration = Math.min(data.max_duration, maxPossibleDuration);
+
             // Установка базовых значений формы
             elements.bookingDate.value = date;
             elements.startTime.value = formattedTime;
@@ -363,7 +372,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     const option = document.createElement('option');
                     option.value = t.id;
                     option.textContent = `Стол #${t.number} (${t.table_type})`;
-                    option.dataset.maxPlayers = t.max_players || 4;
+                    option.dataset.maxPlayers = t.default_capacity || 2;
                     tableSelect.appendChild(option);
                 });
 
@@ -374,7 +383,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             // Найти текущий выбранный стол
             const selectedTable = data.tables.find(t => t.id === parseInt(tableId));
             const tableTypeName = selectedTable?.table_type || '';
-            const maxPlayers = selectedTable?.max_players || 4;
+            const maxPlayers = selectedTable?.default_capacity || 2;
 
             // Обновляем тип стола
             const tableTypeElement = document.getElementById('table-type-name');
@@ -382,28 +391,36 @@ document.addEventListener('DOMContentLoaded', async function () {
                 tableTypeElement.textContent = tableTypeName;
             }
 
-            // Обновляем длительность бронирования
+            // Обновляем длительность бронирования с учетом времени закрытия
             const select = document.getElementById('booking-duration');
             select.innerHTML = '';
 
             const step = 30; // 30 минут
-            for (let duration = data.min_duration; duration <= data.max_duration; duration += step) {
+            for (let duration = data.min_duration; duration <= actualMaxDuration; duration += step) {
                 const hours = Math.floor(duration / 60);
                 const minutes = duration % 60;
                 let label = '';
-                if (hours > 0) label += `${hours} час${hours > 1 ? 'а' : ''} `;
-                if (minutes > 0) label += `${minutes} мин`;
-                label = label.trim();
+
+                if (hours > 0) {
+                    label += `${hours} час${hours >= 5 ? 'ов' : hours > 1 ? 'а' : ''}`;
+                    if (minutes > 0) label += ` ${minutes} мин`;
+                } else {
+                    label = `${minutes} мин`;
+                }
 
                 const option = document.createElement('option');
-                option.value = duration / 60;  // в часах, например 1.5
-                option.textContent = label;
+                option.value = duration; // сохраняем в минутах
+                option.textContent = label.trim();
+                  const minDur = data.min_duration % step === 0 ? data.min_duration : step;
+            select.value = minDur
                 select.appendChild(option);
+
+                if (duration === actualMaxDuration && actualMaxDuration < data.max_duration) {
+                    option.textContent += ` (до закрытия)`;
+                }
             }
 
-            // Обновляем стоимость
-            document.getElementById('table-cost').textContent = `${data.base_price} ₽`;
-            document.getElementById('total-cost').textContent = `${data.final_price} ₽`;
+
 
             // ОБРАБОТКА ОБОРУДОВАНИЯ
             const equipmentContainer = document.getElementById('equipment-container');
@@ -418,14 +435,17 @@ document.addEventListener('DOMContentLoaded', async function () {
                     <div class="flex items-center justify-between mb-2">
                         <label class="flex items-center">
                             <input type="checkbox" name="equipment" value="${equip.id}" 
-                                   class="equipment-checkbox mr-2" 
+                                   class="equipment-checkbox mr-2 border rounded" 
                                    data-price-hour="${equip.price_per_hour}"
                                    data-price-half-hour="${equip.price_per_half_hour}">
                             <span class="font-medium">${equip.name}</span>
                         </label>
-                        <span class="text-gray-600">${equip.price_per_hour} ₽/час</span>
+                        <span class="text-gray-600 equipment-price-display" 
+                              data-price-hour="${equip.price_per_hour}">
+                            ${equip.price_per_hour} ₽/час
+                        </span>
                     </div>
-                    <div class="equipment-quantity hidden ml-6">
+                    <div class="equipment-quantity  ml-6">
                         <label class="block text-sm text-gray-600 mb-1">Количество:</label>
                         <select name="equipment_quantity_${equip.id}" class="border rounded px-2 py-1 w-20">
                             ${[1, 2, 3, 4, 5].map(q => `<option value="${q}">${q}</option>`).join('')}
@@ -437,7 +457,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     equipmentContainer.appendChild(equipmentItem);
                 });
 
-                // Добавляем обработчики событий для чекбоксов оборудования
+                // Добавляем обработчики событий для оборудования
                 document.querySelectorAll('.equipment-checkbox').forEach(checkbox => {
                     checkbox.addEventListener('change', function () {
                         const quantityEl = this.closest('.equipment-item').querySelector('.equipment-quantity');
@@ -446,12 +466,21 @@ document.addEventListener('DOMContentLoaded', async function () {
                         } else {
                             quantityEl.classList.add('hidden');
                         }
-                        if (typeof updateBookingCost === "function") {
-                            updateBookingCost();
-                        }
+                        updateBookingCost();
                     });
                 });
+
+                document.querySelectorAll('.equipment-quantity select').forEach(select => {
+                    select.addEventListener('change', updateBookingCost);
+                });
             }
+
+            // Обновляем стоимость (базовая + оборудование)
+            updateCostDisplay({
+                table_cost: data.base_price,
+                equipment_cost: 0,
+                total_cost: data.final_price
+            });
 
             // Сброс остальных полей формы
             elements.participants.value = '2';
@@ -478,14 +507,81 @@ document.addEventListener('DOMContentLoaded', async function () {
             // Показываем модалку
             elements.modal.classList.remove('hidden');
 
-            // Пересчет стоимости, если функция определена
-            if (typeof updateBookingCost === "function") {
-                updateBookingCost();
-            }
-
         } catch (error) {
             console.error("Ошибка при открытии модалки бронирования:", error);
             alert("Не удалось получить информацию о бронировании. Повторите попытку позже.");
+        }
+    }
+
+// Обновленная функция расчета стоимости
+    async function updateBookingCost() {
+        try {
+            const tableId = elements.tableSelect?.value;
+            if (!tableId) {
+                resetCostDisplay();
+                return;
+            }
+
+            // Получаем выбранную длительность
+            // Получаем выбранную длительность в минутах
+            const durationMinutes = parseInt(elements.duration?.value) || 60;
+            const durationHours = durationMinutes / 60;
+
+
+            // Собираем данные оборудования с количеством
+            const equipmentData = Array.from(document.querySelectorAll('.equipment-checkbox:checked'))
+                .map(checkbox => {
+                    const quantityEl = checkbox.closest('.equipment-item').querySelector('select');
+                    const quantity = quantityEl ? parseInt(quantityEl.value) : 1;
+                    return {
+                        id: parseInt(checkbox.value),
+                        quantity: quantity,
+                        price_per_hour: parseFloat(checkbox.dataset.priceHour),
+                        price_per_half_hour: parseFloat(checkbox.dataset.priceHalfHour)
+                    };
+                });
+
+            // Рассчитываем стоимость оборудования
+            let equipmentCost = 0;
+            equipmentData.forEach(item => {
+                // Если длительность меньше часа, используем цену за полчаса
+                if (durationHours < 1 && item.price_per_half_hour) {
+                    equipmentCost += item.price_per_half_hour * item.quantity;
+                } else {
+                    equipmentCost += item.price_per_hour * durationHours * item.quantity;
+                }
+            });
+
+            // Обновляем отображение цен оборудования
+            document.querySelectorAll('.equipment-price-display').forEach(el => {
+                const pricePerHour = parseFloat(el.dataset.priceHour);
+                const duration = parseFloat(elements.duration?.value) || 30;
+
+                if (duration < 1) {
+                    const pricePerHalfHour = el.closest('.equipment-item')
+                        .querySelector('.equipment-checkbox').dataset.priceHalfHour;
+                    el.textContent = `${pricePerHalfHour} ₽/30 мин`;
+                } else {
+                    const total = (pricePerHour * duration).toFixed(0);
+                    el.textContent = `${total} ₽ (${pricePerHour} ₽/час)`;
+                }
+            });
+
+            // Получаем базовую стоимость стола
+            const basePrice = parseFloat(document.getElementById('table-cost').textContent) || 0;
+            const tableCost = basePrice * durationHours;
+            const totalCost = tableCost + equipmentCost;
+
+            // Обновляем отображение
+            updateCostDisplay({
+                table_cost: Math.round(tableCost),
+                equipment_cost: Math.round(equipmentCost),
+                total_cost: Math.round(totalCost)
+            });
+
+        } catch (error) {
+            console.error('Ошибка расчета стоимости:', error);
+            showNotification('Ошибка расчета стоимости: ' + error.message, 'error');
         }
     }
 
@@ -509,53 +605,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         elements.modal.classList.add('hidden');
     }
 
-    // Обновление стоимости бронирования
-    async function updateBookingCost() {
-        try {
-            const tableId = elements.tableSelect?.value;
-            if (!tableId) {
-                resetCostDisplay();
-                return;
-            }
-
-            // Собираем данные оборудования с количеством
-            const equipmentData = Array.from(elements.equipmentCheckboxes)
-                .filter(cb => cb.checked)
-                .map(cb => {
-                    const quantityEl = document.querySelector(`select[name="equipment_quantity_${cb.value}"]`);
-                    const quantity = quantityEl ? parseInt(quantityEl.value) : 1;
-                    return {
-                        id: parseInt(cb.value), quantity: quantity
-                    };
-                });
-
-            const formData = {
-                table_id: parseInt(tableId),
-                duration: parseInt(elements.duration?.value) || 1,
-                equipment: equipmentData,
-                participants: parseInt(elements.participants?.value) || 2,
-                is_group: document.getElementById('is-group').checked
-            };
-
-            const response = await fetch(API_ENDPOINTS.CALCULATE, {
-                method: 'POST', headers: {
-                    'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken()
-                }, body: JSON.stringify(formData)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || 'Ошибка расчета стоимости');
-            }
-
-            const costData = await response.json();
-            updateCostDisplay(costData);
-        } catch (error) {
-            console.error('Ошибка расчета стоимости:', error);
-            showNotification('Ошибка расчета: ' + error.message, 'error');
-        }
-    }
-
     // Обновление отображения стоимости
     function updateCostDisplay(cost) {
         if (elements.costDisplay.table) {
@@ -574,21 +623,26 @@ document.addEventListener('DOMContentLoaded', async function () {
         event.preventDefault();
 
         try {
+            // Получаем выбранную длительность в минутах
+            const durationHours = parseFloat(elements.duration.value);
+            ///  const durationMinutes = Math.round(durationHours * 60);
+            const durationMinutes = parseInt(elements.duration.value) || 60;
+
             // Собираем данные оборудования с количеством
-            const equipmentData = Array.from(elements.equipmentCheckboxes)
-                .filter(cb => cb.checked)
-                .map(cb => {
-                    const quantityEl = document.querySelector(`select[name="equipment_quantity_${cb.value}"]`);
+            const equipmentData = Array.from(document.querySelectorAll('.equipment-checkbox:checked'))
+                .map(checkbox => {
+                    const quantityEl = checkbox.closest('.equipment-item').querySelector('select');
                     const quantity = quantityEl ? parseInt(quantityEl.value) : 1;
                     return {
-                        id: parseInt(cb.value), quantity: quantity
+                        id: parseInt(checkbox.value),
+                        quantity: quantity
                     };
                 });
 
             const formData = {
                 date: elements.bookingDate.value,
                 start_time: elements.startTime.value,
-                duration: parseInt(elements.duration.value),
+                duration: durationMinutes, // отправляем в минутах
                 table_id: parseInt(elements.tableSelect.value),
                 equipment: equipmentData,
                 participants: parseInt(elements.participants.value),
@@ -598,9 +652,12 @@ document.addEventListener('DOMContentLoaded', async function () {
             };
 
             const response = await fetch(API_ENDPOINTS.BOOKINGS, {
-                method: 'POST', headers: {
-                    'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken()
-                }, body: JSON.stringify(formData)
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify(formData)
             });
 
             if (!response.ok) {

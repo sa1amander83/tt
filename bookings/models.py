@@ -1,10 +1,10 @@
 from datetime import datetime
-
+User='accounts.User'
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 
-
+from bookings.utils import calculate_booking_price
 
 
 class TableType(models.Model):
@@ -109,7 +109,7 @@ class Equipment(models.Model):
 
 
 
-User='accounts.User'
+
 class Booking(models.Model):
     STATUS_CHOICES = (
         ('pending', 'Ожидает подтверждения'),
@@ -146,24 +146,18 @@ class Booking(models.Model):
         return f"Бронирование #{self.id} - {self.user} ({self.get_status_display()})"
 
     def calculate_prices(self):
-        pricing = self.pricing
-        duration = (self.end_time - self.start_time).total_seconds() / 3600
+        duration = (self.end_time - self.start_time).total_seconds() / 60
+        equipment_data = [
+            {'id': be.equipment.id, 'quantity': be.quantity}
+            for be in self.bookingequipment_set.all()
+        ]
 
-        if self.is_group:
-            self.base_price = pricing.hour_rate_group * duration
-        else:
-            self.base_price = pricing.hour_rate * duration
-
-        # Получаем связанные BookingEquipment записи
-        booking_equipments = self.bookingequipment_set.all()
-
-        equipment_price = 0
-        for be in booking_equipments:
-            equipment_price += be.equipment.price_per_hour * duration * be.quantity
-
-        self.equipment_price = int(equipment_price)
-        self.total_price = int(self.base_price + self.equipment_price)
-
+        self.base_price, self.equipment_price, self.total_price, _ = calculate_booking_price(
+            pricing=self.pricing,
+            duration_minutes=int(duration),
+            is_group=self.is_group,
+            equipment_data=equipment_data
+        )
     def save(self, *args, **kwargs):
         # Сначала сохраняем объект, если он новый
         is_new = self.pk is None

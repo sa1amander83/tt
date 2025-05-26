@@ -241,3 +241,49 @@ def update_slot_view_mode(request):
             'status': 'error',
             'message': str(e)
         }, status=400)
+
+
+
+from datetime import timedelta, date
+
+
+def can_use_membership(user, booking_start, duration_minutes):
+    membership = user.memberships.filter(
+        is_active=True,
+        start_date__lte=booking_start.date(),
+        end_date__gte=booking_start.date()
+    ).first()
+
+    if not membership:
+        return False, "Нет активного абонемента"
+
+    mtype = membership.membership_type
+
+    # Проверка дней недели
+    if str(booking_start.isoweekday()) not in mtype.valid_days:
+        return False, "Абонемент не действует в этот день"
+
+    # Проверка времени
+    if mtype.time_from and mtype.time_to:
+        if not (mtype.time_from <= booking_start.time() <= mtype.time_to):
+            return False, "Время не входит в доступное окно абонемента"
+
+    # Проверка лимитов по часам
+    if not mtype.is_unlimited:
+        remaining_minutes = (mtype.included_hours * 60) - membership.used_minutes
+        if duration_minutes > remaining_minutes:
+            return False, f"Осталось только {remaining_minutes // 60} ч. {remaining_minutes % 60} мин."
+
+    return True, "ОК"
+
+
+def apply_membership_usage(user, duration_minutes):
+    membership = user.memberships.filter(
+        is_active=True,
+        start_date__lte=date.today(),
+        end_date__gte=date.today()
+    ).first()
+
+    if membership and not membership.membership_type.is_unlimited:
+        membership.used_minutes += duration_minutes
+        membership.save()

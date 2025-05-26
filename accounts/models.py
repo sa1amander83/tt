@@ -149,4 +149,3 @@ class User(AbstractBaseUser, PermissionsMixin):
             self.is_staff = True
         super().save(*args, **kwargs)
 
-
