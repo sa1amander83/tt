@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -299,6 +301,25 @@ class MembershipType(models.Model):
 
     def __str__(self):
         return self.name
+
+class Membership(models.Model):
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='memberships')
+    membership_type = models.ForeignKey(MembershipType, on_delete=models.CASCADE, verbose_name="Тип абонемента")
+    start_date = models.DateField(verbose_name="Дата начала")
+    end_date = models.DateField(verbose_name="Дата окончания")
+    is_active = models.BooleanField(default=True, verbose_name="Активен")
+
+    class Meta:
+        verbose_name = "Абонемент"
+        verbose_name_plural = "Абонементы"
+
+    def __str__(self):
+        return f"{self.user} - {self.membership_type.name}"
+
+    def is_valid(self):
+        today = date.today()
+        return self.is_active and self.start_date <= today <= self.end_date
+
 
 
 class SpecialOffer(models.Model):

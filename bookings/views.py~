@@ -18,12 +18,12 @@ from django.utils.timezone import make_aware
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, UpdateView
 from django.views.decorators.http import require_GET, require_POST
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import  ObjectDoesNotExist
 import json
 
 from admin_settings.models import WorkingDay, Holiday, SpecialOffer
 from events.forms import BookingForm
-from .models import Table, Booking, BookingEquipment, Equipment, PricingPlan, TableTypePricing
+from .models import Table,  Booking, BookingEquipment, Equipment, PricingPlan, TableTypePricing
 
 
 def booking_view(request):
@@ -46,7 +46,7 @@ def booking_view(request):
 
     context = {
         'tables': tables,
-        'cols_class': f"grid-cols-{len(tables)}",
+        'cols_class' : f"grid-cols-{len(tables)}",
         'current_date': selected_date,
         'view_type': view_type,
         'table_filter': table_filter,
@@ -54,6 +54,11 @@ def booking_view(request):
         'pricing_plan': pricing_plan,
     }
     return render(request, "bookings/bookings.html", context)
+
+
+
+
+
 
 
 class CalendarAPIView(APIView):
@@ -166,8 +171,7 @@ class CalendarAPIView(APIView):
             booking_map[b.table_id].append((b.start_time, b.end_time))
 
         pricing_data = TableTypePricing.objects.select_related('pricing_plan', 'table_type')
-        offers = SpecialOffer.objects.filter(is_active=True, valid_from__lte=date, valid_to__gte=date).prefetch_related(
-            'tables')
+        offers = SpecialOffer.objects.filter(is_active=True, valid_from__lte=date, valid_to__gte=date).prefetch_related('tables')
 
         offers_by_table = defaultdict(list)
         for offer in offers:
@@ -370,7 +374,7 @@ class CalendarAPIView(APIView):
                         'price': int(final_price),
                         'discount_applied': discount > 0,
                         'discount_percent': discount
-                    }
+                                            }
 
             calendar_schedule[day.isoformat()] = {
                 'is_working_day': True,
@@ -391,15 +395,12 @@ class CalendarAPIView(APIView):
             'days': calendar_schedule,
             'slot_duration': slot_duration
         })
-
-
 from django.http import JsonResponse
 from django.utils.dateparse import parse_time
 from datetime import datetime, timedelta
 from .models import Table, TableTypePricing, PricingPlan
 
 from django.contrib.auth.decorators import login_required
-
 
 @login_required
 def get_booking_info(request):
@@ -415,10 +416,9 @@ def get_booking_info(request):
     # Стол
     table = Table.objects.select_related('table_type').get(id=table_id)
     table_type = table.table_type
-    tables = Table.objects.filter(is_active=True).order_by('number')
+    tables=Table.objects.filter(is_active=True).order_by('number')
     # Абонемент
-    active_membership = request.user.memberships.filter(is_active=True, start_date__lte=date.today(),
-                                                        end_date__gte=date.today()).first()
+    active_membership = request.user.memberships.filter(is_active=True, start_date__lte=date.today(), end_date__gte=date.today()).first()
     has_membership = bool(active_membership)
     membership_name = active_membership.membership_type.name if has_membership else None
 
@@ -468,8 +468,6 @@ def get_booking_info(request):
         'pricing_plan': applicable_plan.name if applicable_plan else 'Не найден',
         'table_number': table.number,
         'table_type_id': table_type.id,
-        'min_duration': min_duration,
-        'max_duration': max_duration,
         'tables': [
             {
                 'id': t.id,
@@ -799,6 +797,8 @@ def get_booking_info(request):
 #         "status_filter": status_filter,
 #     })
 
+
+
 # @require_GET
 # def month_view(request):
 #     selected_date = date.fromisoformat(request.GET.get('date', date.today().isoformat()))
@@ -852,7 +852,9 @@ def get_booking_info(request):
 #         "status_filter": status_filter,
 #     })
 
+
 @require_GET
+
 def get_site_settings(request):
     try:
         # Получаем дату или используем текущую
@@ -924,8 +926,6 @@ def get_site_settings(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e), 'status': 'error'}, status=500)
-
-
 @login_required
 def get_user_bookings(request):
     try:
@@ -958,7 +958,6 @@ def get_user_bookings(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
 
 class CreateBookingView(LoginRequiredMixin, CreateView):
     model = Booking
@@ -1051,6 +1050,8 @@ def cancel_booking(request, booking_id):
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 
+
+
 @require_GET
 def booking_rates_api(request):
     try:
@@ -1058,11 +1059,11 @@ def booking_rates_api(request):
 
         # Поиск актуального тарифного плана (с поддержкой open-ended valid_to)
         pricing_plan = (
-                PricingPlan.objects.filter(
-                    Q(valid_from__lte=today),
-                    Q(valid_to__gte=today) | Q(valid_to__isnull=True)
-                ).first()
-                or PricingPlan.objects.filter(is_default=True).first()
+            PricingPlan.objects.filter(
+                Q(valid_from__lte=today),
+                Q(valid_to__gte=today) | Q(valid_to__isnull=True)
+            ).first()
+            or PricingPlan.objects.filter(is_default=True).first()
         )
 
         if not pricing_plan:
@@ -1106,6 +1107,7 @@ def booking_rates_api(request):
 
 
 @require_GET
+
 def tables_api(request):
     tables = Table.objects.filter(is_active=True).order_by('number')
     tables_data = [{
@@ -1117,9 +1119,7 @@ def tables_api(request):
     } for table in tables]
     return JsonResponse(tables_data, safe=False)
 
-
 from django.db.models import Prefetch
-
 
 # def calendar_api(request):
 #     try:
@@ -1637,6 +1637,8 @@ def calculate_booking_api(request):
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
+
+
         table_id = data.get('table_id')
         duration = int(data.get('duration', 1))
         participants = int(data.get('participants', 2))
@@ -1692,13 +1694,11 @@ def calculate_booking_api(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
-
 from django.db import transaction
-
 
 @login_required
 @require_POST
+
 def create_booking_api(request):
     try:
         data = json.loads(request.body)
@@ -1776,3 +1776,6 @@ def create_booking_api(request):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+
+

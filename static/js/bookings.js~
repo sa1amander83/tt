@@ -443,7 +443,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (elements.bookingForm) {
                 elements.bookingForm.dataset.slotId = slotId || '';
             }
-
+     
             // Показываем модалку
             elements.modal.classList.remove('hidden');
 
