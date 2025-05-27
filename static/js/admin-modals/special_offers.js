@@ -79,11 +79,12 @@ function fillSpecialOfferForm(form, data) {
     }
     if (data.weekdays) {
     const weekdays = data.weekdays.split(',');
+     form.querySelectorAll('input[name="weekdays"]').forEach(cb => cb.checked = false);
+
     weekdays.forEach(day => {
-        const checkbox = form.querySelector(`input[name="weekdays"][value="${day.value}"]`);
+        const checkbox = form.querySelector(`input[name="weekdays"][value="${day}"]`);
         if (checkbox) checkbox.checked = true;
-    });
-}
+    });}
 }
 
 /**

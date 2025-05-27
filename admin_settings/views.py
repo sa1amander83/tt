@@ -388,6 +388,7 @@ class SpecialOfferView(LoginRequiredMixin, UserPassesTestMixin, View):
                 'valid_to': offer.valid_to.isoformat() if offer.valid_to else None,
                 'is_active': offer.is_active,
                 'apply_to_all': offer.apply_to_all,
+                'weekdays': offer.weekdays,
                 'time_from': offer.time_from.strftime('%H:%M'),
                 'time_to': offer.time_to.strftime('%H:%M'),
                 'tables': [
@@ -420,7 +421,8 @@ class SpecialOfferUpdateView(LoginRequiredMixin, IsAdminMixin, View):
 
         if form.is_valid():
             offer = form.save(commit=False)
-
+            weekdays_list = request.POST.getlist('weekdays')
+            offer.weekdays = ','.join(weekdays_list) if weekdays_list else ''
             # Сохраняем M2M поля
             offer.save()  # Сначала сохраняем основную модель
             form.save_m2m()  # Затем сохраняем связи many-to-many

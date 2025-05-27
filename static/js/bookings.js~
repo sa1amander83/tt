@@ -580,14 +580,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const basePrice = parseFloat(document.getElementById('table-cost').textContent) || 0;
                 const tableCost = basePrice * durationHours;
                 const totalCost = tableCost + equipmentCost;
-                const tariffName = 'Выбранный тариф'; // или получай динамически, если есть данные
 
-                updateTariffSummary(
-                    tariffName,
-                    Math.round(tableCost),
-                    Math.round(equipmentCost),
-                    Math.round(totalCost)
-                );
                 // Обновляем отображение
                 updateCostDisplay({
                     table_cost: Math.round(tableCost),

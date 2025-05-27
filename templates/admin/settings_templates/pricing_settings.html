@@ -251,6 +251,11 @@
                             <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                                 Период действия
                             </th>
+                            
+                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                                 Дни                            
+                            </th>
+                            
                             <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Статус
                             </th>
@@ -268,6 +273,11 @@
                                     {{ offer.valid_from|date:"d.m.Y" }} -
                                     {% if offer.valid_to %}{{ offer.valid_to|date:"d.m.Y" }}{% else %}∞{% endif %}
                                 </td>
+                            
+                             <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                              {{ offer.get_weekdays_display }}
+                                </td>
+                            
                                 <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap">
                   <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if offer.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
                     {% if offer.is_active %}Активно{% else %}Неактивно{% endif %}

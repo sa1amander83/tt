@@ -347,6 +347,19 @@ class SpecialOffer(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.discount_percent}%)"
+    def get_weekdays_display(self):
+        days_map = {
+            '1': 'Пн',
+            '2': 'Вт',
+            '3': 'Ср',
+            '4': 'Чт',
+            '5': 'Пт',
+            '6': 'Сб',
+            '7': 'Вс'
+        }
+        days = self.weekdays.split(',')
+        return ', '.join(days_map.get(day, '') for day in days if day in days_map)
+
 
 class BookingPackage(models.Model):
     user = models.ForeignKey('accounts.User', on_delete=models.CASCADE)

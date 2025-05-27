@@ -556,7 +556,18 @@ def get_booking_info(request):
         participants=table.table_type.default_capacity if not is_group else (table.table_type.default_capacity + 1),
         equipment_items=equipment_items
     )
+    tariff_parts = []
 
+    if engine.pricing_plan:
+        tariff_parts.append(engine.pricing_plan.name)
+
+    if engine.special_offer:
+        offer_name = engine.special_offer.name  # например, "Ранняя пташка 10% скидка"
+        discount = engine.special_offer.discount_percent
+        if offer_name and discount:
+            tariff_parts.append(f"Акция ({offer_name} {discount}% скидка)")
+
+    tariff_description = " + ".join(tariff_parts) if tariff_parts else "Стандартный тариф"
     engine.calculate_total_price()
 
     # Формируем ответ
@@ -564,6 +575,7 @@ def get_booking_info(request):
         'has_membership': bool(engine.membership),
         'membership_name': engine.membership.membership_type.name if engine.membership else None,
         'base_price': engine.base_price,
+        'tariff_description': tariff_description,
         'equipment_price': engine.equipment_price,
         'discount': engine.special_offer.discount_percent if engine.special_offer else 0,
         'final_price': engine.total_price,
