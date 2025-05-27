@@ -34,7 +34,11 @@
             <ul class="flex space-x-6">
                 <li><a href="{% url 'main:index' %}" class="hover:text-green-200 font-medium">Главная</a></li>
                 <li><a href="{% url 'bookings:bookings' %}" class="hover:text-green-200">Бронирование</a></li>
-                {% if user.is_authenticated and user.role == 'ADMIN' %}
+                <div id="user_role" class="hidden">{{ request.user.is_staff }}</div>
+
+
+               {% if user.is_authenticated and user.role == 'ADMIN' %}
+
                     {#                    <li><a href="{% url 'admin-bookings' %}" class="hover:text-green-200">Текущие</a></li>#}
                     <li><a href="{% url 'admin_settings:club_settings' 'general' %}" class="hover:text-green-200">Настройки
                         2</a></li>
@@ -226,7 +230,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="{% static 'js/script.js' %}"></script>
 
+<script id="user-data" type="application/json">
 
+</script>
 
 {% endblock %}
 </body>

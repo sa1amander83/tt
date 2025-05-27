@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             USER_BOOKINGS: '/bookings/api/user-bookings/',
             SITE_SETTINGS: '/bookings/api/site-settings/'
         };
-
+        const isAdmin = document.getElementById('user_role').innerText === 'True';
         // Состояние приложения
         const state = {
             currentDate: new Date(),
@@ -21,11 +21,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             bookings: [],
             pricingPlan: null,
             equipment: [],
-
-            siteSettings: {
-                open_time: "09:00", close_time: "22:00"
-            }
-        };
+            isAdmin: isAdmin
+        }
 
         // Кэш элементов DOM
         const elements = {
@@ -203,15 +200,20 @@ document.addEventListener('DOMContentLoaded', async function () {
             const lastSlotTime = new Date(closeTime);
             lastSlotTime.setHours(closeTime.getHours() - 1);
 
-            while (currentTime <= lastSlotTime) {
-                const hours = currentTime.getHours().toString().padStart(2, '0');
-                const minutes = currentTime.getMinutes().toString().padStart(2, '0');
-                const timeString = `${hours}:${minutes}`;
+            const now = new Date();
 
-                const option = document.createElement('option');
-                option.value = timeString;
-                option.textContent = timeString;
-                elements.startTime.appendChild(option);
+            while (currentTime <= lastSlotTime) {
+                // Пропускаем прошедшее время
+                if (currentTime > now) {
+                    const hours = currentTime.getHours().toString().padStart(2, '0');
+                    const minutes = currentTime.getMinutes().toString().padStart(2, '0');
+                    const timeString = `${hours}:${minutes}`;
+
+                    const option = document.createElement('option');
+                    option.value = timeString;
+                    option.textContent = timeString;
+                    elements.startTime.appendChild(option);
+                }
 
                 // Увеличиваем время на 1 час для следующего слота
                 currentTime.setHours(currentTime.getHours() + 1);
@@ -278,7 +280,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     const isPastDay = selectedDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
                     // Если пользователь не админ и день прошёл — игнорируем клик
-                    if (isPastDay && !state.userIsAdmin) {
+                    if (isPastDay && !state.IsAdmin) {
                         return;
                     }
 
@@ -352,6 +354,15 @@ document.addEventListener('DOMContentLoaded', async function () {
             summaryBlock.classList.remove('hidden');
         }
 
+        function isPastTime(dateStr, timeStr) {
+            if (state.isAdmin) return false;
+            const now = new Date();
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            const slotDate = new Date(dateStr);
+            slotDate.setHours(hours, minutes, 0, 0);
+            return slotDate < now;
+        }
+
         // Открытие модального окна бронирования
         async function openBookingModal(date, time, tableId, slotId) {
             const formattedTime = time.includes(':') ? time : `${time}:00`;
@@ -372,7 +383,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const [closeHour, closeMinute] = state.siteSettings.close_time.split(':').map(Number);
                 const closeTime = new Date(`${date}T${state.siteSettings.close_time}:00`);
                 const bookingStartTime = new Date(`${date}T${formattedTime}:00`);
-                const tariffName = data.tariff_name || "Стандартный тариф";
+                const tariffName = data.tariff_description|| "Стандартный тариф";
 
 // Здесь data.base_price - аренда, 0 - оборудование пока нет, data.final_price - итого
                 updateTariffSummary(tariffName, Math.round(data.base_price), 0, Math.round(data.final_price));
@@ -982,22 +993,27 @@ document.addEventListener('DOMContentLoaded', async function () {
             // Проверяем, не выходит ли слот за время закрытия
             const slotEnd = new Date(slotDate);
             slotEnd.setMinutes(slotEnd.getMinutes() + slotDuration);
-            if (slotEnd > closeDate) {
-                return ''; // Пропускаем слоты, которые выходят за время закрытия
+
+            // Проверяем, является ли слот прошедшим временем
+            const isPast = isPastTime(data.date, slotTime);
+
+            // Если слот выходит за время закрытия или является прошедшим - скрываем его
+            if (slotEnd > closeDate || isPast) {
+                return ''; // Пропускаем слоты, которые выходят за время закрытия или уже прошли
             }
+
             return `
-    <div class="flex border-b border-gray-200 hover:bg-gray-50 booking-slot-row">
-        <div class="w-24 md:w-32 p-3 text-right text-sm font-semibold text-gray-700">${slotTime}</div>
-        <div class="flex-1 grid grid-cols-${data.tables.length} divide-x divide-gray-200">
-            ${data.tables.map(table => {
+<div class="flex border-b border-gray-200 hover:bg-gray-50 booking-slot-row">
+    <div class="w-24 md:w-32 p-3 text-right text-sm font-semibold text-gray-700">${slotTime}</div>
+    <div class="flex-1 grid grid-cols-${data.tables.length} divide-x divide-gray-200">
+        ${data.tables.map(table => {
                 const slot = renderSlotCell(data, table.id, slotTime);
                 return slot;
             }).join('')}
-        </div>
     </div>
-    `;
+</div>
+`;
         }
-
 
         function renderDayHeader(tables) {
             return `
@@ -1015,14 +1031,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         function renderSlotCell(data, tableId, slotTime) {
             const slot = data.day_schedule[tableId]?.[slotTime] || null;
-            const [hours, minutes] = slotTime.split(':').map(Number);
             const now = new Date();
-            const today = new Date(now.toISOString().split('T')[0]);
             const selectedDate = new Date(data.date);
             const [slotHour, slotMinute] = slotTime.split(':').map(Number);
             const slotDate = new Date(selectedDate);
             slotDate.setHours(slotHour, slotMinute, 0, 0);
-            slotDate.setHours(hours, minutes, 0, 0);
+
+            const isPast = slotDate < now;
+
             const closingTime = state.siteSettings.close_time || "22:00";
             const [closingHour, closingMinute] = closingTime.split(':').map(Number);
             const closingDate = new Date(selectedDate);
@@ -1030,17 +1046,20 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             let status, isAvailable, cellClass, textClass, pointerClass;
 
-            if (slot && slot.status !== 'available') {
+            // 👇 Показываем "Прошло" только для админа
+            if (isPast) {
+                if (!state.isAdmin) return '';  // скрыть от обычных пользователей
+
+                status = 'Прошло';
+                isAvailable = false;
+                cellClass = 'bg-gray-200';
+                textClass = 'text-gray-500 italic';
+                pointerClass = 'cursor-default pointer-events-none';
+            } else if (slot && slot.status !== 'available') {
                 status = slot.status || 'Занято';
                 isAvailable = false;
                 cellClass = 'bg-red-100';
                 textClass = 'text-red-800';
-                pointerClass = 'cursor-default pointer-events-none';
-            } else if (selectedDate.toISOString() === today.toISOString() && slotDate < now) {
-                status = '-';
-                isAvailable = false;
-                cellClass = 'bg-gray-100';
-                textClass = 'text-gray-500';
                 pointerClass = 'cursor-default pointer-events-none';
             } else if (slotDate >= closingDate) {
                 status = 'закрыто';
@@ -1057,16 +1076,15 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
 
             return `
-    <div class="flex items-center justify-center border-b mt-1 ml-1 rounded-xl p-2 min-h-12 ${cellClass} ${pointerClass} ${isAvailable ? 'booking-slot-available' : ''}"
-         data-date="${data.date}" 
-         data-time="${slotTime}" 
-         data-table="${tableId}" 
-         data-slot-id="${slot?.slot_id || ''}">
-        <span class="text-sm ${textClass}">${status}</span>
-    </div>
-    `;
+<div class="flex items-center justify-center border-b mt-1 ml-1 rounded-xl p-2 min-h-12 ${cellClass} ${pointerClass} ${isAvailable ? 'booking-slot-available' : ''}"
+     data-date="${data.date}" 
+     data-time="${slotTime}" 
+     data-table="${tableId}" 
+     data-slot-id="${slot?.slot_id || ''}">
+    <span class="text-sm ${textClass}">${status}</span>
+</div>
+`;
         }
-
 
         function renderWeekView(data) {
             if (!data.days || !data.tables) {
@@ -1133,7 +1151,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const statusClass = booked === total ? 'bg-red-100 text-red-800' : booked > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800';
 
                 // Для прошедших дней и обычных пользователей делаем неактивный слот
-                const isDisabled = isPastDay && !state.userIsAdmin;
+                const isDisabled = isPastDay && !state.isAdmin;
                 const disabledClass = isDisabled ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : statusClass;
                 const pointerEvents = isDisabled ? 'pointer-events-none' : '';
 

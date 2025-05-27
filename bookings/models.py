@@ -1,10 +1,13 @@
 from datetime import datetime
+
+
+
 User='accounts.User'
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 
-from bookings.utils import calculate_booking_price
+# from bookings.utils import calculate_booking_price
 
 
 class TableType(models.Model):
@@ -145,19 +148,7 @@ class Booking(models.Model):
     def __str__(self):
         return f"Бронирование #{self.id} - {self.user} ({self.get_status_display()})"
 
-    def calculate_prices(self):
-        duration = (self.end_time - self.start_time).total_seconds() / 60
-        equipment_data = [
-            {'id': be.equipment.id, 'quantity': be.quantity}
-            for be in self.bookingequipment_set.all()
-        ]
 
-        self.base_price, self.equipment_price, self.total_price, _ = calculate_booking_price(
-            pricing=self.pricing,
-            duration_minutes=int(duration),
-            is_group=self.is_group,
-            equipment_data=equipment_data
-        )
     def save(self, *args, **kwargs):
         # Сначала сохраняем объект, если он новый
         is_new = self.pk is None
@@ -173,6 +164,28 @@ class Booking(models.Model):
                 total_price=self.total_price,
             )
 
+    def calculate_prices(self):
+        from bookings.BookingEngine import BookingEngine
+        equipment_data = [
+            {'equipment': be.equipment, 'quantity': be.quantity}
+            for be in self.bookingequipment_set.all()
+        ]
+
+        engine = BookingEngine(
+            user=self.user,
+            table=self.table,
+            start_time=self.start_time,
+            duration_minutes=int((self.end_time - self.start_time).total_seconds() / 60),
+            participants=self.participants,
+            equipment_items=equipment_data,
+            is_group=self.is_group
+        )
+
+        engine.calculate_total_price()
+
+        self.base_price = engine.base_price
+        self.equipment_price = engine.equipment_price
+        self.total_price = engine.total_price
 
 class BookingEquipment(models.Model):
     """Промежуточная модель для оборудования в бронировании"""

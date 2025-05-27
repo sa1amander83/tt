@@ -478,7 +478,7 @@ def get_booking_info(request):
         offer_name = engine.special_offer.name  # например, "Ранняя пташка 10% скидка"
         discount = engine.special_offer.discount_percent
         if offer_name and discount:
-            tariff_parts.append(f"Акция ({offer_name} {discount}% )")
+            tariff_parts.append(f"Акция ({offer_name} {discount}% скидка)")
 
     tariff_description = " + ".join(tariff_parts) if tariff_parts else "Стандартный тариф"
 
