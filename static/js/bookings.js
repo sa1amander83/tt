@@ -58,9 +58,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             participants: document.getElementById('participants'),
             notes: document.getElementById('booking-notes'),
             costDisplay: {
-                table: document.getElementById('table-cost'),
-                equipment: document.getElementById('equipment-price'),
-                total: document.getElementById('total-cost')
+                table: document.getElementById('tariff-table-cost'),
+                equipment: document.getElementById('tariff-equipment-cost'),
+                total: document.getElementById('tariff-total-cost')
             }
         };
 
@@ -363,6 +363,54 @@ document.addEventListener('DOMContentLoaded', async function () {
             return slotDate < now;
         }
 
+        const formElement = elements.bookingForm;
+
+        formElement.addEventListener('input', handleFormChange);
+        formElement.addEventListener('change', handleFormChange);
+
+        async function handleFormChange() {
+            const date = elements.bookingDate.value;
+            const time = elements.startTime.value;
+            const tableId = document.getElementById('booking-table')?.value;
+            const duration = parseInt(elements.duration?.value) || 60;
+
+            if (!date || !time || !tableId || !duration) return;
+
+            await fetchBookingInfoAndRecalculate({date, time, tableId, duration});
+        }
+
+        async function fetchBookingInfoAndRecalculate({date, time, tableId, duration}) {
+            try {
+                const response = await fetch(`/bookings/api/get-booking-info/?date=${date}&time=${time}&table_id=${tableId}&duration=${duration}`);
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    alert(data.error || "Ошибка при получении тарифа.");
+                    return;
+                }
+
+                const pricePerHour = data.price_per_hour;
+                const pricePerHalfHour = data.price_per_half_hour;
+                const tariffName = data.tariff_description || "Стандартный тариф";
+
+                // Обновим dataset формы
+                elements.bookingForm.dataset.pricePerHour = pricePerHour;
+                elements.bookingForm.dataset.pricePerHalfHour = pricePerHalfHour;
+
+                updateBookingCost({
+                    tablePriceHour: pricePerHour,
+                    tablePriceHalfHour: pricePerHalfHour,
+                    equipment: data.equipment || [],
+                    tariffName: tariffName
+                });
+
+            } catch (error) {
+                console.error("Ошибка при получении тарифа:", error);
+                showNotification("Ошибка при получении тарифа: " + error.message, 'error');
+            }
+        }
+
+
         // Открытие модального окна бронирования
         async function openBookingModal(date, time, tableId, slotId) {
             const formattedTime = time.includes(':') ? time : `${time}:00`;
@@ -375,240 +423,213 @@ document.addEventListener('DOMContentLoaded', async function () {
                     alert(data.error || "Ошибка при получении тарифной информации.");
                     return;
                 }
-                const tableCostElement = document.getElementById('table-cost');
-                if (tableCostElement) {
-                    tableCostElement.textContent = data.base_price.toString();
-                }
-                // Получаем время закрытия клуба
-                const [closeHour, closeMinute] = state.siteSettings.close_time.split(':').map(Number);
-                const closeTime = new Date(`${date}T${state.siteSettings.close_time}:00`);
+
+                // Установка базовых значений
+                const {open_time, close_time} = state.siteSettings;
+                const clubOpenTime = new Date(`${date}T${open_time}:00`);
+                const clubCloseTime = new Date(`${date}T${close_time}:00`);
                 const bookingStartTime = new Date(`${date}T${formattedTime}:00`);
-                const tariffName = data.tariff_description|| "Стандартный тариф";
+                const maxDurationMinutes = Math.min(data.max_duration, Math.floor((clubCloseTime - bookingStartTime) / 60000));
 
-// Здесь data.base_price - аренда, 0 - оборудование пока нет, data.final_price - итого
-                updateTariffSummary(tariffName, Math.round(data.base_price), 0, Math.round(data.final_price));
-                // Рассчитываем максимально возможную длительность (в минутах)
-                const maxPossibleDuration = Math.floor((closeTime - bookingStartTime) / (1000 * 60));
-                const actualMaxDuration = Math.min(data.max_duration, maxPossibleDuration);
+                // Обновление UI
+                updateTariffSummary(
+                    data.tariff_description || "Стандартный тариф",
+                    Math.round(data.price_per_half_hour),
+                    0,
+                    Math.round(data.final_price)
+                );
+                elements.bookingForm.dataset.pricePerHour = data.price_per_hour;
+                elements.bookingForm.dataset.pricePerHalfHour = data.price_per_half_hour;
 
-                // Установка базовых значений формы
                 elements.bookingDate.value = date;
                 elements.startTime.value = formattedTime;
 
-                // Обновляем список столов
-                const tableSelect = document.getElementById('booking-table');
-                if (tableSelect) {
-                    tableSelect.innerHTML = ''; // очищаем
+                populateTimeOptions(clubOpenTime, clubCloseTime, formattedTime);
+                populateTableOptions(data.tables, tableId);
+                populateParticipants(data.tables, tableId);
+                populateDurationOptions(data.min_duration, maxDurationMinutes, data.max_duration);
+                populateEquipmentOptions(data.equipment);
 
-                    data.tables.forEach(t => {
-                        const option = document.createElement('option');
-                        option.value = t.id;
-                        option.textContent = `Стол #${t.number} (${t.table_type})`;
-                        option.dataset.maxPlayers = t.default_capacity || 2;
-                        tableSelect.appendChild(option);
-                    });
+                // Сброс значений
+                elements.participants.value = '2';
+                elements.notes.value = '';
+                document.getElementById('is-group').checked = false;
 
-                    // Устанавливаем выбранный стол
-                    tableSelect.value = tableId;
+                if (elements.bookingForm) {
+                    elements.bookingForm.dataset.slotId = slotId || '';
                 }
 
-                // Найти текущий выбранный стол
-                const selectedTable = data.tables.find(t => t.id === parseInt(tableId));
-                const tableTypeName = selectedTable?.table_type || '';
-                const maxPlayers = selectedTable?.default_capacity || 2;
-
-                // Обновляем тип стола
-                const tableTypeElement = document.getElementById('table-type-name');
-                if (tableTypeElement) {
-                    tableTypeElement.textContent = tableTypeName;
-                }
-
-                // Обновляем длительность бронирования с учетом времени закрытия
-                const select = document.getElementById('booking-duration');
-                select.innerHTML = '';
-
-                const step = 30; // 30 минут
-                const availableDurations = [];
-
-                for (let duration = data.min_duration; duration <= actualMaxDuration; duration += step) {
-                    const hours = Math.floor(duration / 60);
-                    const minutes = duration % 60;
-                    let label = '';
-
-                    if (hours > 0) {
-                        label += `${hours} час${hours >= 5 ? 'ов' : hours > 1 ? 'а' : ''}`;
-                        if (minutes > 0) label += ` ${minutes} мин`;
-                    } else {
-                        label = `${minutes} мин`;
-                    }
-
-                    const option = document.createElement('option');
-                    option.value = duration;
-                    option.textContent = label.trim();
-
-                    if (duration === actualMaxDuration && actualMaxDuration < data.max_duration) {
-                        option.textContent += ` (до закрытия)`;
-                    }
-
-                    select.appendChild(option);
-                    availableDurations.push(duration); // сохраняем возможные значения
-                }
-
-// Теперь корректно устанавливаем значение
-                let initialDuration = data.min_duration;
-                if (!availableDurations.includes(initialDuration)) {
-                    initialDuration = availableDurations[0]; // fallback
-                }
-                select.value = initialDuration;
-
-
-                // ОБРАБОТКА ОБОРУДОВАНИЯ
-                // ОБРАБОТКА ОБОРУДОВАНИЯ
-                const equipmentContainer = document.getElementById('equipment-container');
-                if (equipmentContainer && data.equipment) {
-                    equipmentContainer.innerHTML = ''; // Очищаем контейнер
-
-                    data.equipment.forEach(equip => {
-                        const equipmentItem = document.createElement('div');
-                        equipmentItem.className = 'equipment-item mb-4 p-3 border rounded';
-
-                        equipmentItem.innerHTML = `
-            <label class="flex items-center">
-                <input type="checkbox" name="equipment" value="${equip.id}" 
-                       class="equipment-checkbox mr-2 border rounded" 
-                       data-price-hour="${equip.price_per_hour}"
-                       data-price-half-hour="${equip.price_per_half_hour}">
-                <span class="font-medium">${equip.name}</span>
-            </label>
-          
-            ${equip.description ? `<p class="text-sm text-gray-500 mt-1">${equip.description}</p>` : ''}
-        `;
-
-                        equipmentContainer.appendChild(equipmentItem);
-                    });
-
-                    // Добавляем обработчики событий для оборудования
-                    document.querySelectorAll('.equipment-checkbox').forEach(checkbox => {
-                        checkbox.addEventListener('change', updateBookingCost);
-                    });
-                }
-
-
-                // Обновляем стоимость (базовая + оборудование)
                 updateCostDisplay({
                     table_cost: data.base_price,
                     equipment_cost: 0,
                     total_cost: data.final_price
                 });
 
-                // Сброс остальных полей формы
-                elements.participants.value = '2';
-                elements.notes.value = '';
-                document.getElementById('is-group').checked = false;
-
-                // Обновляем список участников
-                const participantsSelect = document.getElementById('participants');
-                if (participantsSelect) {
-                    participantsSelect.innerHTML = '';
-                    for (let i = 2; i <= maxPlayers; i++) {
-                        const option = document.createElement('option');
-                        option.value = i;
-                        option.textContent = `${i} игрок${i > 1 ? 'а' : ''}`;
-                        participantsSelect.appendChild(option);
-                    }
-                }
-
-                // Привязываем slotId к форме
-                if (elements.bookingForm) {
-                    elements.bookingForm.dataset.slotId = slotId || '';
-                }
-
-                // Показываем модалку
                 elements.modal.classList.remove('hidden');
 
-            } catch
-                (error) {
+            } catch (error) {
                 console.error("Ошибка при открытии модалки бронирования:", error);
                 alert("Не удалось получить информацию о бронировании. Повторите попытку позже.");
             }
         }
 
-// Обновленная функция расчета стоимости
-        async function updateBookingCost() {
+        function populateTimeOptions(startTime, endTime, selectedTime) {
+            const select = document.getElementById('booking-start-time');
+            select.innerHTML = '';
+
+            let currentTime = new Date(startTime);
+            while (currentTime <= endTime) {
+                const timeStr = currentTime.toTimeString().slice(0, 5);
+                const option = new Option(timeStr, timeStr);
+                select.add(option);
+                currentTime.setMinutes(currentTime.getMinutes() + 30);
+            }
+
+            if ([...select.options].some(opt => opt.value === selectedTime)) {
+                select.value = selectedTime;
+            } else {
+                select.selectedIndex = 0;
+            }
+        }
+
+        function populateTableOptions(tables, selectedId) {
+            const select = document.getElementById('booking-table');
+            if (!select) return;
+
+            select.innerHTML = '';
+            tables.forEach(table => {
+                const option = new Option(`Стол #${table.number} (${table.table_type})`, table.id);
+                option.dataset.maxPlayers = table.default_capacity || 2;
+                select.add(option);
+            });
+            select.value = selectedId;
+
+            const selectedTable = tables.find(t => t.id === parseInt(selectedId));
+            const tableTypeElement = document.getElementById('table-type-name');
+            if (tableTypeElement) {
+                tableTypeElement.textContent = selectedTable?.table_type || '';
+            }
+        }
+
+        function populateParticipants(tables, tableId) {
+            const select = document.getElementById('participants');
+            if (!select) return;
+
+            const table = tables.find(t => t.id === parseInt(tableId));
+            const maxPlayers = table?.default_capacity || 2;
+
+            select.innerHTML = '';
+            for (let i = 2; i <= maxPlayers; i++) {
+                const option = new Option(`${i} игрок${i > 1 ? 'а' : ''}`, i);
+                select.add(option);
+            }
+        }
+
+        function populateDurationOptions(min, max, limit) {
+            const select = document.getElementById('booking-duration');
+            const step = 30;
+            select.innerHTML = '';
+
+            for (let dur = min; dur <= max; dur += step) {
+                const hours = Math.floor(dur / 60);
+                const minutes = dur % 60;
+                let label = hours > 0 ? `${hours} час${hours >= 5 ? 'ов' : hours > 1 ? 'а' : ''}` : '';
+                if (minutes > 0) label += ` ${minutes} мин`;
+
+                const option = new Option(label.trim() + (dur === max && max < limit ? ' (до закрытия)' : ''), dur);
+                select.add(option);
+            }
+
+            select.value = 60;
+            elements.duration.addEventListener('change', () => {
+                updateBookingCost();
+            });
+        }
+
+        function populateEquipmentOptions(equipmentList) {
+            const container = document.getElementById('equipment-container');
+            if (!container || !equipmentList) return;
+
+            container.innerHTML = '';
+            equipmentList.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'equipment-item mb-2 p-1 border rounded';
+                div.innerHTML = `
+            <label class="flex items-center">
+                <input type="checkbox" name="equipment" value="${item.id}"
+                    class="equipment-checkbox mr-2 border rounded"
+                    data-price-hour="${item.price_per_hour}"
+                    data-price-half-hour="${item.price_per_half_hour}">
+                <span class="font-medium">${item.name}</span>
+            </label>
+            ${item.description ? `<p class="text-sm text-gray-500 mt-1">${item.description}</p>` : ''}
+        `;
+                container.appendChild(div);
+            });
+
+            document.querySelectorAll('.equipment-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', () => updateBookingCost());
+            });
+        }
+
+        async function updateBookingCost({
+                                             tablePriceHour = parseFloat(elements.bookingForm.dataset.pricePerHour),
+                                             tablePriceHalfHour = parseFloat(elements.bookingForm.dataset.pricePerHalfHour),
+                                             tariffName = "Стандартный тариф"
+                                         } = {}) {
             try {
-                const tableId = elements.tableSelect?.value;
-                if (!tableId) {
-                    resetCostDisplay();
-                    return;
+                const duration = parseInt(elements.duration?.value) || 60;
+                const blocks = Math.ceil(duration / 30);
+
+                // Стол
+                let tableCost = 0;
+                if (duration <= 30) {
+                    tableCost = tablePriceHalfHour;
+                } else if (duration === 60) {
+                    tableCost = tablePriceHour;
+                } else {
+                    const hours = Math.floor(duration / 60);
+                    const extra = Math.ceil((duration % 60) / 30);
+                    tableCost = (hours * tablePriceHour) + (extra * tablePriceHalfHour);
                 }
 
-                // Получаем выбранную длительность
-                // Получаем выбранную длительность в минутах
-                const durationMinutes = parseInt(elements.duration?.value) || 60;
-                const durationHours = durationMinutes / 60;
+                // Оборудование
+                const equipmentCost = [...document.querySelectorAll('.equipment-checkbox:checked')].reduce((sum, el) => {
+                    const priceHalf = parseFloat(el.dataset.priceHalfHour) || 0;
+                    const priceHour = parseFloat(el.dataset.priceHour) || priceHalf * 2;
+                    let cost = 0;
 
-
-                // Собираем данные оборудования с количеством
-                const equipmentData = Array.from(document.querySelectorAll('.equipment-checkbox:checked'))
-                    .map(checkbox => {
-                        const quantityEl = checkbox.closest('.equipment-item').querySelector('select');
-                        const quantity = quantityEl ? parseInt(quantityEl.value) : 1;
-                        return {
-                            id: parseInt(checkbox.value),
-                            quantity: quantity,
-                            price_per_hour: parseFloat(checkbox.dataset.priceHour),
-                            price_per_half_hour: parseFloat(checkbox.dataset.priceHalfHour)
-                        };
-                    });
-
-                // Рассчитываем стоимость оборудования
-                let equipmentCost = 0;
-                equipmentData.forEach(item => {
-                    // Если длительность меньше часа, используем цену за полчаса
-                    if (durationHours < 1 && item.price_per_half_hour) {
-                        equipmentCost += item.price_per_half_hour * item.quantity;
+                    if (duration <= 30) {
+                        cost = priceHalf;
+                    } else if (duration === 60) {
+                        cost = priceHour;
                     } else {
-                        equipmentCost += item.price_per_hour * durationHours * item.quantity;
+                        const hours = Math.floor(duration / 60);
+                        const extra = Math.ceil((duration % 60) / 30);
+                        cost = (hours * priceHour) + (extra * priceHalf);
                     }
-                });
 
-                // Обновляем отображение цен оборудования
-                document.querySelectorAll('.equipment-price-display').forEach(el => {
-                    const pricePerHour = parseFloat(el.dataset.priceHour);
-                    const duration = parseFloat(elements.duration?.value) || 30;
+                    return sum + cost;
+                }, 0);
 
-                    if (duration < 1) {
-                        const pricePerHalfHour = el.closest('.equipment-item')
-                            .querySelector('.equipment-checkbox').dataset.priceHalfHour;
-                        el.textContent = `${pricePerHalfHour} ₽/30 мин`;
-                    } else {
-                        const total = (pricePerHour * duration).toFixed(0);
-                        el.textContent = `${total} ₽ (${pricePerHour} ₽/час)`;
-                    }
-                });
-
-                // Получаем базовую стоимость стола
-                const basePrice = parseFloat(document.getElementById('table-cost').textContent) || 0;
-                const tableCost = basePrice * durationHours;
-                const totalCost = tableCost + equipmentCost;
-                const tariffName = 'Выбранный тариф'; // или получай динамически, если есть данные
+                const totalCost = Math.round(tableCost + equipmentCost);
 
                 updateTariffSummary(
                     tariffName,
                     Math.round(tableCost),
                     Math.round(equipmentCost),
-                    Math.round(totalCost)
+                    totalCost
                 );
-                // Обновляем отображение
+
                 updateCostDisplay({
                     table_cost: Math.round(tableCost),
                     equipment_cost: Math.round(equipmentCost),
-                    total_cost: Math.round(totalCost)
+                    total_cost: totalCost
                 });
 
             } catch (error) {
                 console.error('Ошибка расчета стоимости:', error);
-                showNotification('Ошибка расчета стоимости: ' + error.message, 'error');
+                showNotification(`Ошибка расчета стоимости: ${error.message}`, 'error');
             }
         }
 

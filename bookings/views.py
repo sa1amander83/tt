@@ -481,7 +481,15 @@ def get_booking_info(request):
             tariff_parts.append(f"Акция ({offer_name} {discount}% )")
 
     tariff_description = " + ".join(tariff_parts) if tariff_parts else "Стандартный тариф"
-
+    if engine.is_group:
+        table_price_hour = float(
+            engine.pricing.hour_rate_group) if engine.pricing and engine.pricing.hour_rate_group else 0
+        table_price_half_hour = float(
+            engine.pricing.half_hour_rate_group) if engine.pricing and engine.pricing.half_hour_rate_group else 0
+    else:
+        table_price_hour = float(engine.pricing.hour_rate) if engine.pricing and engine.pricing.hour_rate else 0
+        table_price_half_hour = float(
+            engine.pricing.half_hour_rate) if engine.pricing and engine.pricing.half_hour_rate else 0
 
     # Формируем ответ
     response = {
@@ -497,6 +505,9 @@ def get_booking_info(request):
         'table_type_id': table.table_type.id,
         'min_duration': engine.pricing.min_duration if engine.pricing else 30,
         'max_duration': engine.pricing.max_duration if engine.pricing else 180,
+        'price_per_hour': table_price_hour,
+        'price_per_half_hour': table_price_half_hour,
+
         'equipment': [
             {
                 'id': e.id,

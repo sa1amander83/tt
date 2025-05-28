@@ -1,11 +1,8 @@
-<!-- Управление абонементами -->
-
 <div id="tab-memberships" class="tab-content">
-
     <div class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 md:mb-6">
             <h2 class="text-lg md:text-xl font-semibold mb-3 sm:mb-0">Управление абонементами</h2>
-            <button onclick="document.getElementById('membership-modal').classList.remove('hidden')"
+            <button onclick="openMembershipModal()"
                     class="bg-green-600 hover:bg-green-700 text-white font-medium py-1.5 px-3 md:py-2 md:px-4 rounded-md transition duration-300 text-sm md:text-base">
                 <i class="fas fa-plus mr-1 md:mr-2"></i> Добавить абонемент
             </button>
@@ -28,6 +25,9 @@
                         Стоимость
                     </th>
                     <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Тип
+                    </th>
+                    <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Статус
                     </th>
                     <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -40,16 +40,16 @@
                     <tr>
                         <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ membership.name }}</td>
                         <td class="px-3 py-3 md:px-6 md:py-4 text-sm text-gray-500 hidden sm:table-cell">{{ membership.description|truncatechars:50 }}</td>
-                        <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">{{ membership.duration_days }}
-                            дней
-                        </td>
-                        <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">{{ membership.price }}
-                            ₽
+                        <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">{{ membership.duration_days }} дней</td>
+                        <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">{{ membership.price }} ₽</td>
+                        <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if membership.is_group_plan %}Групповой{% else %}Индивидуальный{% endif %}
+                            {% if membership.is_unlimited %} (Безлимит){% endif %}
                         </td>
                         <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap">
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if membership.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
-                {% if membership.is_active %}Активен{% else %}Неактивен{% endif %}
-              </span>
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if membership.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {% if membership.is_active %}Активен{% else %}Неактивен{% endif %}
+                            </span>
                         </td>
                         <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium">
                             <button onclick="openEditMembershipModal({{ membership.id }})"
@@ -60,7 +60,6 @@
                                     class="text-red-600 hover:text-red-900">
                                 <i class="fas fa-trash"></i>
                             </button>
-
                         </td>
                     </tr>
                 {% endfor %}
@@ -69,21 +68,136 @@
         </div>
     </div>
 
-
-    {% include 'admin/admin_modals/add_membership_modal.html' %}
+    <!-- Membership Modal -->
+    <div id="membership-modal" class="hidden fixed inset-0 overflow-y-auto z-50">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 id="modal-title" class="text-lg leading-6 font-medium text-gray-900 mb-4">Добавить новый абонемент</h3>
+                            <form id="membershipForm" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="membership_id" id="membership_id" value="">
+                                
+                                <div class="grid grid-cols-1 gap-y-4 gap-x-6 sm:grid-cols-6">
+                                    <!-- Basic Fields -->
+                                    <div class="sm:col-span-6">
+                                        <label for="id_name" class="block text-sm font-medium text-gray-700">Название</label>
+                                        <input type="text" name="name" id="id_name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    </div>
+                                    
+                                    <div class="sm:col-span-6">
+                                        <label for="id_description" class="block text-sm font-medium text-gray-700">Описание</label>
+                                        <textarea name="description" id="id_description" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                                    </div>
+                                    
+                                    <div class="sm:col-span-3">
+                                        <label for="id_duration_days" class="block text-sm font-medium text-gray-700">Длительность (дней)</label>
+                                        <input type="number" name="duration_days" id="id_duration_days" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    </div>
+                                    
+                                    <div class="sm:col-span-3">
+                                        <label for="id_price" class="block text-sm font-medium text-gray-700">Стоимость (₽)</label>
+                                        <input type="number" name="price" id="id_price" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    </div>
+                                    
+                                    <div class="sm:col-span-3">
+                                        <label for="id_discount_percent" class="block text-sm font-medium text-gray-700">Скидка (%)</label>
+                                        <input type="number" name="discount_percent" id="id_discount_percent" min="0" max="100" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    </div>
+                                    
+                                    <div class="sm:col-span-3">
+                                        <label for="id_included_hours" class="block text-sm font-medium text-gray-700">Включено часов</label>
+                                        <input type="number" name="included_hours" id="id_included_hours" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                        <p class="mt-1 text-xs text-gray-500">0 = не ограничено</p>
+                                    </div>
+                                    
+                                    <!-- Checkboxes -->
+                                    <div class="sm:col-span-6">
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div class="flex items-start">
+                                                <div class="flex items-center h-5">
+                                                    <input id="id_is_active" name="is_active" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 border rounded">
+                                                </div>
+                                                <div class="ml-3 text-sm">
+                                                    <label for="id_is_active" class="font-medium text-gray-700">Активен</label>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex items-start">
+                                                <div class="flex items-center h-5">
+                                                    <input id="id_includes_booking" name="includes_booking" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 border rounded">
+                                                </div>
+                                                <div class="ml-3 text-sm">
+                                                    <label for="id_includes_booking" class="font-medium text-gray-700">Включает бронирование</label>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex items-start">
+                                                <div class="flex items-center h-5">
+                                                    <input id="id_includes_discount" name="includes_discount" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 border rounded">
+                                                </div>
+                                                <div class="ml-3 text-sm">
+                                                    <label for="id_includes_discount" class="font-medium text-gray-700">Включает скидки</label>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex items-start">
+                                                <div class="flex items-center h-5">
+                                                    <input id="id_includes_tournaments" name="includes_tournaments" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 border rounded">
+                                                </div>
+                                                <div class="ml-3 text-sm">
+                                                    <label for="id_includes_tournaments" class="font-medium text-gray-700">Включает турниры</label>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex items-start">
+                                                <div class="flex items-center h-5">
+                                                    <input id="id_includes_training" name="includes_training" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 border rounded">
+                                                </div>
+                                                <div class="ml-3 text-sm">
+                                                    <label for="id_includes_training" class="font-medium text-gray-700">Включает тренировки</label>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex items-start">
+                                                <div class="flex items-center h-5">
+                                                    <input id="id_is_group_plan" name="is_group_plan" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 border rounded">
+                                                </div>
+                                                <div class="ml-3 text-sm">
+                                                    <label for="id_is_group_plan" class="font-medium text-gray-700">Групповой план</label>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex items-start">
+                                                <div class="flex items-center h-5">
+                                                    <input id="id_is_unlimited" name="is_unlimited" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 border rounded">
+                                                </div>
+                                                <div class="ml-3 text-sm">
+                                                    <label for="id_is_unlimited" class="font-medium text-gray-700">Безлимитный</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" onclick="saveMembership()" id="saveMembershipBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Сохранить
+                    </button>
+                    <button type="button" onclick="closeMembershipModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Отмена
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<script>
-    // Функции для работы с модальным окном
-
-
-    function closeMembershipModal() {
-        document.getElementById('membership-modal').classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
-    }
-
-    // Обработчик для кнопки добавления
-    document.querySelector('[onclick*="membership-modal"]').addEventListener('click', function (e) {
-        e.preventDefault();
-        openMembershipModal();
-    });
-</script>

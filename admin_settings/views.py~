@@ -377,12 +377,26 @@ class SpecialOfferView(LoginRequiredMixin, UserPassesTestMixin, View):
         return self.request.user.is_staff
 
     def get(self, request, pk, *args, **kwargs):
-        """Получение данных специального предложения"""
+        """Получение данных специального предложения и списка столов"""
         try:
             offer = get_object_or_404(
                 SpecialOffer.objects.prefetch_related('tables'),
                 pk=pk
             )
+
+            # Получение всех столов
+            all_tables = Table.objects.select_related('table_type').all()
+            selected_table_ids = set(offer.tables.values_list('id', flat=True))
+
+            tables_data = [
+                {
+                    'id': table.id,
+                    'name': f"Стол #{table.number}",
+                    'table_type': table.table_type.name if table.table_type else None,
+                    'selected': table.id in selected_table_ids
+                }
+                for table in all_tables
+            ]
 
             data = {
                 'id': offer.id,
@@ -393,23 +407,23 @@ class SpecialOfferView(LoginRequiredMixin, UserPassesTestMixin, View):
                 'valid_to': offer.valid_to.isoformat() if offer.valid_to else None,
                 'is_active': offer.is_active,
                 'apply_to_all': offer.apply_to_all,
-                'weekdays': offer.weekdays,  # Оставляем как строку "1,2,3"
+                'weekdays': [int(day) for day in offer.weekdays.split(',')] if offer.weekdays else [],
                 'time_from': offer.time_from.strftime('%H:%M') if offer.time_from else None,
                 'time_to': offer.time_to.strftime('%H:%M') if offer.time_to else None,
-                'tables': [
-                    {
-                        'id': table.id,
-                        'name': str(table),  # Используем __str__ модели Table
-                        'table_type': table.table_type.name if table.table_type else None
-                    }
-                    for table in offer.tables.all()
-                ] if not offer.apply_to_all else [],
+                'tables': [] if offer.apply_to_all else [
+    {
+        'id': table.id,
+        'name': str(table),
+        'table_type': table.table_type.name if table.table_type else None
+    }
+    for table in offer.tables.all()
+],
+
             }
 
             return JsonResponse({'status': 'success', 'data': data})
 
         except Exception as e:
-            logger.error(f"Error getting special offer {pk}: {str(e)}", exc_info=True)
             return JsonResponse(
                 {
                     'status': 'error',
@@ -418,6 +432,7 @@ class SpecialOfferView(LoginRequiredMixin, UserPassesTestMixin, View):
                 },
                 status=500
             )
+
 
 class SpecialOfferUpdateView(LoginRequiredMixin, IsAdminMixin, View):
     def post(self, request, pk, *args, **kwargs):

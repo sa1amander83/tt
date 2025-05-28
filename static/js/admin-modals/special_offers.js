@@ -1,25 +1,25 @@
 /**==============================================
-//          Функции для работы с Special Offers
-// ==============================================
-..
-/**
+ //          Функции для работы с Special Offers
+ // ==============================================
+ ..
+ /**
  * Открытие модального окна для создания/редактирования Special Offer
  */
 async function openSpecialOfferModal(offerId = null) {
     try {
         const modal = document.getElementById('addSpecialOfferModal');
         const form = document.getElementById('SpecialOfferForm');
-        
+
         // Сброс формы и заголовка
         form.reset();
-        modal.querySelector('h3').textContent = offerId 
-            ? 'Редактировать предложение' 
+        modal.querySelector('h3').textContent = offerId
+            ? 'Редактировать предложение'
             : 'Новое спецпредложение';
 
         // Если это редактирование - загружаем данные
         if (offerId) {
             const offerData = await fetchSpecialOfferData(offerId);
-            fillSpecialOfferForm(form, offerData);
+           fillSpecialOfferForm(form, offerData.data)
             form.dataset.offerId = offerId;
         }
 
@@ -45,49 +45,103 @@ async function openSpecialOfferModal(offerId = null) {
  * Загрузка данных специального предложения с сервера
  */
 async function fetchSpecialOfferData(offerId) {
+    console.log('Fetching offer data for ID:', offerId); // Логируем ID
     const response = await fetch(`/settings/special-offers/${offerId}/`);
+    console.log('Response status:', response.status); // Логируем статус ответа
+
     if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText); // Логируем текст ошибки
         throw new Error('Не удалось загрузить данные предложения');
     }
-    return await response.json();
+
+    const data = await response.json();
+    console.log('Received data:', data); // Логируем полученные данные
+    return data;
 }
 
 /**
  * Заполнение формы данными предложения
  */
+/**
+ * Заполняет форму редактирования спецпредложения данными
+ * @param {HTMLFormElement} form - DOM-элемент формы
+ * @param {Object} data - Данные предложения с сервера
+ */
 function fillSpecialOfferForm(form, data) {
+    console.log('Filling form with data:', data);
+
+    if (!form || !data || !data.id) {
+        console.error('Invalid form or data');
+        return;
+    }
+
+    // Основные поля
     form.querySelector('[name="name"]').value = data.name || '';
     form.querySelector('[name="description"]').value = data.description || '';
     form.querySelector('[name="discount_percent"]').value = data.discount_percent || '';
-    form.querySelector('[name="valid_from"]').value = data.valid_from || '';
-    form.querySelector('[name="valid_to"]').value = data.valid_to || '';
-    form.querySelector('[name="is_active"]').checked = data.is_active || false;
-    form.querySelector('[name="apply_to_all"]').checked = data.apply_to_all || false;
-    form.querySelector('[name="time_from"]').value = data.time_from || false;
-    form.querySelector('[name="time_to"]').value = data.time_to || false;
 
-    
-    // Обработка выбора столов (если не "применить ко всем")
-    if (!data.apply_to_all && data.tables) {
-        const tableSelect = form.querySelector('[name="tables"]');
-        if (tableSelect) {
+    // Даты
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        try {
+            return new Date(dateStr).toISOString().split('T')[0];
+        } catch (e) {
+            console.error('Invalid date format:', dateStr);
+            return '';
+        }
+    };
+
+    form.querySelector('[name="valid_from"]').value = formatDate(data.valid_from);
+    form.querySelector('[name="valid_to"]').value = formatDate(data.valid_to);
+
+    // Время
+    form.querySelector('[name="time_from"]').value = data.time_from || '';
+    form.querySelector('[name="time_to"]').value = data.time_to || '';
+
+    // Чекбоксы
+    form.querySelector('[name="is_active"]').checked = Boolean(data.is_active);
+    const applyToAllChecked = Boolean(data.apply_to_all);
+    form.querySelector('[name="apply_to_all"]').checked = applyToAllChecked;
+
+    // Таблицы
+    const tableSelect = form.querySelector('#id_tables');
+    if (tableSelect && data.tables) {
+        Array.from(tableSelect.options).forEach(opt => opt.selected = false);
+
+        if (!applyToAllChecked && data.tables.length > 0) {
             data.tables.forEach(table => {
-                const option = tableSelect.querySelector(`option[value="${table.id}"]`);
+                const option = Array.from(tableSelect.options)
+                    .find(opt => parseInt(opt.value) === table.id);
                 if (option) option.selected = true;
             });
         }
     }
+
+    // Дни недели
     if (data.weekdays) {
-    const weekdays = data.weekdays.split(',');
-     form.querySelectorAll('input[name="weekdays"]').forEach(cb => cb.checked = false);
+        const daysArray = typeof data.weekdays === 'string'
+            ? data.weekdays.split(',')
+            : Array.isArray(data.weekdays)
+                ? data.weekdays.map(String)
+                : [];
 
-    weekdays.forEach(day => {
-        const checkbox = form.querySelector(`input[name="weekdays"][value="${day}"]`);
-        if (checkbox) checkbox.checked = true;
-    });}
-}
+        form.querySelectorAll('input[name="weekdays"]').forEach(checkbox => {
+            checkbox.checked = daysArray.includes(checkbox.value);
+        });
+    }
 
-/**
+    // Блокировка выбора столов
+    const tableSelection = document.getElementById('tableSelection');
+    if (tableSelection) {
+        tableSelection.classList.toggle('opacity-50', applyToAllChecked);
+        tableSelection.classList.toggle('pointer-events-none', applyToAllChecked);
+    }
+
+    // ID предложения
+    form.dataset.offerId = data.id;
+    console.log('Form filled successfully');
+}/**
  * Сохранение специального предложения
  */
 async function saveSpecialOffer() {
@@ -95,12 +149,16 @@ async function saveSpecialOffer() {
     const saveBtn = document.getElementById('SaveSpecialOffer');
     const offerId = form.dataset.offerId;
     const isEditMode = !!offerId;
-
+    const applyToAll = form.querySelector('[name="apply_to_all"]').checked;
+    const selectedTables = Array.from(form.querySelector('#id_tables').selectedOptions).length;
     if (!form.checkValidity()) {
         form.reportValidity();
         return;
     }
-
+    if (!applyToAll && selectedTables === 0) {
+        showNotification('Выберите столы или отметьте "Применять ко всем столам"', 'error');
+        return;
+    }
     try {
         // Показать состояние загрузки
         saveBtn.innerHTML = `
@@ -113,10 +171,10 @@ async function saveSpecialOffer() {
         const formData = new FormData(form);
 
         // Для полей many-to-many нужно передавать массив значений
-        const selectedTables = Array.from(form.querySelector('#id_tables').selectedOptions)
-            .map(opt => opt.value);
-        formData.delete('tables'); // Удаляем старые значения
-        selectedTables.forEach(tableId => formData.append('tables', tableId));
+        // const selectedTables = Array.from(form.querySelector('#id_tables').selectedOptions)
+        //     .map(opt => opt.value);
+        // formData.delete('tables'); // Удаляем старые значения
+        // selectedTables.forEach(tableId => formData.append('tables', tableId));
 
         // Для дней недели (weekdays)
         const selectedDays = Array.from(form.querySelectorAll('[name="weekdays"]:checked'))
@@ -177,6 +235,7 @@ async function saveSpecialOffer() {
         saveBtn.disabled = false;
     }
 }
+
 /**
  * Удаление специального предложения
  */
@@ -185,7 +244,7 @@ async function deleteSpecialOffer(offerId) {
 
     try {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        
+
         const response = await fetch(`/settings/special-offers/${offerId}/delete/`, {
             method: 'POST',
             headers: {
@@ -200,7 +259,7 @@ async function deleteSpecialOffer(offerId) {
         }
 
         showNotification('Предложение успешно удалено!', 'success');
-        
+
         // Обновляем страницу через 0.5 секунды
         setTimeout(() => {
             window.location.reload();
@@ -234,26 +293,26 @@ function closeSpecialOfferModal() {
 document.addEventListener('DOMContentLoaded', () => {
     // Обработчик для кнопки сохранения
     document.getElementById('SaveSpecialOffer')?.addEventListener('click', saveSpecialOffer);
-    
+
     // Обработчик для чекбокса "Применить ко всем"
     const applyToAllCheckbox = document.getElementById('applyToAll');
     const tableSelection = document.getElementById('tableSelection');
-    
+
     if (applyToAllCheckbox && tableSelection) {
-        applyToAllCheckbox.addEventListener('change', function() {
+        applyToAllCheckbox.addEventListener('change', function () {
             tableSelection.classList.toggle('opacity-50', this.checked);
             tableSelection.classList.toggle('pointer-events-none', this.checked);
         });
     }
-    
+
     // Обработчики для кнопок редактирования в таблице
-    document.querySelectorAll('[onclick^="openEditSpecialOfferModal"]').forEach(btn => {
-        const match = btn.getAttribute('onclick').match(/openEditSpecialOfferModal\((\d+)\)/);
+    document.querySelectorAll('[onclick^="SpecialOfferModal"]').forEach(btn => {
+        const match = btn.getAttribute('onclick').match(/SpecialOfferModal\((\d+)\)/);
         if (match) {
             btn.addEventListener('click', () => openSpecialOfferModal(match[1]));
         }
     });
-    
+
     // Обработчики для кнопок удаления в таблице
 
 

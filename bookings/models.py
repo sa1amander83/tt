@@ -22,7 +22,7 @@ class TableType(models.Model):
         verbose_name_plural = "Типы столов"
 
     def __str__(self):
-        return self.name
+        return self.name or f"Стол #{self.name}"
 
 
 class Table(models.Model):

@@ -359,7 +359,8 @@ class SpecialOffer(models.Model):
         }
         days = self.weekdays.split(',')
         return ', '.join(days_map.get(day, '') for day in days if day in days_map)
-
+    def get_tables_display(self):
+        return ', '.join(table.table_type.name for table in self.tables.all())
 
 class BookingPackage(models.Model):
     user = models.ForeignKey('accounts.User', on_delete=models.CASCADE)

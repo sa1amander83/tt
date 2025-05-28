@@ -16,7 +16,8 @@ class BookingEngine:
         self.participants = participants
         self.equipment_items = equipment_items or []
         self.is_group = is_group
-
+        self.price_per_half_hour = 0
+        self.price_per_hour=0
         self.membership = self._get_membership()
         self.special_offer = self._get_special_offer()
         self.intervals = self._split_intervals()
@@ -79,48 +80,53 @@ class BookingEngine:
         total = 0
         pricing_used = set()
 
-        for interval_start, interval_end in self.intervals:
-            plan = get_applicable_pricing_plan(interval_start)
-            self.pricing_plan = plan  # Последний применённый тариф
-            pricing = TableTypePricing.objects.filter(
-                pricing_plan=plan,
-                table_type=self.table.table_type
-            ).first()
+        # Количество полчасовых интервалов
+        total_half_hours = len(self.intervals)
 
-            if not pricing:
-                continue
+        # Количество полных часов и остаток в полчасах
+        full_hours = total_half_hours // 2
+        leftover_half_hour = total_half_hours % 2
 
-            pricing_used.add(pricing)
+        plan = get_applicable_pricing_plan(self.start_time)
+        self.pricing_plan = plan
+        pricing = TableTypePricing.objects.filter(
+            pricing_plan=plan,
+            table_type=self.table.table_type
+        ).first()
 
-            if self.is_group:
-                if pricing.half_hour_rate_group is not None:
-                    rate = pricing.half_hour_rate_group
-                else:
-                    rate = pricing.hour_rate_group / 2
-            else:
-                if pricing.half_hour_rate is not None:
-                    rate = pricing.half_hour_rate
-                else:
-                    rate = pricing.hour_rate / 2
+        if not pricing:
+            self.base_price = 0
+            self.total_price = 0
+            return
 
-            interval_price = rate
-            total += interval_price
+        pricing_used.add(pricing)
+
+        # Определяем ставки по типу группы
+        if self.is_group:
+            hour_rate = pricing.hour_rate_group or 0
+            half_hour_rate = pricing.half_hour_rate_group if pricing.half_hour_rate_group is not None else hour_rate / 2
+        else:
+            hour_rate = pricing.hour_rate or 0
+            half_hour_rate = pricing.half_hour_rate if pricing.half_hour_rate is not None else hour_rate / 2
+
+        # Считаем цену
+        total = full_hours * hour_rate + leftover_half_hour * half_hour_rate
 
         self.pricing = max(pricing_used, key=lambda p: p.min_duration, default=None)
         self.base_price = round(total)
 
-        # Применение скидки от спецпредложения
+        # Применяем скидку спецпредложения
         if self.special_offer:
             self.discount = self.special_offer.discount_percent
             total *= (100 - self.discount) / 100
 
-        # Применение абонемента (например, бесплатные часы)
+        # Применяем скидку абонемента
         if self.membership:
-            total *= 0.8  # Пример: 20% скидка по абонементу, адаптируй под свою логику
+            total *= 0.8
 
         self.total_price = round(total)
 
-        # Расчёт оборудования
+        # Оборудование
         self.equipment_price = self._calculate_equipment_price()
         self.total_price += self.equipment_price
 

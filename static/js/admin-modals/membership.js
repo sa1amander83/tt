@@ -1,8 +1,6 @@
-//membership.js для обработки абонементов
-
 let currentMembershipId = null;
 
-// Открыть модалку для создания
+// Open modal for creating
 function openMembershipModal() {
     currentMembershipId = null;
     const modal = document.getElementById('membership-modal');
@@ -13,12 +11,19 @@ function openMembershipModal() {
     document.getElementById('modal-title').textContent = 'Добавить новый абонемент';
     document.getElementById('membership_id').value = '';
 
+    // Set default values
+    document.getElementById('id_duration_days').value = '30';
+    document.getElementById('id_discount_percent').value = '0';
+    document.getElementById('id_included_hours').value = '0';
+    document.getElementById('id_is_active').checked = true;
+    document.getElementById('id_includes_booking').checked = true;
+
     clearFormErrors();
     modal.classList.remove('hidden');
     document.body.classList.add('overflow-hidden');
 }
 
-// Открыть модалку для редактирования
+// Open modal for editing
 async function openEditMembershipModal(membershipId) {
     try {
         currentMembershipId = membershipId;
@@ -35,21 +40,27 @@ async function openEditMembershipModal(membershipId) {
         const res = await fetch(`/settings/membership/${membershipId}/view/`);
         const data = await res.json();
 
+        // Fill form fields
         document.getElementById('id_name').value = data.name || '';
         document.getElementById('id_description').value = data.description || '';
-        document.getElementById('id_duration_days').value = data.duration_days || '';
+        document.getElementById('id_duration_days').value = data.duration_days || '30';
         document.getElementById('id_price').value = data.price || '';
+        document.getElementById('id_discount_percent').value = data.discount_percent || '0';
+        document.getElementById('id_included_hours').value = data.included_hours || '0';
 
+        // Checkboxes
         document.getElementById('id_is_active').checked = data.is_active;
         document.getElementById('id_includes_booking').checked = data.includes_booking;
         document.getElementById('id_includes_discount').checked = data.includes_discount;
         document.getElementById('id_includes_tournaments').checked = data.includes_tournaments;
         document.getElementById('id_includes_training').checked = data.includes_training;
+        document.getElementById('id_is_group_plan').checked = data.is_group_plan;
+        document.getElementById('id_is_unlimited').checked = data.is_unlimited;
 
-        // 👇 Скрытое поле с ID
+        // Hidden field with ID
         document.getElementById('membership_id').value = membershipId;
 
-        // 👇 Обновляем экшен формы
+        // Update form action
         form.action = `/settings/membership/${membershipId}/update/`;
         document.getElementById('modal-title').textContent = 'Редактировать абонемент';
     } catch (err) {
@@ -58,7 +69,7 @@ async function openEditMembershipModal(membershipId) {
     }
 }
 
-// Закрытие модалки
+// Close modal
 function closeMembershipModal() {
     const modal = document.getElementById('membership-modal');
     modal.classList.add('hidden');
@@ -66,8 +77,8 @@ function closeMembershipModal() {
     currentMembershipId = null;
 }
 
-// Сохранение формы
- async function saveMembership() {
+// Save membership
+async function saveMembership() {
     const form = document.getElementById('membershipForm');
     const formData = new FormData(form);
     const saveBtn = document.getElementById('saveMembershipBtn');
@@ -94,12 +105,7 @@ function closeMembershipModal() {
 
         showNotification(currentMembershipId ? 'Абонемент обновлён' : 'Абонемент создан', 'success');
         closeMembershipModal();
-
-        if (typeof window.updateMembershipsTable === 'function') {
-            await window.updateMembershipsTable();
-        } else {
-            window.location.reload();
-        }
+        window.location.reload();
 
     } catch (err) {
         showNotification(`Ошибка: ${err.message}`, 'error');
@@ -109,13 +115,39 @@ function closeMembershipModal() {
     }
 }
 
-// Очистка ошибок
+// Delete membership
+async function deleteMembership(membershipId) {
+    if (!confirm('Вы уверены, что хотите удалить этот абонемент?')) return;
+
+    try {
+        const response = await fetch(`/settings/membership/${membershipId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.status !== 'success') {
+            throw new Error(data.message || 'Ошибка при удалении');
+        }
+
+        showNotification('Абонемент успешно удалён', 'success');
+        window.location.reload();
+    } catch (err) {
+        showNotification(`Ошибка: ${err.message}`, 'error');
+    }
+}
+
+// Clear form errors
 function clearFormErrors() {
     document.querySelectorAll('.form-error').forEach(e => e.remove());
     document.querySelectorAll('.border-red-500').forEach(e => e.classList.remove('border-red-500'));
 }
 
-// Показ ошибок
+// Show form errors
 function showFormErrors(errors) {
     for (const field in errors) {
         const input = document.querySelector(`[name="${field}"]`);
