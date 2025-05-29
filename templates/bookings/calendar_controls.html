@@ -6,15 +6,15 @@
             <i class="fas fa-chevron-left"></i>
         </button>
 
-     <h2 id="calendar-title" class="text-xl font-semibold">
-    {% if view == 'day' %}
-        {{ current_date|date:"d E Y" }}  {{ current_date|short_ru_day }}
-    {% elif view == 'week' %}
-        Неделя {{ current_date|date:"W" }}, {{ current_date|date:"Y" }}
-    {% else %}
-        {{ current_date|date:"F Y" }}
-    {% endif %}
-</h2>
+        <h2 id="calendar-title" class="text-xl font-semibold">
+            {% if view == 'day' %}
+                {{ current_date|date:"d E Y" }}  {{ current_date|short_ru_day }}
+            {% elif view == 'week' %}
+                Неделя {{ current_date|date:"W" }}, {{ current_date|date:"Y" }}
+            {% else %}
+                {{ current_date|date:"F Y" }}
+            {% endif %}
+        </h2>
 
         <button id="next-btn" class="p-2 rounded-full hover:bg-gray-100" data-date="{{ current_date|date:'Y-m-d' }}">
             <i class="fas fa-chevron-right"></i>
@@ -24,7 +24,6 @@
             Сегодня
         </button>
     </div>
-
     <div class="flex flex-wrap gap-2">
         <div class="inline-flex rounded-md shadow-sm" role="group">
             <button id="day-view"
