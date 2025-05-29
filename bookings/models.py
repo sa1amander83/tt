@@ -121,19 +121,80 @@ class Booking(models.Model):
         ('completed', 'Завершено'),
     )
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings', verbose_name="Пользователь")
-    table = models.ForeignKey(Table, on_delete=models.CASCADE, verbose_name="Стол")
-    pricing = models.ForeignKey(TableTypePricing, on_delete=models.PROTECT, verbose_name="Ценообразование")
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='bookings',
+        verbose_name="Пользователь"
+    )
+    table = models.ForeignKey(
+        Table,
+        on_delete=models.CASCADE,
+        verbose_name="Стол"
+    )
+    pricing = models.ForeignKey(
+        TableTypePricing,
+        on_delete=models.PROTECT,
+        verbose_name="Ценообразование"
+    )
     start_time = models.DateTimeField(verbose_name="Время начала")
     end_time = models.DateTimeField(verbose_name="Время окончания")
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='pending',
+        verbose_name="Статус"
+    )
 
-    participants = models.PositiveIntegerField(default=2, verbose_name="Количество участников")
-    is_group = models.BooleanField(default=False, verbose_name="Групповое бронирование")
-    equipment = models.ManyToManyField(Equipment, through='BookingEquipment', blank=True, verbose_name="Оборудование")
+    promo_code = models.ForeignKey(
+        'PromoCode',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name="Промокод",
+        help_text="Применённый промокод, если был"
+    )
+    promo_code_discount_percent = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Скидка по промокоду (%)"
+    )
 
-    base_price = models.PositiveIntegerField(verbose_name="Базовая стоимость", default=400)
-    equipment_price = models.PositiveIntegerField(default=0, verbose_name="Стоимость оборудования")
+    special_offer = models.ForeignKey(
+        'admin_settings.SpecialOffer',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name="Специальное предложение",
+        help_text="Применённое спецпредложение, если было"
+    )
+    special_offer_discount_percent = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Скидка по спецпредложению (%)"
+    )
+
+    participants = models.PositiveIntegerField(
+        default=2,
+        verbose_name="Количество участников"
+    )
+    is_group = models.BooleanField(
+        default=False,
+        verbose_name="Групповое бронирование"
+    )
+    equipment = models.ManyToManyField(
+        Equipment,
+        through='BookingEquipment',
+        blank=True,
+        verbose_name="Оборудование"
+    )
+
+    base_price = models.PositiveIntegerField(
+        verbose_name="Базовая стоимость",
+        default=400
+    )
+    equipment_price = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Стоимость оборудования"
+    )
     total_price = models.PositiveIntegerField(verbose_name="Итоговая стоимость")
 
     notes = models.TextField(blank=True, verbose_name="Примечания")
@@ -148,16 +209,13 @@ class Booking(models.Model):
     def __str__(self):
         return f"Бронирование #{self.id} - {self.user} ({self.get_status_display()})"
 
-
     def save(self, *args, **kwargs):
-        # Сначала сохраняем объект, если он новый
         is_new = self.pk is None
         super().save(*args, **kwargs)
 
-        # Если объект уже сохранён и есть id, тогда можно вычислять цены
         if not is_new:
             self.calculate_prices()
-            # Чтобы не попасть в бесконечный цикл, при пересчёте цен можно сделать update напрямую:
+            # Обновляем цены напрямую, чтобы избежать бесконечной рекурсии
             Booking.objects.filter(pk=self.pk).update(
                 base_price=self.base_price,
                 equipment_price=self.equipment_price,
@@ -166,6 +224,7 @@ class Booking(models.Model):
 
     def calculate_prices(self):
         from bookings.BookingEngine import BookingEngine
+
         equipment_data = [
             {'equipment': be.equipment, 'quantity': be.quantity}
             for be in self.bookingequipment_set.all()
@@ -178,7 +237,8 @@ class Booking(models.Model):
             duration_minutes=int((self.end_time - self.start_time).total_seconds() / 60),
             participants=self.participants,
             equipment_items=equipment_data,
-            is_group=self.is_group
+            is_group=self.is_group,
+            promo_code=self.promo_code,
         )
 
         engine.calculate_total_price()
@@ -186,6 +246,9 @@ class Booking(models.Model):
         self.base_price = engine.base_price
         self.equipment_price = engine.equipment_price
         self.total_price = engine.total_price
+
+        self.promo_code_discount_percent = engine.promo_code_discount_percent or 0
+        self.special_offer_discount_percent = engine.special_offer_discount_percent or 0
 
 class BookingEquipment(models.Model):
     """Промежуточная модель для оборудования в бронировании"""
@@ -200,3 +263,30 @@ class BookingEquipment(models.Model):
 
     def __str__(self):
         return f"{self.equipment} x{self.quantity} в брони #{self.booking.id}"
+
+
+
+class PromoCode(models.Model):
+    code = models.CharField(max_length=50, unique=True)
+    description = models.TextField(blank=True)
+    discount_percent = models.PositiveIntegerField()  # например, 10 = 10%
+    valid_from = models.DateField()
+    valid_to = models.DateField()
+    is_active = models.BooleanField(default=True)
+    usage_limit = models.PositiveIntegerField(null=True, blank=True)  # необязательное ограничение
+    used_count = models.PositiveIntegerField(default=0)
+
+    # Ограничение на конкретного пользователя (опционально)
+    user = models.ForeignKey('accounts.User', null=True, blank=True, on_delete=models.SET_NULL)
+
+    def is_valid_for_user(self, user):
+        if not self.is_active:
+            return False
+        if self.user and self.user != user:
+            return False
+        if self.usage_limit is not None and self.used_count >= self.usage_limit:
+            return False
+        return True
+
+    def __str__(self):
+        return f"{self.code} ({self.discount_percent}% off)"

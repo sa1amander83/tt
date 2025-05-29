@@ -1,3 +1,6 @@
+from decimal import Decimal
+
+from django.utils.timezone import make_aware, now
 import re
 
 from django.db.models import Q
@@ -24,8 +27,7 @@ import json
 from admin_settings.models import WorkingDay, Holiday, SpecialOffer
 from events.forms import BookingForm
 from .BookingEngine import BookingEngine
-from .models import Table, Booking, BookingEquipment, Equipment, PricingPlan, TableTypePricing
-
+from .models import Table, Booking, BookingEquipment, Equipment, PricingPlan, TableTypePricing, PromoCode
 
 from .models import Equipment  # не забудь импортировать
 
@@ -940,6 +942,8 @@ from django.db import transaction
 
 @login_required
 @require_POST
+
+
 def create_booking_api(request):
     try:
         data = json.loads(request.body)
@@ -949,24 +953,21 @@ def create_booking_api(request):
         if missing:
             return JsonResponse({'error': f'Missing required fields: {", ".join(missing)}'}, status=400)
 
-        # Парсим дату и время
         try:
             start_datetime = make_aware(datetime.strptime(f"{data['date']} {data['start_time']}", "%Y-%m-%d %H:%M"))
         except ValueError:
             return JsonResponse({'error': 'Invalid date or time format'}, status=400)
 
         try:
-            duration = int(data['duration'])
-            if duration <= 0:
+            duration_minutes = int(data['duration'])
+            if duration_minutes <= 0:
                 raise ValueError
         except ValueError:
-            return JsonResponse({'error': 'Duration must be a positive integer'}, status=400)
+            return JsonResponse({'error': 'Duration must be a positive integer (minutes)'}, status=400)
 
-        end_datetime = start_datetime + timedelta(hours=duration)
-
+        end_datetime = start_datetime + timedelta(minutes=duration_minutes)
         table = get_object_or_404(Table, id=data['table_id'])
 
-        # Проверка на пересечение с другими бронированиями
         overlapping = Booking.objects.filter(
             table=table,
             start_time__lt=end_datetime,
@@ -976,42 +977,100 @@ def create_booking_api(request):
         if overlapping.exists():
             return JsonResponse({'error': 'Timeslot is already booked'}, status=400)
 
-        # Получаем подходящее ценообразование
-        today = start_datetime.date()
-        pricing = TableTypePricing.objects.filter(
-            table_type=table.table_type,
-            pricing_plan__valid_from__lte=today
-        ).filter(
-            Q(pricing_plan__valid_to__gte=today) | Q(pricing_plan__valid_to__isnull=True)
-        ).order_by('-pricing_plan__valid_from').first()
+        equipment_items = []
+        for item in data.get('equipment', []):
+            try:
+                equipment = Equipment.objects.get(id=item['id'])
+                quantity = int(item.get('quantity', 1))
+                equipment_items.append({'equipment': equipment, 'quantity': quantity})
+            except Equipment.DoesNotExist:
+                return JsonResponse({'error': f"Invalid equipment ID: {item['id']}"}, status=400)
 
-        if not pricing:
-            return JsonResponse({'error': 'No pricing plan available for this date'}, status=400)
+        promo_code_str = data.get('promo_code')
+        promo = None
+        if promo_code_str:
+            promo = PromoCode.objects.filter(code=promo_code_str, is_active=True).first()
+            if not promo or not (promo.valid_from <= start_datetime.date() <= promo.valid_to):
+                return JsonResponse({'error': 'Invalid or expired promo code'}, status=400)
+
+        membership = request.user.memberships.filter(is_active=True).first()
+        if membership and not membership.is_valid():
+            membership = None
+
+        loyalty_profile = getattr(request.user, 'loyaltyprofile', None)
+
+        engine = BookingEngine(
+            user=request.user,
+            table=table,
+            start_time=start_datetime,
+            duration_minutes=duration_minutes,
+            participants=data.get('participants', 2),
+            equipment_items=equipment_items,
+            is_group=data.get('is_group', False),
+            promo_code=promo
+        )
+        engine.membership = membership
+        engine.loyalty_profile = loyalty_profile
+        engine.calculate_total_price()
 
         with transaction.atomic():
+            Booking.objects.filter(status='pending', created_at__lt=now() - timedelta(minutes=10)).delete()
+
+            overlapping = Booking.objects.select_for_update().filter(
+                table=table,
+                start_time__lt=end_datetime,
+                end_time__gt=start_datetime,
+                status__in=['pending', 'confirmed']
+            )
+            if overlapping.exists():
+                return JsonResponse({'error': 'Timeslot is already booked'}, status=400)
+
             booking = Booking.objects.create(
                 user=request.user,
                 table=table,
-                pricing=pricing,
                 start_time=start_datetime,
                 end_time=end_datetime,
                 participants=data.get('participants', 2),
                 is_group=data.get('is_group', False),
-                status='pending'
+                total_price=engine.total_price,
+                base_price=engine.base_price,
+                equipment_price=engine.equipment_price,
+                pricing=engine.pricing,
+                status='pending',
+
+                promo_code=promo,
+                promo_code_discount_percent=promo.discount_percent if promo else 0,
+                special_offer=engine.special_offer,
+                special_offer_discount_percent=engine.special_offer.discount_percent if engine.special_offer else 0,
+                membership=membership,
+                membership_discount_percent=membership.membership_type.discount_percent if membership else 0,
+                loyalty_level=loyalty_profile.level if loyalty_profile else None,
+                loyalty_discount_percent=loyalty_profile.get_discount() if loyalty_profile else Decimal('0.00'),
             )
 
-            for equip_id in data.get('equipment', []):
-                equipment = get_object_or_404(Equipment, id=equip_id)
+            for item in equipment_items:
                 BookingEquipment.objects.create(
                     booking=booking,
-                    equipment=equipment,
-                    quantity=1
+                    equipment=item['equipment'],
+                    quantity=item['quantity']
                 )
 
-            booking.calculate_prices()
-            booking.save()
-
-        return JsonResponse({'success': True, 'booking_id': booking.id})
+        return JsonResponse({
+            'success': True,
+            'booking_id': booking.id,
+            'total_price': engine.total_price,
+            'base_price': engine.base_price,
+            'equipment_price': engine.equipment_price,
+            'discount_percent': engine.discount,
+            'pricing_plan': str(engine.pricing_plan),
+            'promo_code': promo_code_str,
+            'promo_code_discount_percent': promo.discount_percent if promo else 0,
+            'special_offer': str(engine.special_offer) if engine.special_offer else None,
+            'special_offer_discount_percent': engine.special_offer.discount_percent if engine.special_offer else 0,
+            'membership_discount_percent': membership.membership_type.discount_percent if membership else 0,
+            'loyalty_level': loyalty_profile.level if loyalty_profile else None,
+            'loyalty_discount_percent': loyalty_profile.get_discount() if loyalty_profile else Decimal('0.00'),
+        })
 
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)

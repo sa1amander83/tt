@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             RATES: '/bookings/api/rates/',
             TABLES: '/bookings/api/tables/',
             CALENDAR: '/bookings/api/calendar/',
-            BOOKINGS: '/bookings/api/bookings/',
+            BOOKINGS: '/bookings/api/create/',
             CALCULATE: '/bookings/api/calculate/',
             USER_BOOKINGS: '/bookings/api/user-bookings/',
             SITE_SETTINGS: '/bookings/api/site-settings/'
@@ -473,48 +473,49 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         }
 
-function populateTimeOptions(clubOpenTime, clubCloseTime, selectedTime) {
-    const select = document.getElementById('booking-start-time');
-    select.innerHTML = '';
+        function populateTimeOptions(clubOpenTime, clubCloseTime, selectedTime) {
+            const select = document.getElementById('booking-start-time');
+            select.innerHTML = '';
 
-    const now = new Date();
-    let currentTime = new Date(clubOpenTime);
+            const now = new Date();
+            let currentTime = new Date(clubOpenTime);
 
-    // Если текущее время находится между XX:30 и XX:59,
-    // начинаем со следующего полного часа
-    if (now.getMinutes() >= 30) {
-        currentTime.setHours(now.getHours() + 1);
-        currentTime.setMinutes(0, 0, 0);
-    } else {
-        // Иначе начинаем со следующего получаса
-        currentTime = new Date(now);
-        currentTime.setMinutes(30, 0, 0);
-    }
+            // Если текущее время находится между XX:30 и XX:59,
+            // начинаем со следующего полного часа
+            if (now.getMinutes() >= 30) {
+                currentTime.setHours(now.getHours() + 1);
+                currentTime.setMinutes(0, 0, 0);
+            } else {
+                // Иначе начинаем со следующего получаса
+                currentTime = new Date(now);
+                currentTime.setMinutes(30, 0, 0);
+            }
 
-    // Убедимся, что не вышли за время закрытия
-    if (currentTime > clubCloseTime) {
-        return; // Нет доступных слотов
-    }
+            // Убедимся, что не вышли за время закрытия
+            if (currentTime > clubCloseTime) {
+                return; // Нет доступных слотов
+            }
 
-    // Начинаем с ближайшего получаса или часа
-    while (currentTime <= clubCloseTime) {
-        const timeStr = currentTime.toTimeString().slice(0, 5);
-        const option = new Option(timeStr, timeStr);
-        select.add(option);
-        currentTime.setMinutes(currentTime.getMinutes() + 30);
-    }
+            // Начинаем с ближайшего получаса или часа
+            while (currentTime <= clubCloseTime) {
+                const timeStr = currentTime.toTimeString().slice(0, 5);
+                const option = new Option(timeStr, timeStr);
+                select.add(option);
+                currentTime.setMinutes(currentTime.getMinutes() + 30);
+            }
 
-    // Установим ближайшее доступное время по умолчанию
-    if (select.options.length > 0) {
-        select.selectedIndex = 0;
-    }
+            // Установим ближайшее доступное время по умолчанию
+            if (select.options.length > 0) {
+                select.selectedIndex = 0;
+            }
 
-    // Если было передано выбранное время и оно доступно - выбираем его
-    if (selectedTime && [...select.options].some(opt => opt.value === selectedTime)) {
-        select.value = selectedTime;
-    }
-}
-function populateTableOptions(tables, selectedId) {
+            // Если было передано выбранное время и оно доступно - выбираем его
+            if (selectedTime && [...select.options].some(opt => opt.value === selectedTime)) {
+                select.value = selectedTime;
+            }
+        }
+
+        function populateTableOptions(tables, selectedId) {
             const select = document.getElementById('booking-table');
             if (!select) return;
 
