@@ -14,7 +14,7 @@ class TableType(models.Model):
     """Типы столов с базовыми характеристиками"""
     name = models.CharField(max_length=50, verbose_name="Название типа")
     description = models.TextField(blank=True, verbose_name="Описание")
-    default_capacity = models.PositiveIntegerField(default=2, verbose_name="Вместимость по умолчанию")
+    max_capacity = models.PositiveIntegerField(default=2, verbose_name="Вместимость")
 
 
     class Meta:

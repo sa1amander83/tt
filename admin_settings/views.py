@@ -409,7 +409,6 @@ class SpecialOfferView(LoginRequiredMixin, UserPassesTestMixin, View):
             return JsonResponse({'status': 'success', 'data': data})
 
         except Exception as e:
-            logger.error(f"Error getting special offer {pk}: {str(e)}", exc_info=True)
             return JsonResponse(
                 {
                     'status': 'error',
@@ -580,6 +579,8 @@ class PricingPlanDetailView(LoginRequiredMixin, IsAdminMixin, View):
             'is_default': pricing_plan.is_default,
             'valid_from': pricing_plan.valid_from.strftime('%Y-%m-%d'),
             'valid_to': pricing_plan.valid_to.strftime('%Y-%m-%d') if pricing_plan.valid_to else None,
+            'time_from': pricing_plan.time_from.strftime('%H:%M'),
+            'time_to': pricing_plan.time_to.strftime('%H:%M'),
         }
 
         return JsonResponse(data)
@@ -609,40 +610,11 @@ class TableTypeView(LoginRequiredMixin, IsAdminMixin, View):
             'id': table_type.id,
             'description': table_type.description,
             'name': table_type.name,
-            'default_capacity': table_type.default_capacity
+            'max_capacity': table_type.max_capacity
 
         }
 
         return JsonResponse(data)
-
-
-class UpdateWorkingHoursView(LoginRequiredMixin, View):
-    def post(self, request, *args, **kwargs):
-        working_days = WorkingDay.objects.all().order_by('day')
-        all_valid = True
-
-        for day in working_days:
-            form = WorkingHoursForm(
-                request.POST,
-                instance=day,
-                prefix=f'day_{day.day}',
-                initial={'day': day.day}  # Устанавливаем начальное значение для day
-            )
-            if form.is_valid():
-                form.save()
-            else:
-                all_valid = False
-                print(f"Ошибки для дня {day.day}: {form.errors}")
-
-        if all_valid:
-            messages.success(request, "Часы работы успешно обновлены")
-        else:
-            messages.error(request, "Произошли ошибки при сохранении")
-
-        return redirect('admin_settings:club_settings', active_tab='schedule')
-
-
-from datetime import time
 
 
 class TableTypeUpdateView(LoginRequiredMixin, IsAdminMixin, View):
@@ -672,6 +644,35 @@ class TableTypeDeleteView(LoginRequiredMixin, IsAdminMixin, View):
                 {'status': 'error', 'message': str(e)},
                 status=400
             )
+
+class UpdateWorkingHoursView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        working_days = WorkingDay.objects.all().order_by('day')
+        all_valid = True
+
+        for day in working_days:
+            form = WorkingHoursForm(
+                request.POST,
+                instance=day,
+                prefix=f'day_{day.day}',
+                initial={'day': day.day}  # Устанавливаем начальное значение для day
+            )
+            if form.is_valid():
+                form.save()
+            else:
+                all_valid = False
+                print(f"Ошибки для дня {day.day}: {form.errors}")
+
+        if all_valid:
+            messages.success(request, "Часы работы успешно обновлены")
+        else:
+            messages.error(request, "Произошли ошибки при сохранении")
+
+        return redirect('admin_settings:club_settings', active_tab='schedule')
+
+
+from datetime import time
+
 
 
 import json

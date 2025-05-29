@@ -509,7 +509,7 @@ function openEditTableTypeModal(tableTypeId) {
             document.getElementById('editTableTypeId').value = data.id;
             document.getElementById('editTableTypeName').value = data.name;
             document.getElementById('editTableTypeDescription').value = data.description;
-            document.getElementById('editTableTypeCapacity').value = data.default_capacity;
+            document.getElementById('editTableTypeCapacity').value = data.max_capacity;
 
             // Показываем модальное окно
             document.getElementById('edit-table-type-modal').classList.remove('hidden');

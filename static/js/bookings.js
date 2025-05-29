@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (elements.tableSelect && state.tables.length) {
                 elements.tableSelect.innerHTML = state.tables.map(table => `<option value="${table.id}" 
                     data-type="${table.table_type}" 
-                    data-capacity="${table.capacity}">
+                    data-capacity="${table.max_capacity}">
                     Стол #${table.number} (${table.table_type})
                 </option>`).join('');
             }
@@ -423,8 +423,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                     alert(data.error || "Ошибка при получении тарифной информации.");
                     return;
                 }
+                elements.bookingForm.dataset.discount = data.discount || 0;
 
-                // Установка базовых значений
                 const {open_time, close_time} = state.siteSettings;
                 const clubOpenTime = new Date(`${date}T${open_time}:00`);
                 const clubCloseTime = new Date(`${date}T${close_time}:00`);
@@ -473,33 +473,55 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         }
 
-        function populateTimeOptions(startTime, endTime, selectedTime) {
-            const select = document.getElementById('booking-start-time');
-            select.innerHTML = '';
+function populateTimeOptions(clubOpenTime, clubCloseTime, selectedTime) {
+    const select = document.getElementById('booking-start-time');
+    select.innerHTML = '';
 
-            let currentTime = new Date(startTime);
-            while (currentTime <= endTime) {
-                const timeStr = currentTime.toTimeString().slice(0, 5);
-                const option = new Option(timeStr, timeStr);
-                select.add(option);
-                currentTime.setMinutes(currentTime.getMinutes() + 30);
-            }
+    const now = new Date();
+    let currentTime = new Date(clubOpenTime);
 
-            if ([...select.options].some(opt => opt.value === selectedTime)) {
-                select.value = selectedTime;
-            } else {
-                select.selectedIndex = 0;
-            }
-        }
+    // Если текущее время находится между XX:30 и XX:59,
+    // начинаем со следующего полного часа
+    if (now.getMinutes() >= 30) {
+        currentTime.setHours(now.getHours() + 1);
+        currentTime.setMinutes(0, 0, 0);
+    } else {
+        // Иначе начинаем со следующего получаса
+        currentTime = new Date(now);
+        currentTime.setMinutes(30, 0, 0);
+    }
 
-        function populateTableOptions(tables, selectedId) {
+    // Убедимся, что не вышли за время закрытия
+    if (currentTime > clubCloseTime) {
+        return; // Нет доступных слотов
+    }
+
+    // Начинаем с ближайшего получаса или часа
+    while (currentTime <= clubCloseTime) {
+        const timeStr = currentTime.toTimeString().slice(0, 5);
+        const option = new Option(timeStr, timeStr);
+        select.add(option);
+        currentTime.setMinutes(currentTime.getMinutes() + 30);
+    }
+
+    // Установим ближайшее доступное время по умолчанию
+    if (select.options.length > 0) {
+        select.selectedIndex = 0;
+    }
+
+    // Если было передано выбранное время и оно доступно - выбираем его
+    if (selectedTime && [...select.options].some(opt => opt.value === selectedTime)) {
+        select.value = selectedTime;
+    }
+}
+function populateTableOptions(tables, selectedId) {
             const select = document.getElementById('booking-table');
             if (!select) return;
 
             select.innerHTML = '';
             tables.forEach(table => {
                 const option = new Option(`Стол #${table.number} (${table.table_type})`, table.id);
-                option.dataset.maxPlayers = table.default_capacity || 2;
+                option.dataset.maxPlayers = table.max_capacity || 2;
                 select.add(option);
             });
             select.value = selectedId;
@@ -516,7 +538,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (!select) return;
 
             const table = tables.find(t => t.id === parseInt(tableId));
-            const maxPlayers = table?.default_capacity || 2;
+            const maxPlayers = table?.max_capacity || 2;
 
             select.innerHTML = '';
             for (let i = 2; i <= maxPlayers; i++) {
@@ -581,19 +603,26 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const duration = parseInt(elements.duration?.value) || 60;
                 const blocks = Math.ceil(duration / 30);
 
-                // Стол
-                let tableCost = 0;
+                // Получаем базовую стоимость без скидки
+                let baseTableCost = 0;
                 if (duration <= 30) {
-                    tableCost = tablePriceHalfHour;
+                    baseTableCost = tablePriceHalfHour;
                 } else if (duration === 60) {
-                    tableCost = tablePriceHour;
+                    baseTableCost = tablePriceHour;
                 } else {
                     const hours = Math.floor(duration / 60);
                     const extra = Math.ceil((duration % 60) / 30);
-                    tableCost = (hours * tablePriceHour) + (extra * tablePriceHalfHour);
+                    baseTableCost = (hours * tablePriceHour) + (extra * tablePriceHalfHour);
                 }
 
-                // Оборудование
+                // Применяем скидку (если есть)
+                let tableCost = baseTableCost;
+                const discount = parseFloat(elements.bookingForm.dataset.discount) || 0;
+                if (discount > 0) {
+                    tableCost = baseTableCost * (1 - discount / 100);
+                }
+
+                // Оборудование (без скидки)
                 const equipmentCost = [...document.querySelectorAll('.equipment-checkbox:checked')].reduce((sum, el) => {
                     const priceHalf = parseFloat(el.dataset.priceHalfHour) || 0;
                     const priceHour = parseFloat(el.dataset.priceHour) || priceHalf * 2;
@@ -1071,7 +1100,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (isPast) {
                 if (!state.isAdmin) return '';  // скрыть от обычных пользователей
 
-                status = 'Прошло';
+                status = '-';
                 isAvailable = false;
                 cellClass = 'bg-gray-200';
                 textClass = 'text-gray-500 italic';

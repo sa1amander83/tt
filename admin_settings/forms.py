@@ -43,11 +43,11 @@ from bookings.models import Table, TableType, PricingPlan, TableTypePricing
 class TableTypeForm(forms.ModelForm):
     class Meta:
         model = TableType
-        fields = ['name', 'description', 'default_capacity']
+        fields = ['name', 'description', 'max_capacity']
         labels = {
             'name': 'Название типа',
             'description': 'Описание',
-            'default_capacity': 'Вместимость по умолчанию',
+            'max_capacity': 'Вместимость',
         }
         widgets = {
             'name': forms.TextInput(attrs={
@@ -57,7 +57,7 @@ class TableTypeForm(forms.ModelForm):
                 'rows': 3,
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
-            'default_capacity': forms.NumberInput(attrs={
+            'max_capacity': forms.NumberInput(attrs={
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md  border-2 border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
         }
@@ -66,14 +66,15 @@ class TableTypeForm(forms.ModelForm):
 class PricingPlanForm(forms.ModelForm):
     class Meta:
         model = PricingPlan
-        fields = ['name', 'description', 'is_default', 'valid_from', 'valid_to']
+        fields = ['name', 'description', 'is_default', 'valid_from', 'valid_to', 'time_from', 'time_to']
         labels = {
             'name': 'Название тарифа',
             'description': 'Описание',
             'is_default': 'Тариф по умолчанию',
             'valid_from': 'Действует с',
             'valid_to': 'Действует до',
-        }
+            'time_from': 'Время начала',
+            'time_to': 'Время окончания',}
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
@@ -93,6 +94,19 @@ class PricingPlanForm(forms.ModelForm):
                 'type': 'date',
                 'class': 'w-full sm:w-1/2 mt-1 block rounded-md  border-2 border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
             }),
+
+            'time_from': forms.TimeInput(attrs={
+                'type': 'time',
+                'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+            }),
+            'time_to': forms.TimeInput(attrs={
+                'type': 'time',
+                'class': 'w-full sm:w-1/2 mt-1 block rounded-md border-2 border-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+            }),
+
+
+
+
         }
 
 

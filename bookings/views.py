@@ -465,7 +465,7 @@ def get_booking_info(request):
         table=table,
         start_time=dt,
         duration_minutes=duration_minutes,
-        participants=table.table_type.default_capacity if not is_group else (table.table_type.default_capacity + 1),
+        participants=table.table_type.max_capacity if not is_group else (table.table_type.max_capacity + 1),
         equipment_items=equipment_items
     )
     engine.calculate_total_price()
@@ -525,7 +525,7 @@ def get_booking_info(request):
                 'number': t.number,
                 'table_type_display': str(t.table_type),
                 'table_type': t.table_type.name,
-                'default_capacity': t.table_type.default_capacity,
+                'max_capacity': t.table_type.max_capacity,
             }
             for t in Table.objects.filter(is_active=True).order_by('number')
         ],
@@ -861,7 +861,7 @@ def tables_api(request):
         'number': table.number,
         'type': table.table_type.name,
         'description': table.description,
-        'capacity': table.table_type.default_capacity
+        'capacity': table.table_type.max_capacity
     } for table in tables]
     return JsonResponse(tables_data, safe=False)
 
@@ -916,7 +916,7 @@ def calculate_booking_api(request):
                 }
             )
 
-        is_group = participants > table.table_type.default_capacity
+        is_group = participants > table.table_type.max_capacity
         base_rate = pricing.hour_rate_group if is_group else pricing.hour_rate
         table_cost = base_rate * duration
 

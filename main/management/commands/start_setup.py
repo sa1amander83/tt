@@ -20,7 +20,7 @@ class Command(BaseCommand):
         for name in table_type_names:
             table_type, _ = TableType.objects.get_or_create(name=name, defaults={
                 'description': f'{name} тип стола',
-                'default_capacity': randint(2, 6)
+                'max_capacity': randint(2, 6)
             })
             table_types[name] = table_type
 

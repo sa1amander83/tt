@@ -88,33 +88,33 @@ async function openEditPricingPlanModal(planId) {
 
         // Показываем модальное окно с индикатором загрузки
         // Показываем модалку
-modal.classList.remove('hidden');
-document.body.classList.add('overflow-hidden');
+        modal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
 
-const backdrop = document.getElementById('pricingPlanBackdrop');
-const content = document.getElementById('pricingPlanModalContent');
+        const backdrop = document.getElementById('pricingPlanBackdrop');
+        const content = document.getElementById('pricingPlanModalContent');
 
 // Сбросим анимационные классы к начальному состоянию (важно!)
-if (backdrop) {
-    backdrop.classList.remove('opacity-100');
-    backdrop.classList.add('opacity-0');
-}
-if (content) {
-    content.classList.remove('opacity-100', 'translate-y-0');
-    content.classList.add('opacity-0', 'translate-y-10');
-}
+        if (backdrop) {
+            backdrop.classList.remove('opacity-100');
+            backdrop.classList.add('opacity-0');
+        }
+        if (content) {
+            content.classList.remove('opacity-100', 'translate-y-0');
+            content.classList.add('opacity-0', 'translate-y-10');
+        }
 
 // Принудительная перерисовка DOM, чтобы transition сработал
-requestAnimationFrame(() => {
-    if (backdrop) {
-        backdrop.classList.remove('opacity-0');
-        backdrop.classList.add('opacity-100');
-    }
-    if (content) {
-        content.classList.remove('opacity-0', 'translate-y-10');
-        content.classList.add('opacity-100', 'translate-y-0');
-    }
-});
+        requestAnimationFrame(() => {
+            if (backdrop) {
+                backdrop.classList.remove('opacity-0');
+                backdrop.classList.add('opacity-100');
+            }
+            if (content) {
+                content.classList.remove('opacity-0', 'translate-y-10');
+                content.classList.add('opacity-100', 'translate-y-0');
+            }
+        });
 
         // Добавляем индикатор загрузки
         const loader = document.createElement('div');
@@ -146,6 +146,8 @@ requestAnimationFrame(() => {
         form.querySelector('[name="valid_from"]').value = planData.valid_from || '';
         form.querySelector('[name="valid_to"]').value = planData.valid_to || '';
         form.querySelector('[name="is_default"]').checked = planData.is_default || false;
+        form.querySelector('[name="time_from"]').value = planData.time_from || '';
+        form.querySelector('[name="time_to"]').checked = planData.time_to || '';
 
         // Добавляем ID плана в форму
         if (!form.dataset.planId) {
@@ -377,9 +379,8 @@ async function saveTableTypePricing() {
 // }
 
 
-
 // Инициализация обработчиков
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Обработчики для кнопок редактирования
     document.querySelectorAll('[onclick^="openEditTableTypePricingModal"]').forEach(btn => {
         const match = btn.getAttribute('onclick').match(/openEditTableTypePricingModal\((\d+)\)/);
@@ -394,9 +395,6 @@ document.addEventListener('DOMContentLoaded', function() {
 /**
  * Обновление ценообразования для типа стола
  */
-
-
-
 
 
 // =====================Институт дополнительного образования=========================
@@ -598,124 +596,121 @@ function openModal(modalId) {
 // }
 // Универсальная функция для закрытия модальных окон
 function closeModal(modalId) {
-  const modal = document.getElementById(modalId);
-  if (!modal) return;
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
 
-  // Анимация закрытия
-  const backdrop = modal.querySelector('.backdrop-blur-sm');
-  const content = modal.querySelector('[id$="ModalContent"]');
+    // Анимация закрытия
+    const backdrop = modal.querySelector('.backdrop-blur-sm');
+    const content = modal.querySelector('[id$="ModalContent"]');
 
-  if (backdrop) backdrop.classList.remove('opacity-100');
-  if (content) content.classList.remove('opacity-100', 'scale-100', 'translate-y-10');
+    if (backdrop) backdrop.classList.remove('opacity-100');
+    if (content) content.classList.remove('opacity-100', 'scale-100', 'translate-y-10');
 
-  setTimeout(() => {
-    modal.classList.add('hidden');
-    document.body.classList.remove('overflow-hidden');
-  }, 300);
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }, 300);
 }
 
 // Функции открытия для каждой модалки
 function openAddPricingPlanModal() {
-  const modal = document.getElementById('addPricingPlanModal');
-  if (!modal) return;
+    const modal = document.getElementById('addPricingPlanModal');
+    if (!modal) return;
 
-  // Сброс формы и заголовка
-  const form = document.getElementById('pricingPlanForm');
-  if (form) form.reset();
+    // Сброс формы и заголовка
+    const form = document.getElementById('pricingPlanForm');
+    if (form) form.reset();
 
-  const title = modal.querySelector('h3');
-  if (title) title.textContent = 'Новый тарифный план';
+    const title = modal.querySelector('h3');
+    if (title) title.textContent = 'Новый тарифный план';
 
-  // Показ с анимацией
-  modal.classList.remove('hidden');
-  document.body.classList.add('overflow-hidden');
+    // Показ с анимацией
+    modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
 
-  setTimeout(() => {
-    const backdrop = document.getElementById('pricingPlanBackdrop');
-    const content = document.getElementById('pricingPlanModalContent');
-    if (backdrop) backdrop.classList.add('opacity-100');
-    if (content) content.classList.add('opacity-100', 'scale-100', 'translate-y-0');
-  }, 10);
+    setTimeout(() => {
+        const backdrop = document.getElementById('pricingPlanBackdrop');
+        const content = document.getElementById('pricingPlanModalContent');
+        if (backdrop) backdrop.classList.add('opacity-100');
+        if (content) content.classList.add('opacity-100', 'scale-100', 'translate-y-0');
+    }, 10);
 }
 
 function openAddSpecialOfferModal() {
-  const modal = document.getElementById('addSpecialOfferModal');
-  if (!modal) return;
+    const modal = document.getElementById('addSpecialOfferModal');
+    if (!modal) return;
 
-  const form = document.getElementById('specialOfferForm');
-  if (form) form.reset();
+    const form = document.getElementById('specialOfferForm');
+    if (form) form.reset();
 
-  const title = modal.querySelector('h3');
-  if (title) title.textContent = 'Новое спецпредложение';
+    const title = modal.querySelector('h3');
+    if (title) title.textContent = 'Новое спецпредложение';
 
-  modal.classList.remove('hidden');
-  document.body.classList.add('overflow-hidden');
+    modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
 
-  setTimeout(() => {
-    const backdrop = document.getElementById('specialOfferBackdrop');
-    const content = document.getElementById('specialOfferModalContent');
-    if (backdrop) backdrop.classList.add('opacity-100');
-    if (content) content.classList.add('opacity-100', 'scale-100', 'translate-y-0');
-  }, 10);
-
+    setTimeout(() => {
+        const backdrop = document.getElementById('specialOfferBackdrop');
+        const content = document.getElementById('specialOfferModalContent');
+        if (backdrop) backdrop.classList.add('opacity-100');
+        if (content) content.classList.add('opacity-100', 'scale-100', 'translate-y-0');
+    }, 10);
 
 
 }
-
-
 
 
 function openAddTableTypePricingModal() {
-  const modal = document.getElementById('addTableTypePricingModal');
-  if (!modal) return;
+    const modal = document.getElementById('addTableTypePricingModal');
+    if (!modal) return;
 
-  const form = document.getElementById('tableTypePricingForm');
-  if (form) form.reset();
+    const form = document.getElementById('tableTypePricingForm');
+    if (form) form.reset();
 
-  const title = modal.querySelector('h3');
-  if (title) title.textContent = 'Цены для типа стола';
+    const title = modal.querySelector('h3');
+    if (title) title.textContent = 'Цены для типа стола';
 
-  modal.classList.remove('hidden');
-  document.body.classList.add('overflow-hidden');
+    modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
 
-  setTimeout(() => {
-    const backdrop = document.getElementById('tableTypePricingBackdrop');
-    const content = document.getElementById('tableTypePricingModalContent');
-    if (backdrop) backdrop.classList.add('opacity-100');
-    if (content) content.classList.add('opacity-100', 'scale-100', 'translate-y-0');
-  }, 10);
+    setTimeout(() => {
+        const backdrop = document.getElementById('tableTypePricingBackdrop');
+        const content = document.getElementById('tableTypePricingModalContent');
+        if (backdrop) backdrop.classList.add('opacity-100');
+        if (content) content.classList.add('opacity-100', 'scale-100', 'translate-y-0');
+    }, 10);
 }
 
 // Инициализация обработчиков
-document.addEventListener('DOMContentLoaded', function() {
-  // Обработчики для кнопок открытия
-  document.querySelectorAll('[data-modal="pricing-plan"]').forEach(btn => {
-    btn.addEventListener('click', openAddPricingPlanModal);
-  });
-
-  document.querySelectorAll('[data-modal="special-offer"]').forEach(btn => {
-    btn.addEventListener('click', openAddSpecialOfferModal);
-  });
-
-  document.querySelectorAll('[data-modal="table-type-pricing"]').forEach(btn => {
-    btn.addEventListener('click', openAddTableTypePricingModal);
-  });
-
-  // Обработчики закрытия по кнопкам
-  document.querySelectorAll('[onclick^="closeModal"]').forEach(btn => {
-    const match = btn.getAttribute('onclick').match(/closeModal\('([^']+)'/);
-    if (match && match[1]) {
-      btn.addEventListener('click', () => closeModal(match[1]));
-    }
-  });
-
-  // Закрытие по клику на бэкдроп
-  document.querySelectorAll('.backdrop-blur-sm').forEach(backdrop => {
-    backdrop.addEventListener('click', function() {
-      const modal = this.closest('.fixed.inset-0');
-      if (modal) closeModal(modal.id);
+document.addEventListener('DOMContentLoaded', function () {
+    // Обработчики для кнопок открытия
+    document.querySelectorAll('[data-modal="pricing-plan"]').forEach(btn => {
+        btn.addEventListener('click', openAddPricingPlanModal);
     });
-  });
+
+    document.querySelectorAll('[data-modal="special-offer"]').forEach(btn => {
+        btn.addEventListener('click', openAddSpecialOfferModal);
+    });
+
+    document.querySelectorAll('[data-modal="table-type-pricing"]').forEach(btn => {
+        btn.addEventListener('click', openAddTableTypePricingModal);
+    });
+
+    // Обработчики закрытия по кнопкам
+    document.querySelectorAll('[onclick^="closeModal"]').forEach(btn => {
+        const match = btn.getAttribute('onclick').match(/closeModal\('([^']+)'/);
+        if (match && match[1]) {
+            btn.addEventListener('click', () => closeModal(match[1]));
+        }
+    });
+
+    // Закрытие по клику на бэкдроп
+    document.querySelectorAll('.backdrop-blur-sm').forEach(backdrop => {
+        backdrop.addEventListener('click', function () {
+            const modal = this.closest('.fixed.inset-0');
+            if (modal) closeModal(modal.id);
+        });
+    });
 });
 
 // ==============================================
