@@ -1,119 +1,38 @@
 from datetime import datetime
+from django.db import models
+from django.utils import timezone
 
-
+# from admin_settings.models import Table, Equipment
+from pricing.models import TableTypePricing
 
 User='accounts.User'
-from django.db import models
-from django.core.exceptions import ValidationError
-from django.contrib.auth import get_user_model
-
-# from bookings.utils import calculate_booking_price
-
-
-class TableType(models.Model):
-    """Типы столов с базовыми характеристиками"""
-    name = models.CharField(max_length=50, verbose_name="Название типа")
-    description = models.TextField(blank=True, verbose_name="Описание")
-    max_capacity = models.PositiveIntegerField(default=2, verbose_name="Вместимость")
-
-
-    class Meta:
-        verbose_name = "Тип стола"
-        verbose_name_plural = "Типы столов"
-
-    def __str__(self):
-        return self.name or f"Стол #{self.name}"
-
-
-class Table(models.Model):
-    """Модель стола"""
-    number = models.PositiveIntegerField(unique=True, verbose_name="Номер стола")
-    table_type = models.ForeignKey(TableType, on_delete=models.PROTECT, verbose_name="Тип стола")
-    is_active = models.BooleanField(default=True, verbose_name="Активен")
-    description = models.TextField(blank=True, verbose_name="Дополнительное описание")
-
-    class Meta:
-        verbose_name = "Стол"
-        verbose_name_plural = "Столы"
-        ordering = ['number']
-
-    def __str__(self):
-        return f"Стол #{self.number} ({self.table_type})"
-
-
-class PricingPlan(models.Model):
-    """Модель тарифного плана"""
-    name = models.CharField(max_length=100, verbose_name="Название тарифа")
-    description = models.TextField(blank=True, verbose_name="Описание тарифа")
-    is_default = models.BooleanField(default=False, verbose_name="Тариф по умолчанию")
-    valid_from = models.DateField(verbose_name="Действует с")
-    valid_to = models.DateField(blank=True, null=True, verbose_name="Действует до")
-    time_from = models.TimeField(null=True, blank=True, verbose_name="Начало действия")
-    time_to = models.TimeField(null=True, blank=True, verbose_name="Окончание действия")
-    weekdays = models.CharField(max_length=13, default="1234567", verbose_name="Дни недели")  # '1' = Пн ... '7' = Вс
-
-    def is_applicable(self, dt:     datetime) -> bool:
-        """Проверка, применим ли тариф в конкретное время"""
-        if str(dt.isoweekday()) not in self.weekdays:
-            return False
-        if self.time_from and self.time_to:
-            return self.time_from <= dt.time() < self.time_to
-        return True
-
-        
-    class Meta:
-        verbose_name = "Тарифный план"
-        verbose_name_plural = "Тарифные планы"
-
-    def __str__(self):
-        return self.name
-
-
-class TableTypePricing(models.Model):
-    """Цены для типов столов в разных тарифных планах"""
-    table_type = models.ForeignKey(TableType, on_delete=models.CASCADE, verbose_name="Тип стола")
-    pricing_plan = models.ForeignKey(PricingPlan, on_delete=models.CASCADE, verbose_name="Тарифный план")
-    hour_rate = models.PositiveIntegerField(verbose_name="Цена за час (стандарт)",default=400)
-    half_hour_rate = models.PositiveIntegerField(verbose_name="Цена за полчаса (стандарт)",default=250)
-    hour_rate_group = models.PositiveIntegerField(verbose_name="Цена за час (группа)")
-    min_duration = models.PositiveIntegerField(default=30, verbose_name="Минимальная длительность (минуты)")
-    max_duration = models.PositiveIntegerField(default=180, verbose_name="Максимальная длительность (минуты)")
-
-    class Meta:
-        verbose_name = "Цена типа стола"
-        verbose_name_plural = "Цены типов столов"
-        unique_together = ('table_type', 'pricing_plan')
-
-
-    def __str__(self):
-        return f"{self.table_type} - {self.pricing_plan}"
-
-
-class Equipment(models.Model):
-    """Оборудование для аренды"""
-    name = models.CharField(max_length=100, verbose_name="Название")
-    description = models.TextField(blank=True, verbose_name="Описание")
-    price_per_half_hour = models.PositiveIntegerField(verbose_name="Цена за полчаса аренды", default=200)
-    price_per_hour = models.PositiveIntegerField(verbose_name="Цена за час аренды", default=200)
-    is_available = models.BooleanField(default=True, verbose_name="Доступно для аренды")
-
-    class Meta:
-        verbose_name = "Оборудование"
-        verbose_name_plural = "Оборудование"
-
-    def __str__(self):
-        return self.name
-
-    #
-    # @property
-    # def quantity_range(self):
-    #     return range(1, self.quanavailable + 1)
 
 
 
+class BookingPackage(models.Model):
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    total_minutes = models.PositiveIntegerField()
+    used_minutes = models.PositiveIntegerField(default=0)
+    valid_until = models.DateField()
+    is_active = models.BooleanField(default=True)
+
+    def remaining_minutes(self):
+        return max(self.total_minutes - self.used_minutes, 0)
+
+    def is_valid(self):
+        return self.is_active and self.valid_until >= timezone.now().date()
+
+    def consume(self, minutes):
+        if self.remaining_minutes() >= minutes:
+            self.used_minutes += minutes
+            self.save()
+            return True
+        return False
 
 
 class Booking(models.Model):
+    from admin_settings.models import Table, Equipment
     STATUS_CHOICES = (
         ('pending', 'Ожидает подтверждения'),
         ('confirmed', 'Подтверждено'),
@@ -251,6 +170,7 @@ class Booking(models.Model):
         self.special_offer_discount_percent = engine.special_offer_discount_percent or 0
 
 class BookingEquipment(models.Model):
+    from admin_settings.models import  Equipment
     """Промежуточная модель для оборудования в бронировании"""
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE)
     equipment = models.ForeignKey(Equipment, on_delete=models.PROTECT)
@@ -264,29 +184,3 @@ class BookingEquipment(models.Model):
     def __str__(self):
         return f"{self.equipment} x{self.quantity} в брони #{self.booking.id}"
 
-
-
-class PromoCode(models.Model):
-    code = models.CharField(max_length=50, unique=True)
-    description = models.TextField(blank=True)
-    discount_percent = models.PositiveIntegerField()  # например, 10 = 10%
-    valid_from = models.DateField()
-    valid_to = models.DateField()
-    is_active = models.BooleanField(default=True)
-    usage_limit = models.PositiveIntegerField(null=True, blank=True)  # необязательное ограничение
-    used_count = models.PositiveIntegerField(default=0)
-
-    # Ограничение на конкретного пользователя (опционально)
-    user = models.ForeignKey('accounts.User', null=True, blank=True, on_delete=models.SET_NULL)
-
-    def is_valid_for_user(self, user):
-        if not self.is_active:
-            return False
-        if self.user and self.user != user:
-            return False
-        if self.usage_limit is not None and self.used_count >= self.usage_limit:
-            return False
-        return True
-
-    def __str__(self):
-        return f"{self.code} ({self.discount_percent}% off)"

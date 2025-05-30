@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts',
     'admin_settings',
+    'buisneslogic',
+    'pricing',
     'events',
     'bookings',
     'main',

@@ -15,6 +15,8 @@ class BookingEngine:
     def __init__(self, user, table, start_time, duration_minutes,
                  participants, equipment_items=None, is_group=False,
                  promo_code=None, manual_discount_percent=0):
+        self.special_offer_discount_percent = None
+        self.promo_code_discount_percent = None
         self.user = user
         self.table = table
         self.start_time = localtime(start_time)

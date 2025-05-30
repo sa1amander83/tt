@@ -61,7 +61,7 @@
 
     {% block extrascripts %}
         {{ block.super }}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+
     <script src="{% static 'js/ru.js' %}"></script>
     <script src="{% static 'js/admin_settings.js' %}"></script>
     <script src="{% static 'js/admin-modals/table_pricing.js' %}"></script>
@@ -71,6 +71,6 @@
     <script src="{% static 'js/admin-modals/schedule.js' %}"></script>
     <script src="{% static 'js/admin-modals/membership.js' %}"></script>
     <script src="{% static 'js/admin-modals/equipment.js' %}"></script>
-        
+    <script src="{% static 'js/admin-modals/promocode.js' %}"></script>        
 
     {% endblock %}

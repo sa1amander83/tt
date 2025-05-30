@@ -7,7 +7,8 @@ from accounts.models import User
 from yookassa import  Payment
 import logging
 
-from bookings.models import Table, Booking
+from admin_settings.models import Table
+from bookings.models import Booking
 
 logger = logging.getLogger(__name__)
 

@@ -1,3 +1,4 @@
+import uuid
 from decimal import Decimal
 
 from django.utils.timezone import make_aware, now
@@ -14,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.shortcuts import render, get_object_or_404
 from datetime import date
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.http import JsonResponse
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
@@ -24,6 +25,9 @@ from django.views.generic import CreateView, UpdateView
 from django.views.decorators.http import require_GET, require_POST
 from django.core.exceptions import ObjectDoesNotExist
 import json
+
+from yookassa import Payment
+
 from admin_settings.models import WorkingDay, Holiday, SpecialOffer
 from events.forms import BookingForm
 from .BookingEngine import BookingEngine
@@ -1076,3 +1080,87 @@ def create_booking_api(request):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+@csrf_exempt
+def create_yookassa_payment(request, event=None):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Неподдерживаемый метод запроса'}, status=405)
+
+    try:
+        if event is None:
+            form = BookingForm(request.POST)
+            if not form.is_valid():
+                return JsonResponse({'error': 'Неверные данные формы'}, status=400)
+
+            event = form.save(commit=False)
+            event.user = request.user
+        else:
+            form = None  # Используем переданный event
+
+        # Проверка пересечений
+        conflict = Event.objects.filter(
+            table=event.table,
+            start_time__lt=event.end_time,
+            end_time__gt=event.start_time
+        ).exclude(id=event.id).exists()
+
+        if conflict:
+            return JsonResponse({'error': 'Стол уже забронирован на это время'}, status=400)
+
+        # ---- РАСЧЁТ СТОИМОСТИ ЧЕРЕЗ BOOKING ENGINE ----
+        engine = BookingEngine(
+            user=request.user,
+            table=event.table,
+            start_time=event.start_time,
+            duration_minutes=int((event.end_time - event.start_time).total_seconds() // 60),
+            participants=event.participants or 2,
+            is_group=event.is_group,
+            manual_discount_percent=0  # или получи из формы
+        )
+        engine.calculate_total_price()
+
+        # Обновляем стоимость события (важно)
+        event.total_cost = engine.total_price
+        event.save()
+
+        # ---- ПРОВЕРКА СУЩЕСТВУЮЩЕГО ПЛАТЕЖА ----
+        if event.payment_id:
+            payment = Payment.find_one(event.payment_id)
+            if payment.status == 'pending':
+                return JsonResponse({
+                    'payment_id': event.payment_id,
+                    'confirmation_url': payment.confirmation.confirmation_url
+                })
+
+        # ---- СОЗДАНИЕ НОВОГО ПЛАТЕЖА ----
+        return_url = request.build_absolute_uri(
+            reverse('calendarapp:payment_callback', args=[event.id])
+        )
+
+        payment = Payment.create({
+            "amount": {
+                "value": f"{event.total_cost:.2f}",
+                "currency": "RUB"
+            },
+            "confirmation": {
+                "type": "redirect",
+                "return_url": return_url
+            },
+            "capture": True,
+            "description": f"Бронирование: {event.title}",
+            "metadata": {
+                "event_id": str(event.id),
+                "user_id": str(request.user.id)
+            }
+        }, idempotency_key=str(uuid.uuid4()))
+
+        event.payment_id = payment.id
+        event.save()
+
+        return JsonResponse({
+            'payment_id': payment.id,
+            'confirmation_url': payment.confirmation.confirmation_url
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': 'Ошибка при создании платежа'}, status=500)
