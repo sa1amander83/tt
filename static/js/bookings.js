@@ -1,5 +1,26 @@
 document.addEventListener('DOMContentLoaded', async function () {
 
+        async function getCurrentUser() {
+            try {
+                const response = await fetch('/settings/current_user/');
+                if (!response.ok) return null;
+
+                const data = await response.json();
+
+                if (data.isAuthenticated) {
+                    return {
+                        userId: data.userId || data.id || null,  // подставь правильное поле из API
+                        ...data // можно вернуть другие полезные данные, если нужно
+                    };
+                } else {
+                    return null;
+                }
+            } catch (error) {
+                console.error('Ошибка при получении текущего пользователя:', error);
+                return null;
+            }
+        }
+
 
         // Конфигурация API
         const API_ENDPOINTS = {
@@ -11,7 +32,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             USER_BOOKINGS: '/bookings/api/user-bookings/',
             SITE_SETTINGS: '/bookings/api/site-settings/'
         };
-        const isAdmin = document.getElementById('user_role').innerText === 'True';
+
+        const userRoleEl = document.getElementById('user_role');
+        const isAdmin = userRoleEl ? userRoleEl.innerText === 'True' : false;
         // Состояние приложения
         const state = {
             currentDate: new Date(),
@@ -21,7 +44,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             bookings: [],
             pricingPlan: null,
             equipment: [],
-            isAdmin: isAdmin
+            isAdmin: isAdmin,
+            isAuthenticated: getCurrentUser()
         }
 
         // Кэш элементов DOM
@@ -68,7 +92,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         async function init() {
             try {
                 await loadInitialData();
-                await loadSiteSettings(state.currentDate);
+                // await loadSiteSettings(state.currentDate);
 
                 setupEventListeners();
                 setupEquipmentHandlers(); // Добавляем эту строку
@@ -86,43 +110,88 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         // Загрузка начальных данных
-        async function loadInitialData() {
-            try {
-                showLoader()
-                const [ratesRes, tablesRes, userBookingsRes] = await Promise.all([fetch(API_ENDPOINTS.RATES), fetch(API_ENDPOINTS.TABLES), fetch(API_ENDPOINTS.USER_BOOKINGS)]);
+async function loadInitialData() {
+    try {
+        showLoader();
 
-                if (!ratesRes.ok) throw new Error('Ошибка загрузки тарифов');
-                if (!tablesRes.ok) throw new Error('Ошибка загрузки столов');
+        // Получаем данные о текущем пользователе — здесь устанавливаем state.currentUserId и state.isAuthenticated
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+            state.currentUserId = currentUser.userId;
+            state.isAuthenticated = true;
+        } else {
+            state.currentUserId = null;
+            state.isAuthenticated = false;
+        }
 
-                state.rates = await ratesRes.json();
-                state.tables = await tablesRes.json();
-                state.pricingPlan = state.rates.pricing_plan;
+        // Теперь грузим остальные данные, уже с учётом пользователя
+        const [ratesRes, tablesRes, userBookingsRes] = await Promise.all([
+            fetch(API_ENDPOINTS.RATES),
+            fetch(API_ENDPOINTS.TABLES),
+            fetch(API_ENDPOINTS.USER_BOOKINGS)
+        ]);
 
-                // Загружаем настройки для текущей даты
-                await loadSiteSettings(state.currentDate);
+        if (!ratesRes.ok) throw new Error('Ошибка загрузки тарифов');
+        if (!tablesRes.ok) throw new Error('Ошибка загрузки столов');
 
-                if (userBookingsRes.ok) {
-                    const userBookingsData = await userBookingsRes.json();
-                    state.bookings = userBookingsData.bookings || [];
-                }
+        state.rates = await ratesRes.json();
+        state.tables = await tablesRes.json();
+        state.pricingPlan = state.rates.pricing_plan;
 
-            } catch (error) {
-                console.error('Ошибка загрузки данных:', error);
-                showError('Не удалось загрузить данные приложения');
+        await loadSiteSettings(state.currentDate);
+
+        if (userBookingsRes.ok && userBookingsRes.headers.get('content-type')?.includes('application/json')) {
+            const userBookingsData = await userBookingsRes.json();
+            state.bookings = userBookingsData.bookings || [];
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки данных:', error);
+        showError('Не удалось загрузить данные приложения');
+    } finally {
+        hideLoader();
+        initForm();
+    }
+}
+
+
+        async function fetchWithAuthCheck(url, options = {}) {
+            const response = await fetch(url, options);
+
+            if (response.status === 401 || response.status === 403) {
+                // Перенаправляем на страницу входа или показываем модальное окно авторизации
+                window.location.href = '/login/?next=' + encodeURIComponent(window.location.pathname);
+                setTimeout(() => {
+                }, 3000)
+                throw new Error('Требуется авторизация');
             }
-            hideLoader()
-            initForm();
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return response;
         }
 
         // Инициализация формы
         function initForm() {
             // Заполнение выбора столов
+
+            if (!state.isAuthenticated) {
+                return;
+            }
+
             if (elements.tableSelect && state.tables.length) {
                 elements.tableSelect.innerHTML = state.tables.map(table => `<option value="${table.id}" 
                     data-type="${table.table_type}" 
                     data-capacity="${table.max_capacity}">
                     Стол #${table.number} (${table.table_type})
                 </option>`).join('');
+            }
+
+
+            if (elements.bookingForm) {
+                elements.bookingForm.addEventListener('input', handleFormChange);
+                elements.bookingForm.addEventListener('change', handleFormChange);
             }
 
             // Установка текущей даты
@@ -150,29 +219,40 @@ document.addEventListener('DOMContentLoaded', async function () {
         async function loadSiteSettings(date) {
             try {
                 const dateStr = date.toISOString().split('T')[0];
-                showLoader()
+
                 const response = await fetch(`${API_ENDPOINTS.SITE_SETTINGS}?date=${dateStr}`);
 
-                if (!response.ok) throw new Error('Ошибка получения настроек');
+                if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) {
+                    throw new Error('Ошибка получения настроек');
+                }
+
                 const data = await response.json();
+
+                // Проверяем наличие обязательных полей
+                if (!data.current_day) {
+                    throw new Error('Неверный формат настроек');
+                }
 
                 state.siteSettings = {
                     open_time: data.current_day.open_time || "09:00",
                     close_time: data.current_day.close_time || "22:00",
-                    is_open: data.current_day.is_open !== false // по умолчанию true
+                    is_open: data.current_day.is_open !== false
                 };
 
                 initTimeSlots();
-                hideLoader()
                 return true;
-
             } catch (error) {
                 console.error('Ошибка загрузки настроек дня:', error);
+                // Значения по умолчанию
                 state.siteSettings = {
-                    open_time: "09:00", close_time: "22:00", is_open: true
+                    open_time: "09:00",
+                    close_time: "22:00",
+                    is_open: true
                 };
                 initTimeSlots();
                 return false;
+            } finally {
+
             }
         }
 
@@ -292,18 +372,28 @@ document.addEventListener('DOMContentLoaded', async function () {
                     renderCalendar();
                 }
             });
-            elements.dayContainer?.addEventListener('click', function (event) {
-                const slot = event.target.closest('.booking-slot-available');
-                if (slot) {
-                    handleSlotClick(event, slot);
-                }
-            });
+
+
+            if (elements.dayContainer) {
+                elements.dayContainer.addEventListener('click', function (event) {
+                    const slot = event.target.closest('.booking-slot-available');
+                    if (slot) {
+                        handleSlotClick(event, slot);
+                    }
+                });
+            }
+
 
         }
+
 
         // Обработка кликов по слотам бронирования
         function handleSlotClick(event, slot) {
             event.preventDefault();
+            if (!getCurrentUser()) {
+                showNotification('Для бронирования стола необходимо войти в систему', 'warning');
+                return;
+            }
 
             const date = slot.dataset.date;
             const time = slot.dataset.time;
@@ -346,13 +436,16 @@ document.addEventListener('DOMContentLoaded', async function () {
             const equipmentCostEl = document.getElementById('tariff-equipment-cost');
             const totalCostEl = document.getElementById('tariff-total-cost');
 
-            nameEl.textContent = tariffName || '—';
-            tableCostEl.textContent = `${tableCost} ₽`;
-            equipmentCostEl.textContent = `${equipmentCost} ₽`;
-            totalCostEl.textContent = `${totalCost} ₽`;
+            if (!summaryBlock) return; // Если блока нет — выходим
+
+            if (nameEl) nameEl.textContent = tariffName || '—';
+            if (tableCostEl) tableCostEl.textContent = tableCost != null ? `${tableCost} ₽` : '—';
+            if (equipmentCostEl) equipmentCostEl.textContent = equipmentCost != null ? `${equipmentCost} ₽` : '—';
+            if (totalCostEl) totalCostEl.textContent = totalCost != null ? `${totalCost} ₽` : '—';
 
             summaryBlock.classList.remove('hidden');
         }
+
 
         function isPastTime(dateStr, timeStr) {
             if (state.isAdmin) return false;
@@ -363,10 +456,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             return slotDate < now;
         }
 
-        const formElement = elements.bookingForm;
-
-        formElement.addEventListener('input', handleFormChange);
-        formElement.addEventListener('change', handleFormChange);
 
         async function handleFormChange() {
             const date = elements.bookingDate.value;
@@ -381,7 +470,23 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         async function fetchBookingInfoAndRecalculate({date, time, tableId, duration}) {
             try {
-                const response = await fetch(`/bookings/api/get-booking-info/?date=${date}&time=${time}&table_id=${tableId}&duration=${duration}`);
+                const response = await fetch(`/bookings/api/get-booking-info/?date=${date}&time=${time}&table_id=${tableId}&duration=${duration}`, {
+                    redirect: 'manual'
+                });
+                // Проверяем Content-Type перед парсингом JSON
+                if (response.type === 'opaqueredirect' || response.redirected) {
+                    window.location.href = '/accounts/signin/?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                    setTimeout(() => {
+                    }, 3000)
+                    return;
+                }
+
+                // Проверяем Content-Type
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Сервер вернул неожиданный ответ');
+                }
+
                 const data = await response.json();
 
                 if (!response.ok || data.error) {
@@ -406,23 +511,38 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             } catch (error) {
                 console.error("Ошибка при получении тарифа:", error);
-                showNotification("Ошибка при получении тарифа: " + error.message, 'error');
+                if (error.message.includes('authorization') || error.message.includes('auth') || error.message.includes('неожиданный')) {
+                    window.location.href = '/accounts/signin/?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                    setTimeout(() => {
+                    }, 3000)
+                } else {
+                    showNotification("Ошибка при получении тарифа: " + error.message, 'error');
+                }
             }
         }
-
 
         // Открытие модального окна бронирования
         async function openBookingModal(date, time, tableId, slotId) {
             const formattedTime = time.includes(':') ? time : `${time}:00`;
 
             try {
-                const response = await fetch(`/bookings/api/get-booking-info/?date=${date}&time=${formattedTime}&table_id=${tableId}`);
+                const response = await fetch(`/bookings/api/get-booking-info/?date=${date}&time=${formattedTime}&table_id=${tableId}`, {
+                    redirect: 'manual' // Отключаем автоматическое следование редиректам
+                });
+
+
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Сервер вернул неожиданный ответ');
+                }
+
                 const data = await response.json();
 
                 if (!response.ok || data.error) {
                     alert(data.error || "Ошибка при получении тарифной информации.");
                     return;
                 }
+
                 elements.bookingForm.dataset.discount = data.discount || 0;
 
                 const {open_time, close_time} = state.siteSettings;
@@ -469,7 +589,16 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             } catch (error) {
                 console.error("Ошибка при открытии модалки бронирования:", error);
-                alert("Не удалось получить информацию о бронировании. Повторите попытку позже.");
+                if (error.message.includes('authorization') || error.message.includes('auth') || error.message.includes('неожиданный')) {
+                    if (state.isAuthenticated) {
+                        showNotification('Чтобы забронировать стол, войдите в личный кабинет или зарегистрируйтесь', 'warning');
+                        setTimeout(() => {
+                            window.location.href = '/accounts/signin/?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                        }, 3000); // Ждем 3 секунды перед редиректом
+                    }
+                } else {
+                    alert("Не удалось получить информацию о бронировании. Повторите попытку позже.");
+                }
             }
         }
 
@@ -596,15 +725,29 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         async function updateBookingCost({
-                                             tablePriceHour = parseFloat(elements.bookingForm.dataset.pricePerHour),
-                                             tablePriceHalfHour = parseFloat(elements.bookingForm.dataset.pricePerHalfHour),
+                                             tablePriceHour,
+                                             tablePriceHalfHour,
                                              tariffName = "Стандартный тариф"
                                          } = {}) {
             try {
-                const duration = parseInt(elements.duration?.value) || 60;
+                // Если цены не переданы, пытаемся получить из elements.bookingForm
+                if (!tablePriceHour || !tablePriceHalfHour) {
+                    if (elements.bookingForm) {
+                        // Безопасно читаем из dataset, если элемент существует
+                        tablePriceHour = tablePriceHour ?? (parseFloat(elements.bookingForm.dataset.pricePerHour) || 1000);
+                        tablePriceHalfHour = tablePriceHalfHour ?? (parseFloat(elements.bookingForm.dataset.pricePerHalfHour) || 500);
+                    } else {
+                        // Дефолтные значения для незалогиненных пользователей
+                        tablePriceHour = tablePriceHour ?? 1000;
+                        tablePriceHalfHour = tablePriceHalfHour ?? 500;
+                    }
+                }
+
+                // Получаем длительность брони, если нет - по умолчанию 60 минут
+                const duration = (parseInt(elements.duration?.value) || 60);
                 const blocks = Math.ceil(duration / 30);
 
-                // Получаем базовую стоимость без скидки
+                // Рассчитываем базовую стоимость за стол без скидок
                 let baseTableCost = 0;
                 if (duration <= 30) {
                     baseTableCost = tablePriceHalfHour;
@@ -616,19 +759,24 @@ document.addEventListener('DOMContentLoaded', async function () {
                     baseTableCost = (hours * tablePriceHour) + (extra * tablePriceHalfHour);
                 }
 
-                // Применяем скидку (если есть)
+                // Получаем скидку, если форма есть и есть скидка
+                let discount = 0;
+                if (elements.bookingForm && elements.bookingForm.dataset.discount) {
+                    discount = parseFloat(elements.bookingForm.dataset.discount) || 0;
+                }
+
+                // Применяем скидку
                 let tableCost = baseTableCost;
-                const discount = parseFloat(elements.bookingForm.dataset.discount) || 0;
                 if (discount > 0) {
                     tableCost = baseTableCost * (1 - discount / 100);
                 }
 
-                // Оборудование (без скидки)
+                // Рассчитываем стоимость оборудования
                 const equipmentCost = [...document.querySelectorAll('.equipment-checkbox:checked')].reduce((sum, el) => {
                     const priceHalf = parseFloat(el.dataset.priceHalfHour) || 0;
                     const priceHour = parseFloat(el.dataset.priceHour) || priceHalf * 2;
-                    let cost = 0;
 
+                    let cost = 0;
                     if (duration <= 30) {
                         cost = priceHalf;
                     } else if (duration === 60) {
@@ -638,12 +786,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                         const extra = Math.ceil((duration % 60) / 30);
                         cost = (hours * priceHour) + (extra * priceHalf);
                     }
-
                     return sum + cost;
                 }, 0);
 
+                // Общая стоимость
                 const totalCost = Math.round(tableCost + equipmentCost);
 
+                // Обновляем отображение цены
                 updateTariffSummary(
                     tariffName,
                     Math.round(tableCost),
@@ -662,6 +811,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 showNotification(`Ошибка расчета стоимости: ${error.message}`, 'error');
             }
         }
+
 
         function updateDurationOptions(minMinutes, maxMinutes) {
             const select = document.getElementById('duration-select');
@@ -701,12 +851,19 @@ document.addEventListener('DOMContentLoaded', async function () {
             event.preventDefault();
 
             try {
-                // Получаем выбранную длительность в минутах
-                const durationHours = parseFloat(elements.duration.value);
-                ///  const durationMinutes = Math.round(durationHours * 60);
+                // Get form data
                 const durationMinutes = parseInt(elements.duration.value) || 60;
 
-                // Собираем данные оборудования с количеством
+                // Log form data for debugging
+                console.log("Form data:", {
+                    date: elements.bookingDate.value,
+                    start_time: elements.startTime.value,
+                    duration: durationMinutes,
+                    table_id: elements.tableSelect.value,
+                    participants: elements.participants.value,
+                    notes: elements.notes.value
+                });
+
                 const equipmentData = Array.from(document.querySelectorAll('.equipment-checkbox:checked'))
                     .map(checkbox => {
                         const quantityEl = checkbox.closest('.equipment-item').querySelector('select');
@@ -720,7 +877,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const formData = {
                     date: elements.bookingDate.value,
                     start_time: elements.startTime.value,
-                    duration: durationMinutes, // отправляем в минутах
+                    duration: durationMinutes,
                     table_id: parseInt(elements.tableSelect.value),
                     equipment: equipmentData,
                     participants: parseInt(elements.participants.value),
@@ -728,6 +885,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                     notes: elements.notes.value,
                     slot_id: elements.bookingForm.dataset.slotId || null
                 };
+
+                // Debug: log the complete payload
+                console.log("Full payload:", JSON.stringify(formData, null, 2));
 
                 const response = await fetch(API_ENDPOINTS.BOOKINGS, {
                     method: 'POST',
@@ -738,9 +898,24 @@ document.addEventListener('DOMContentLoaded', async function () {
                     body: JSON.stringify(formData)
                 });
 
+                // Check for HTTP errors
                 if (!response.ok) {
-                    const error = await response.json().catch(() => ({}));
-                    throw new Error(error.message || 'Ошибка сервера');
+                    // Try to get error details from response
+                    let errorDetails = {};
+                    try {
+                        errorDetails = await response.json();
+                    } catch (e) {
+                        console.error("Couldn't parse error response", e);
+                    }
+
+                    console.error("Server response:", response.status, errorDetails);
+
+                    // Show detailed error message if available
+                    const errorMessage = errorDetails.message ||
+                        errorDetails.error ||
+                        `Server error: ${response.status}`;
+
+                    throw new Error(errorMessage);
                 }
 
                 const result = await response.json();
@@ -756,7 +931,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             } catch (error) {
                 console.error('Ошибка бронирования:', error);
-                showNotification('Ошибка: ' + error.message, 'error');
+                showNotification(`Ошибка бронирования: ${error.message}`, 'error');
+
+                // For debugging - show full error in console
+                console.error("Full error:", error);
             }
         }
 
@@ -936,8 +1114,16 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         async function renderCalendar() {
+            // if (state.isAuthenticated) {
+            //     return;
+            // }
             try {
                 const container = elements[`${state.currentView}Container`];
+
+                if (!container) {
+                    console.warn("Календарь не найден — пользователь, возможно, не залогинен.");
+                    return;
+                }
                 container.innerHTML = '<div class="text-center py-4">Загрузка...</div>';
                 if (!state.siteSettings.is_open && state.currentView === 'day') {
                     container.innerHTML = `

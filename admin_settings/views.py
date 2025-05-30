@@ -415,7 +415,15 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 import json
 
-
+def current_user(request):
+    if request.user.is_authenticated:
+        return JsonResponse({
+            'isAuthenticated': True,
+            'username': request.user.username,
+            'user_id': request.user.id
+        })
+    else:
+        return JsonResponse({'isAuthenticated': False})
 @csrf_exempt
 @require_http_methods(["POST"])
 def create_equipment(request):

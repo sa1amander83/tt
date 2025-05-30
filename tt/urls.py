@@ -28,6 +28,8 @@ urlpatterns = [
     path('events/', include('events.urls')),
     path('bookings/', include('bookings.urls')),
     path('accounts/', include('accounts.urls')),
+    path('pricing/', include('pricing.urls')),
+path('buisneslogic/', include('buisneslogic.urls')),
 ]
 
 if settings.DEBUG:

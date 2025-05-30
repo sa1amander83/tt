@@ -3,9 +3,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 
-
 from accounts.models import User
-
 
 from django import forms
 from django.contrib.auth import authenticate
@@ -20,7 +18,8 @@ class SignInForm(forms.Form):
         widget=forms.EmailInput(attrs={
             "class": "w-full px-3 py-2 border border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500",
             "id": "loginEmailField",
-            "placeholder": "example@example.com"
+            "placeholder": "example@example.com",
+            "autocomplete": "email"
         })
     )
     login_phone = forms.CharField(
@@ -36,13 +35,15 @@ class SignInForm(forms.Form):
             "class": "w-full px-3 py-2 border border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500",
             "id": "loginPhoneField",
             "placeholder": "9XXXXXXXXX",
-            "maxlength": "10"
+            "maxlength": "10",
+            "autocomplete": "tel"
         })
     )
     password = forms.CharField(
         label="Пароль",
         widget=forms.PasswordInput(attrs={
-            "class": "w-full px-3 py-2 border border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            "class": "w-full px-3 py-2 border border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500",
+            'autocomplete': 'current-password'
         })
     )
     login_method = forms.CharField(widget=forms.HiddenInput())
@@ -64,16 +65,14 @@ class SignInForm(forms.Form):
         elif method == 'phone':
             if not login_phone:
                 raise ValidationError("Введите номер телефона")
-            cleaned_data['login'] =  login_phone
+            cleaned_data['login'] = login_phone
         else:
             raise ValidationError("Неверный метод входа")
 
         return cleaned_data
 
 
-
 class SignUpForm(forms.ModelForm):
-
     LEVEL_CHOICES = [
         ('beginner', 'Начинающий'),
         ('intermediate', 'Средний'),
@@ -129,7 +128,6 @@ class SignUpForm(forms.ModelForm):
         })
     )
 
-
     password1 = forms.CharField(
         label="Пароль",
         widget=forms.PasswordInput(attrs={
@@ -167,16 +165,12 @@ class SignUpForm(forms.ModelForm):
             raise ValidationError("Пользователь с таким номером телефона уже зарегистрирован.")
         return phone
 
-
-
     def clean_password2(self):
         password1 = self.cleaned_data.get('password1')
         password2 = self.cleaned_data.get('password2')
         if password1 and password2 and password1 != password2:
             raise ValidationError("Пароли не совпадают")
         return password2
-
-
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -189,8 +183,6 @@ class SignUpForm(forms.ModelForm):
 
 
 class ProfileUpdateForm(forms.ModelForm):
-
-
     phone = forms.CharField(
         label="Телефон",
         validators=[
@@ -252,6 +244,7 @@ class ProfileUpdateForm(forms.ModelForm):
             raise ValidationError("Этот email уже используется другим пользователем")
         return email
 
+
 class CustomPasswordChangeForm(PasswordChangeForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -265,7 +258,9 @@ class CustomPasswordChangeForm(PasswordChangeForm):
             'class': 'w-full px-3 py-2 border border-2 border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500'
         })
 
+
 from django.core.validators import FileExtensionValidator
+
 
 class ProfilePhotoForm(forms.ModelForm):
     photo = forms.ImageField(

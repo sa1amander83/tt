@@ -287,3 +287,12 @@ body {
     transform: translate(0px, 0px) scale(1);
   }
 }
+.slot--mine-pending {
+  background-color: #fff3cd; /* светло-жёлтый фон */
+  border: 2px solid #ffc107; /* жёлтый бордер */
+}
+
+.slot--mine-confirmed {
+  background-color: #d4edda; /* светло-зелёный фон */
+  border: 2px solid #28a745; /* зелёный бордер */
+}

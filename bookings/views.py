@@ -2,6 +2,7 @@ import uuid
 from asyncio import Event
 from decimal import Decimal
 
+from django.contrib import messages
 from django.utils.timezone import make_aware, now
 import re
 
@@ -14,7 +15,7 @@ from django.utils.dateparse import parse_date
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from datetime import date
 from django.urls import reverse_lazy, reverse
 from django.http import JsonResponse
@@ -407,6 +408,8 @@ class CalendarAPIView(APIView):
 
 @login_required
 def get_booking_info(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Authentication required'}, status=401)
     table_id = request.GET.get('table_id')
     date_str = request.GET.get('date')
     time_str = request.GET.get('time')
@@ -546,6 +549,7 @@ def get_booking_info(request):
 
 @require_GET
 def get_site_settings(request):
+
     try:
         # Получаем дату или используем текущую
         date_str = request.GET.get('date')
@@ -948,8 +952,6 @@ from django.db import transaction
 
 @login_required
 @require_POST
-
-
 def create_booking_api(request):
     try:
         data = json.loads(request.body)
@@ -1004,7 +1006,13 @@ def create_booking_api(request):
             membership = None
 
         loyalty_profile = getattr(request.user, 'loyaltyprofile', None)
+        pending_bookings_count = Booking.objects.filter(user=request.user, status='pending').count()
+        MAX_PENDING_BOOKINGS = 2
 
+        if pending_bookings_count >= MAX_PENDING_BOOKINGS:
+            return JsonResponse({
+                                    'error': f'У вас уже есть {MAX_PENDING_BOOKINGS} неоплаченных бронирований. Пожалуйста, оплатите их или отмените, чтобы создать новое.'},
+                                status=400)
         engine = BookingEngine(
             user=request.user,
             table=table,
@@ -1044,14 +1052,14 @@ def create_booking_api(request):
                 pricing=engine.pricing,
                 status='pending',
 
-                promo_code=promo,
-                promo_code_discount_percent=promo.discount_percent if promo else 0,
-                special_offer=engine.special_offer,
-                special_offer_discount_percent=engine.special_offer.discount_percent if engine.special_offer else 0,
-                membership=membership,
-                membership_discount_percent=membership.membership_type.discount_percent if membership else 0,
-                loyalty_level=loyalty_profile.level if loyalty_profile else None,
-                loyalty_discount_percent=loyalty_profile.get_discount() if loyalty_profile else Decimal('0.00'),
+                # promo_code=promo,
+                # promo_code_discount_percent=promo.discount_percent if promo else 0,
+                # special_offer=engine.special_offer,
+                # special_offer_discount_percent=engine.special_offer.discount_percent if engine.special_offer else 0,
+                # membership=membership,
+                # membership_discount_percent=membership.membership_type.discount_percent if membership else 0,
+                # loyalty_level=loyalty_profile.level if loyalty_profile else None,
+                # loyalty_discount_percent=loyalty_profile.get_discount() if loyalty_profile else Decimal('0.00'),
             )
 
             for item in equipment_items:
