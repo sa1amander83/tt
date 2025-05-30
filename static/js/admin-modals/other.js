@@ -126,7 +126,7 @@ async function openEditPricingPlanModal(planId) {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
         // Загружаем данные тарифного плана
-        const response = await fetch(`/settings/pricing-plans/${planId}/`, {
+        const response = await fetch(`/pricing/pricing-plans/${planId}/`, {
             headers: {
                 'X-CSRFToken': csrfToken
             }
@@ -191,8 +191,8 @@ async function savePricingPlan() {
 
         // Определяем URL и метод
         const url = isEditMode
-            ? `/settings/pricing-plans/${planId}/update/`
-            : '/settings/pricing-plans/create/';
+            ? `/pricing/pricing-plans/${planId}/update/`
+            : '/pricing/pricing-plans/create/';
         const method = 'POST';
 
         // Получаем CSRF токен
@@ -282,7 +282,7 @@ async function saveTableTypePricing() {
         const formData = new FormData(form);
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-        const response = await fetch('/settings/table-type-pricings/create/', {
+        const response = await fetch('/pricing/table-type-pricings/create/', {
             method: 'POST',
             body: formData,
             headers: {
@@ -551,7 +551,7 @@ async function updateMembership() {
 
             // Отправка данных на сервер
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-            const response = await fetch(`/settings/membership/${membershipId}/update/`, {
+            const response = await fetch(`/buisneslogic/membership/${membershipId}/update/`, {
                 method: 'POST',
                 body: formData,
                 headers: {

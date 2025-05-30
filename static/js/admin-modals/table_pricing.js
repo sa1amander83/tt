@@ -18,7 +18,7 @@ async function deletePricingPlan(planId) {
     try {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         
-        const response = await fetch(`/settings/pricing-plans/${planId}/delete/`, {
+        const response = await fetch(`/pricing/pricing-plans/${planId}/delete/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken,
@@ -71,7 +71,7 @@ async function saveTableTypePricing() {
             const formData = new FormData(form);
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-            const response = await fetch('/settings/table-type-pricings/create/', {
+            const response = await fetch('/pricing/table-type-pricings/create/', {
                 method: 'POST',
                 body: formData,
                 headers: {
@@ -399,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const formData = new FormData(form);
       const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-      const response = await fetch(`/settings/special-offers/${offerId}/update/`, {
+      const response = await fetch(`/buisneslogic/special-offers/${offerId}/update/`, {
         method: 'POST',
         body: formData,
         headers: {

@@ -7,7 +7,7 @@ function openMembershipModal() {
     const form = document.getElementById('membershipForm');
 
     form.reset();
-    form.action = '/settings/membership/create/';
+    form.action = '/buisneslogic/membership/create/';
     document.getElementById('modal-title').textContent = 'Добавить новый абонемент';
     document.getElementById('membership_id').value = '';
 
@@ -37,7 +37,7 @@ async function openEditMembershipModal(membershipId) {
         modal.classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
 
-        const res = await fetch(`/settings/membership/${membershipId}/view/`);
+        const res = await fetch(`/buisneslogic/membership/${membershipId}/view/`);
         const data = await res.json();
 
         // Fill form fields
@@ -120,7 +120,7 @@ async function deleteMembership(membershipId) {
     if (!confirm('Вы уверены, что хотите удалить этот абонемент?')) return;
 
     try {
-        const response = await fetch(`/settings/membership/${membershipId}/delete/`, {
+        const response = await fetch(`/buisneslogic/membership/${membershipId}/delete/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,

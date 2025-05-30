@@ -1,6 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -142,18 +143,27 @@ class LoyaltyProfile(models.Model):
 class PromoCode(models.Model):
     code = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True)
-    discount_percent = models.PositiveIntegerField()  # например, 10 = 10%
+    discount_percent = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(100)]
+    )
     valid_from = models.DateField()
     valid_to = models.DateField()
     is_active = models.BooleanField(default=True)
-    usage_limit = models.PositiveIntegerField(null=True, blank=True)  # необязательное ограничение
+    usage_limit = models.PositiveIntegerField(null=True, blank=True)
     used_count = models.PositiveIntegerField(default=0)
+    user = models.ForeignKey(
+        'accounts.User',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
 
-    # Ограничение на конкретного пользователя (опционально)
-    user = models.ForeignKey('accounts.User', null=True, blank=True, on_delete=models.SET_NULL)
+    def is_valid(self):
+        today = date.today()
+        return self.is_active and self.valid_from <= today <= self.valid_to
 
     def is_valid_for_user(self, user):
-        if not self.is_active:
+        if not self.is_valid():
             return False
         if self.user and self.user != user:
             return False
@@ -161,9 +171,13 @@ class PromoCode(models.Model):
             return False
         return True
 
+    def apply_code(self):
+        if self.usage_limit is not None:
+            self.used_count = models.F('used_count') + 1
+            self.save(update_fields=['used_count'])
+
     def __str__(self):
         return f"{self.code} ({self.discount_percent}% off)"
-from django.db import models
 
 # Create your models here.
 

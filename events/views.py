@@ -6,7 +6,8 @@ from django.utils import timezone
 from django.http import JsonResponse
 from yookassa import Payment
 
-from bookings.models import Booking, Table
+from admin_settings.models import Table
+from bookings.models import Booking
 
 
 class BookingListView(LoginRequiredMixin, ListView):

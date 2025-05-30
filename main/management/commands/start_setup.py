@@ -3,8 +3,10 @@ from datetime import time, timedelta
 from django.utils.timezone import now
 from random import randint, choice
 
-from admin_settings.models import WorkingDay, SpecialOffer
-from bookings.models import TableType, Table, PricingPlan, TableTypePricing
+from admin_settings.models import WorkingDay, TableType, Table
+from bookings.models import  TableTypePricing
+from buisneslogic.models import SpecialOffer
+from pricing.models import PricingPlan
 
 
 class Command(BaseCommand):

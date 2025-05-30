@@ -46,7 +46,7 @@ async function openSpecialOfferModal(offerId = null) {
  */
 async function fetchSpecialOfferData(offerId) {
     console.log('Fetching offer data for ID:', offerId); // Логируем ID
-    const response = await fetch(`/settings/special-offers/${offerId}/`);
+    const response = await fetch(`/buisneslogic/special-offers/${offerId}/`);
     console.log('Response status:', response.status); // Логируем статус ответа
 
     if (!response.ok) {
@@ -186,8 +186,8 @@ async function saveSpecialOffer() {
 
         // Определяем URL и метод
         const url = isEditMode
-            ? `/settings/special-offers/${offerId}/update/`
-            : '/settings/special-offers/create/';
+            ? `/buisneslogic/special-offers/${offerId}/update/`
+            : '/buisneslogic/special-offers/create/';
 
         // Отправляем запрос
         const response = await fetch(url, {
@@ -245,7 +245,7 @@ async function deleteSpecialOffer(offerId) {
     try {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-        const response = await fetch(`/settings/special-offers/${offerId}/delete/`, {
+        const response = await fetch(`/buisneslogic/special-offers/${offerId}/delete/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken,

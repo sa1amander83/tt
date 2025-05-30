@@ -1,7 +1,7 @@
 
 
 def get_applicable_pricing_plan(dt):
-    from bookings.models import PricingPlan
+    from pricing.models import PricingPlan
 
     plans = PricingPlan.objects.filter(valid_from__lte=dt.date()).order_by('-valid_from')
     for plan in plans:

@@ -1,6 +1,7 @@
 from django import forms
 
-from bookings.models import Equipment, Booking
+from admin_settings.models import Equipment
+from bookings.models import  Booking
 
 
 class BookingForm(forms.ModelForm):

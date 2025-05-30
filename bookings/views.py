@@ -1,4 +1,5 @@
 import uuid
+from asyncio import Event
 from decimal import Decimal
 
 from django.utils.timezone import make_aware, now
@@ -28,12 +29,13 @@ import json
 
 from yookassa import Payment
 
-from admin_settings.models import WorkingDay, Holiday, SpecialOffer
+from admin_settings.models import WorkingDay, Holiday, Table, Equipment
+from buisneslogic.models import SpecialOffer, PromoCode
 from events.forms import BookingForm
+from pricing.models import PricingPlan
 from .BookingEngine import BookingEngine
-from .models import Table, Booking, BookingEquipment, Equipment, PricingPlan, TableTypePricing, PromoCode
+from .models import  Booking, BookingEquipment,TableTypePricing
 
-from .models import Equipment  # не забудь импортировать
 
 
 def booking_view(request):

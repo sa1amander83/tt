@@ -2,6 +2,7 @@ from datetime import datetime
 from django.db import models
 from django.utils import timezone
 
+from buisneslogic.models import PromoCode, SpecialOffer
 # from admin_settings.models import Table, Equipment
 from pricing.models import TableTypePricing
 
@@ -66,7 +67,7 @@ class Booking(models.Model):
     )
 
     promo_code = models.ForeignKey(
-        'PromoCode',
+        PromoCode,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -79,7 +80,7 @@ class Booking(models.Model):
     )
 
     special_offer = models.ForeignKey(
-        'admin_settings.SpecialOffer',
+     SpecialOffer,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,

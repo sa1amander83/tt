@@ -2,7 +2,6 @@ import re
 from datetime import timedelta
 from django.utils.timezone import localtime
 
-from admin_settings.models import Membership, SpecialOffer
 from bookings.models import TableTypePricing
 from bookings.utils import get_applicable_pricing_plan
 
@@ -10,6 +9,9 @@ from bookings.utils import get_applicable_pricing_plan
 import re
 from datetime import timedelta, date
 from django.utils.timezone import localtime
+
+from buisneslogic.models import SpecialOffer
+
 
 class BookingEngine:
     def __init__(self, user, table, start_time, duration_minutes,

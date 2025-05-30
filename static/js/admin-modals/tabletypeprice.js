@@ -131,7 +131,7 @@ async function openTableTypePricingModal(pricingId = null) {
 
 
 async function fetchTableTypePricingData(pricingId) {
-    const response = await fetch(`/settings/table-type-pricings/${pricingId}/`);
+    const response = await fetch(`/pricing/table-type-pricings/${pricingId}/`);
     if (!response.ok) {
         throw new Error('Failed to load pricing data');
     }
@@ -201,8 +201,8 @@ async function saveTableTypePricing() {
 
         // Определяем URL и метод в зависимости от наличия ID
         const url = pricingId
-            ? `/settings/table-type-pricings/${pricingId}/update/`
-            : '/settings/table-type-pricings/create/';
+            ? `/pricing/table-type-pricings/${pricingId}/update/`
+            : '/pricing/table-type-pricings/create/';
 
         const response = await fetch(url, {
             method: 'POST',
@@ -248,7 +248,7 @@ async function deleteTableTypePricing(pricingId) {
     try {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-        const response = await fetch(`/settings/table-type-pricings/${pricingId}/delete/`, {
+        const response = await fetch(`/pricing/table-type-pricings/${pricingId}/delete/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken,

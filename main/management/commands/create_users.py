@@ -6,7 +6,9 @@ from django.utils import timezone
 from faker import Faker
 
 from accounts.models import User
-from bookings.models import Table, TableTypePricing, Equipment, Booking, PricingPlan, BookingEquipment
+from admin_settings.models import Table, Equipment
+from bookings.models import  TableTypePricing, Booking, BookingEquipment
+from pricing.models import PricingPlan
 
 fake = Faker('ru_RU')
 
