@@ -35,10 +35,11 @@ class BookingPackage(models.Model):
 class Booking(models.Model):
     from admin_settings.models import Table, Equipment
     STATUS_CHOICES = (
-        ('pending', 'Ожидает подтверждения'),
-        ('confirmed', 'Подтверждено'),
+        ('pending', 'Ожидает оплаты'),
+        ('paid', 'Оплачено'),
         ('cancelled', 'Отменено'),
         ('completed', 'Завершено'),
+        ('expired', 'Просрочено')
     )
 
     user = models.ForeignKey(
@@ -63,7 +64,8 @@ class Booking(models.Model):
         max_length=10,
         choices=STATUS_CHOICES,
         default='pending',
-        verbose_name="Статус"
+        verbose_name="Статус",
+
     )
 
     promo_code = models.ForeignKey(
@@ -116,11 +118,12 @@ class Booking(models.Model):
         verbose_name="Стоимость оборудования"
     )
     total_price = models.PositiveIntegerField(verbose_name="Итоговая стоимость")
+    payment_id = models.CharField(max_length=100, blank=True, null=True)
 
     notes = models.TextField(blank=True, verbose_name="Примечания")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
-
+    expires_at = models.DateTimeField(default=datetime.now() + timezone.timedelta(days=1), verbose_name="Срок действия")
     class Meta:
         verbose_name = "Бронирование"
         verbose_name_plural = "Бронирования"

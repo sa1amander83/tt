@@ -2,6 +2,7 @@ import uuid
 from asyncio import Event
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib import messages
 from django.utils.timezone import make_aware, now
 import re
@@ -18,7 +19,7 @@ from rest_framework.views import APIView
 from django.shortcuts import render, get_object_or_404, redirect
 from datetime import date
 from django.urls import reverse_lazy, reverse
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from django.utils.timezone import make_aware
@@ -642,7 +643,7 @@ def get_user_bookings(request):
                 'table': booking.table.number,
                 'table_type': booking.table.table_type.name,
                 'status': booking.get_status_display(),
-                'can_cancel': booking.status in ['pending', 'confirmed']
+                'can_cancel': booking.status in ['pending']
             }
             for booking in bookings
         ]
@@ -684,7 +685,7 @@ def create_booking_view(request):
         table=table,
         start_time__lt=end_time,
         end_time__gt=start_time,
-        status__in=['confirmed', 'pending']  # или нужные статусы
+        status__in=['paid', 'pending']  # или нужные статусы
     )
     if conflicts.exists():
         return JsonResponse({'error': 'Стол уже забронирован в это время'}, status=409)
@@ -795,7 +796,7 @@ def cancel_booking(request, booking_id):
     try:
         booking = get_object_or_404(Booking, id=booking_id, user=request.user)
 
-        if booking.status not in ['pending', 'confirmed']:
+        if booking.status not in ['pending', 'paid']:
             return JsonResponse({'success': False, 'error': 'Невозможно отменить это бронирование'}, status=400)
 
         # Освобождаем временной слот
@@ -980,7 +981,7 @@ def create_booking_api(request):
             table=table,
             start_time__lt=end_datetime,
             end_time__gt=start_datetime,
-            status__in=['pending', 'confirmed']
+            status__in=['pending', 'paid']
         )
         if overlapping.exists():
             return JsonResponse({'error': 'Timeslot is already booked'}, status=400)
@@ -1034,7 +1035,7 @@ def create_booking_api(request):
                 table=table,
                 start_time__lt=end_datetime,
                 end_time__gt=start_datetime,
-                status__in=['pending', 'confirmed']
+                status__in=['pending', 'paid']
             )
             if overlapping.exists():
                 return JsonResponse({'error': 'Timeslot is already booked'}, status=400)
@@ -1091,65 +1092,89 @@ def create_booking_api(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+
+
+
+from yookassa import Configuration, Payment
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+# Настройте ЮКассу (лучше вынести в settings.py)
+Configuration.account_id = settings.ACCOUNT_ID
+Configuration.secret_key = settings.SHOP_SECRET_KEY
+
 @csrf_exempt
-def create_yookassa_payment(request, event=None):
+def create_yookassa_payment(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Неподдерживаемый метод запроса'}, status=405)
 
     try:
-        if event is None:
-            form = BookingForm(request.POST)
-            if not form.is_valid():
-                return JsonResponse({'error': 'Неверные данные формы'}, status=400)
+        data = json.loads(request.body)
 
-            event = form.save(commit=False)
-            event.user = request.user
-        else:
-            form = None  # Используем переданный event
+        booking_id = data.get('booking_id')
+        if not booking_id:
+            return JsonResponse({'error': 'Отсутствует booking_id'}, status=400)
 
-        # Проверка пересечений
-        conflict = Event.objects.filter(
-            table=event.table,
-            start_time__lt=event.end_time,
-            end_time__gt=event.start_time
-        ).exclude(id=event.id).exists()
+        # Получаем бронирование, принадлежит ли текущему пользователю
+        try:
+            booking = Booking.objects.get(id=booking_id, user=request.user)
+        except Booking.DoesNotExist:
+            return JsonResponse({'error': 'Бронирование не найдено'}, status=404)
+
+        # Проверка пересечений с другими бронированиями того же стола и времени
+        conflict = Booking.objects.filter(
+            table=booking.table,
+            start_time__lt=booking.end_time,
+            end_time__gt=booking.start_time
+        ).exclude(id=booking.id).exists()
 
         if conflict:
             return JsonResponse({'error': 'Стол уже забронирован на это время'}, status=400)
 
-        # ---- РАСЧЁТ СТОИМОСТИ ЧЕРЕЗ BOOKING ENGINE ----
+        # Пересчет стоимости через BookingEngine
+        # Получаем оборудование из связанной модели BookingEquipment
+        equipment_data = [
+            {'equipment': be.equipment, 'quantity': be.quantity}
+            for be in booking.bookingequipment_set.all()
+        ]
+
         engine = BookingEngine(
-            user=request.user,
-            table=event.table,
-            start_time=event.start_time,
-            duration_minutes=int((event.end_time - event.start_time).total_seconds() // 60),
-            participants=event.participants or 2,
-            is_group=event.is_group,
-            manual_discount_percent=0  # или получи из формы
+            user=booking.user,
+            table=booking.table,
+            start_time=booking.start_time,
+            duration_minutes=int((booking.end_time - booking.start_time).total_seconds() // 60),
+            participants=booking.participants,
+            equipment_items=equipment_data,
+            is_group=booking.is_group,
+            promo_code=booking.promo_code,
         )
         engine.calculate_total_price()
 
-        # Обновляем стоимость события (важно)
-        event.total_cost = engine.total_price
-        event.save()
+        # Обновляем цены в бронировании
+        booking.base_price = engine.base_price
+        booking.equipment_price = engine.equipment_price
+        booking.total_price = engine.total_price
+        booking.promo_code_discount_percent = engine.promo_code_discount_percent or 0
+        booking.special_offer_discount_percent = engine.special_offer_discount_percent or 0
+        booking.save()
 
-        # ---- ПРОВЕРКА СУЩЕСТВУЮЩЕГО ПЛАТЕЖА ----
-        if event.payment_id:
-            payment = Payment.find_one(event.payment_id)
+        # Проверяем, есть ли уже платеж в статусе ожидания
+        if booking.payment_id:
+            payment = Payment.find_one(booking.payment_id)
             if payment.status == 'pending':
                 return JsonResponse({
-                    'payment_id': event.payment_id,
+                    'payment_id': booking.payment_id,
                     'confirmation_url': payment.confirmation.confirmation_url
                 })
 
-        # ---- СОЗДАНИЕ НОВОГО ПЛАТЕЖА ----
+        # Создаем новый платеж в Yookassa
         return_url = request.build_absolute_uri(
-            reverse('calendarapp:payment_callback', args=[event.id])
+            reverse('bookings:payment_callback', args=[booking.id])
         )
 
         payment = Payment.create({
             "amount": {
-                "value": f"{event.total_cost:.2f}",
+                "value": f"{booking.total_price:.2f}",
                 "currency": "RUB"
             },
             "confirmation": {
@@ -1157,15 +1182,15 @@ def create_yookassa_payment(request, event=None):
                 "return_url": return_url
             },
             "capture": True,
-            "description": f"Бронирование: {event.title}",
+            "description": f"Бронирование #{booking.id}",
             "metadata": {
-                "event_id": str(event.id),
+                "booking_id": str(booking.id),
                 "user_id": str(request.user.id)
             }
         }, idempotency_key=str(uuid.uuid4()))
 
-        event.payment_id = payment.id
-        event.save()
+        booking.payment_id = payment.id
+        booking.save()
 
         return JsonResponse({
             'payment_id': payment.id,
@@ -1173,4 +1198,54 @@ def create_yookassa_payment(request, event=None):
         })
 
     except Exception as e:
-        return JsonResponse({'error': 'Ошибка при создании платежа'}, status=500)
+        return JsonResponse({'error': f'Ошибка при создании платежа: {str(e)}'}, status=500)
+
+
+
+def payment_callback(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+
+    # Проверяем статус бронирования
+    if booking.status == 'paid':
+        # Можно показать страницу с подтверждением
+        messages.success(request, "Оплата прошла успешно! Ваше бронирование подтверждено.")
+        # Перенаправляем в профиль (например, на страницу с бронированиями)
+        return redirect('/accounts/profile/#my-bookings') # <-- тут укажи свой URL name для профиля
+    else:
+        messages.error(request, "Оплата не была завершена или возникла ошибка.")
+        return redirect('/accounts/profile/#my-bookings')
+
+
+
+
+@csrf_exempt
+def yookassa_webhook(request):
+    if request.method != 'POST':
+        return HttpResponse(status=405)  # Метод не поддерживается
+
+    try:
+        data = json.loads(request.body)
+        event = data.get('event')
+        payment_object = data.get('object', {})
+
+        # Обрабатываем только успешные оплаты
+        if event == 'payment.succeeded':
+            payment_id = payment_object.get('id')
+            if not payment_id:
+                return JsonResponse({'error': 'payment_id отсутствует'}, status=400)
+
+            try:
+                booking = Booking.objects.get(payment_id=payment_id)
+                booking.status = 'paid'
+                booking.save()
+            except Booking.DoesNotExist:
+                # Если бронирование не найдено, просто игнорируем или логируем
+                return JsonResponse({'error': 'Бронирование с таким payment_id не найдено'}, status=404)
+
+        return HttpResponse(status=200)
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Некорректный JSON'}, status=400)
+    except Exception as e:
+        # Логируем ошибку, если нужно
+        return JsonResponse({'error': str(e)}, status=500)

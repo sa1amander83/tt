@@ -1,5 +1,5 @@
 <div class="flex items-center space-x-2">
-    {% if booking.status == 'pending' or booking.status == 'confirmed' %}
+    {% if booking.status == 'pending' or booking.status == 'paid' %}
     <button class="cancel-action text-red-600 hover:text-red-900" data-booking-id="{{ booking.id }}">
         Отменить
     </button>

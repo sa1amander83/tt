@@ -411,10 +411,10 @@ class HolidayDeleteView(LoginRequiredMixin, View):
 
 
 from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_GET
 from django.views.decorators.csrf import csrf_exempt
 import json
-
+@require_GET
 def current_user(request):
     if request.user.is_authenticated:
         return JsonResponse({

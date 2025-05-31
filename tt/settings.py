@@ -142,3 +142,17 @@ load_dotenv()
 
 SHOP_SECRET_KEY = os.getenv('SHOP_SECRET_KEY')
 ACCOUNT_ID = os.getenv('ACCOUNT_ID')
+# Celery настройки
+IS_DOCKER = os.getenv('IS_DOCKER', 'False').lower() == 'true'
+
+if IS_DOCKER:
+    CELERY_BROKER_URL = 'redis://redis:6379/0'  # docker service name
+    CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+else:
+    CELERY_BROKER_URL = 'redis://localhost:6379/0'
+    CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+# CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://redis:6379/0')
+# CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # Можно убрать, если не нужен результат
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'

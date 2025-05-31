@@ -1,26 +1,37 @@
 document.addEventListener('DOMContentLoaded', async function () {
 
-        async function getCurrentUser() {
-            try {
-                const response = await fetch('/settings/current_user/');
-                if (!response.ok) return null;
+async function getCurrentUser() {
+    try {
+        const response = await fetch('/settings/current_user/', {
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include' // Ensure cookies are sent
+        });
 
-                const data = await response.json();
-
-                if (data.isAuthenticated) {
-                    return {
-                        userId: data.userId || data.id || null,  // подставь правильное поле из API
-                        ...data // можно вернуть другие полезные данные, если нужно
-                    };
-                } else {
-                    return null;
-                }
-            } catch (error) {
-                console.error('Ошибка при получении текущего пользователя:', error);
-                return null;
-            }
+        // First check if response is OK and is JSON
+        if (!response.ok) {
+            return null; // Not authenticated
         }
 
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            // If we're getting HTML, we're probably not authenticated
+            return null;
+        }
+
+        const data = await response.json();
+        return data.isAuthenticated ? {
+            userId: data.user_id || data.id || null,
+            ...data
+        } : null;
+
+    } catch (error) {
+        console.error('Error fetching current user:', error);
+        return null;
+    }
+}
 
         // Конфигурация API
         const API_ENDPOINTS = {
@@ -89,50 +100,47 @@ document.addEventListener('DOMContentLoaded', async function () {
         };
 
         // Инициализация приложения
-        async function init() {
-            try {
-                await loadInitialData();
-                // await loadSiteSettings(state.currentDate);
+       async function init() {
+    try {
+        await loadInitialData();
+        setupEventListeners();
+        setupEquipmentHandlers();
 
-                setupEventListeners();
-                setupEquipmentHandlers(); // Добавляем эту строку
-
-                if (!state.siteSettings.close_time || !state.siteSettings.close_time.match(/^\d{1,2}:\d{2}$/)) {
-                    state.siteSettings.close_time = "22:00";
-                }
-
-                await renderCalendar();
-                updateUI();
-            } catch (error) {
-                console.error('Ошибка инициализации:', error);
-                showError('Не удалось загрузить данные приложения');
-            }
+        // Default values if settings didn't load
+        if (!state.siteSettings?.close_time) {
+            state.siteSettings = {
+                open_time: "09:00",
+                close_time: "22:00",
+                is_open: true
+            };
         }
+
+        await renderCalendar();
+        updateUI();
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showError('Application initialization failed');
+    }
+}
 
         // Загрузка начальных данных
 async function loadInitialData() {
     try {
         showLoader();
 
-        // Получаем данные о текущем пользователе — здесь устанавливаем state.currentUserId и state.isAuthenticated
+        // First try to get current user
         const currentUser = await getCurrentUser();
-        if (currentUser) {
-            state.currentUserId = currentUser.userId;
-            state.isAuthenticated = true;
-        } else {
-            state.currentUserId = null;
-            state.isAuthenticated = false;
-        }
+        state.isAuthenticated = currentUser !== null;
+        state.currentUserId = currentUser?.userId || null;
 
-        // Теперь грузим остальные данные, уже с учётом пользователя
-        const [ratesRes, tablesRes, userBookingsRes] = await Promise.all([
+        // Load other data
+        const [ratesRes, tablesRes] = await Promise.all([
             fetch(API_ENDPOINTS.RATES),
-            fetch(API_ENDPOINTS.TABLES),
-            fetch(API_ENDPOINTS.USER_BOOKINGS)
+            fetch(API_ENDPOINTS.TABLES)
         ]);
 
-        if (!ratesRes.ok) throw new Error('Ошибка загрузки тарифов');
-        if (!tablesRes.ok) throw new Error('Ошибка загрузки столов');
+        if (!ratesRes.ok) throw new Error('Failed to load rates');
+        if (!tablesRes.ok) throw new Error('Failed to load tables');
 
         state.rates = await ratesRes.json();
         state.tables = await tablesRes.json();
@@ -140,19 +148,27 @@ async function loadInitialData() {
 
         await loadSiteSettings(state.currentDate);
 
-        if (userBookingsRes.ok && userBookingsRes.headers.get('content-type')?.includes('application/json')) {
-            const userBookingsData = await userBookingsRes.json();
-            state.bookings = userBookingsData.bookings || [];
+        // Only try to load user bookings if authenticated
+        if (state.isAuthenticated) {
+            try {
+                const userBookingsRes = await fetch(API_ENDPOINTS.USER_BOOKINGS);
+                if (userBookingsRes.ok) {
+                    const userBookingsData = await userBookingsRes.json();
+                    state.bookings = userBookingsData.bookings || [];
+                }
+            } catch (e) {
+                console.error('Error loading user bookings:', e);
+            }
         }
+
     } catch (error) {
-        console.error('Ошибка загрузки данных:', error);
-        showError('Не удалось загрузить данные приложения');
+        console.error('Error loading initial data:', error);
+        showError('Failed to load application data');
     } finally {
         hideLoader();
         initForm();
     }
 }
-
 
         async function fetchWithAuthCheck(url, options = {}) {
             const response = await fetch(url, options);
@@ -847,96 +863,121 @@ async function loadInitialData() {
         }
 
         // Обработка отправки формы бронирования
-        async function handleBookingSubmit(event) {
-            event.preventDefault();
+async function handleBookingSubmit(event) {
+    event.preventDefault();
 
-            try {
-                // Get form data
-                const durationMinutes = parseInt(elements.duration.value) || 60;
+    try {
+        // Получаем данные формы
+        const durationMinutes = parseInt(elements.duration.value) || 60;
 
-                // Log form data for debugging
-                console.log("Form data:", {
-                    date: elements.bookingDate.value,
-                    start_time: elements.startTime.value,
-                    duration: durationMinutes,
-                    table_id: elements.tableSelect.value,
-                    participants: elements.participants.value,
-                    notes: elements.notes.value
-                });
+        console.log("Form data:", {
+            date: elements.bookingDate.value,
+            start_time: elements.startTime.value,
+            duration: durationMinutes,
+            table_id: elements.tableSelect.value,
+            participants: elements.participants.value,
+            notes: elements.notes.value
+        });
 
-                const equipmentData = Array.from(document.querySelectorAll('.equipment-checkbox:checked'))
-                    .map(checkbox => {
-                        const quantityEl = checkbox.closest('.equipment-item').querySelector('select');
-                        const quantity = quantityEl ? parseInt(quantityEl.value) : 1;
-                        return {
-                            id: parseInt(checkbox.value),
-                            quantity: quantity
-                        };
-                    });
-
-                const formData = {
-                    date: elements.bookingDate.value,
-                    start_time: elements.startTime.value,
-                    duration: durationMinutes,
-                    table_id: parseInt(elements.tableSelect.value),
-                    equipment: equipmentData,
-                    participants: parseInt(elements.participants.value),
-                    is_group: document.getElementById('is-group').checked,
-                    notes: elements.notes.value,
-                    slot_id: elements.bookingForm.dataset.slotId || null
+        const equipmentData = Array.from(document.querySelectorAll('.equipment-checkbox:checked'))
+            .map(checkbox => {
+                const quantityEl = checkbox.closest('.equipment-item').querySelector('select');
+                const quantity = quantityEl ? parseInt(quantityEl.value) : 1;
+                return {
+                    id: parseInt(checkbox.value),
+                    quantity: quantity
                 };
+            });
 
-                // Debug: log the complete payload
-                console.log("Full payload:", JSON.stringify(formData, null, 2));
+        const formData = {
+            date: elements.bookingDate.value,
+            start_time: elements.startTime.value,
+            duration: durationMinutes,
+            table_id: parseInt(elements.tableSelect.value),
+            equipment: equipmentData,
+            participants: parseInt(elements.participants.value),
+            is_group: document.getElementById('is-group').checked,
+            notes: elements.notes.value,
+            slot_id: elements.bookingForm.dataset.slotId || null
+        };
 
-                const response = await fetch(API_ENDPOINTS.BOOKINGS, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCSRFToken()
-                    },
-                    body: JSON.stringify(formData)
-                });
+        console.log("Full payload:", JSON.stringify(formData, null, 2));
 
-                // Check for HTTP errors
-                if (!response.ok) {
-                    // Try to get error details from response
-                    let errorDetails = {};
-                    try {
-                        errorDetails = await response.json();
-                    } catch (e) {
-                        console.error("Couldn't parse error response", e);
-                    }
+        // Создаём бронирование
+        const response = await fetch(API_ENDPOINTS.BOOKINGS, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify(formData)
+        });
 
-                    console.error("Server response:", response.status, errorDetails);
-
-                    // Show detailed error message if available
-                    const errorMessage = errorDetails.message ||
-                        errorDetails.error ||
-                        `Server error: ${response.status}`;
-
-                    throw new Error(errorMessage);
-                }
-
-                const result = await response.json();
-
-                if (result.success) {
-                    showNotification('Бронирование успешно создано!', 'success');
-                    closeModal();
-                    await renderCalendar();
-                    await loadUserBookings();
-                } else {
-                    throw new Error(result.error || 'Неизвестная ошибка');
-                }
-
-            } catch (error) {
-                console.error('Ошибка бронирования:', error);
-                showNotification(`Ошибка бронирования: ${error.message}`, 'error');
-
-                // For debugging - show full error in console
-                console.error("Full error:", error);
+        if (!response.ok) {
+            let errorDetails = {};
+            try {
+                errorDetails = await response.json();
+            } catch (e) {
+                console.error("Couldn't parse error response", e);
             }
+
+            console.error("Server response:", response.status, errorDetails);
+
+            const errorMessage = errorDetails.message ||
+                errorDetails.error ||
+                `Server error: ${response.status}`;
+
+            throw new Error(errorMessage);
         }
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error || 'Неизвестная ошибка');
+        }
+
+        showNotification('Бронирование успешно создано!', 'success');
+        closeModal();
+        await renderCalendar();
+        await loadUserBookings();
+
+        // --- Создаём платёж для бронирования ---
+        const paymentResponse = await fetch('/bookings/api/payment/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ booking_id: result.booking_id })
+        });
+
+        if (!paymentResponse.ok) {
+            let errorPayment = {};
+            try {
+                errorPayment = await paymentResponse.json();
+            } catch (e) {
+                console.error("Couldn't parse payment error response", e);
+            }
+
+            const paymentErrorMessage = errorPayment.error || `Ошибка создания платежа: ${paymentResponse.status}`;
+            throw new Error(paymentErrorMessage);
+        }
+
+        const paymentResult = await paymentResponse.json();
+
+        if (paymentResult.confirmation_url) {
+            // Открываем ссылку оплаты в новой вкладке
+            window.open(paymentResult.confirmation_url, '_blank');
+        } else {
+            throw new Error('Не получен URL для оплаты');
+        }
+
+    } catch (error) {
+        console.error('Ошибка бронирования:', error);
+        showNotification(`Ошибка бронирования: ${error.message}`, 'error');
+        console.error("Full error:", error);
+    }
+}
 
         // Загрузка бронирований пользователя
         async function loadUserBookings() {

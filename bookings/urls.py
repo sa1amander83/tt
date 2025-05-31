@@ -3,6 +3,8 @@ from django.urls import path, include
 
 
 from . import views
+from .views import yookassa_webhook
+
 app_name = 'bookings'
 urlpatterns = [
     path('', views.booking_view, name='bookings'),
@@ -23,10 +25,12 @@ urlpatterns = [
     path('api/user-bookings/', views.get_user_bookings, name='api_user_bookings'),
     path('api/calculate/', views.calculate_booking_api, name='api_calculate'),
     path('api/create/', views.create_booking_api, name='api_create'),
+    path('api/payment/', views.create_yookassa_payment, name='api_payment'),
+    path('api/payment/callback/<int:booking_id>/', views.payment_callback, name='payment_callback'),
 
     path('api/site-settings/', views.get_site_settings, name='site-settings'),
 
-
+    path('api/yookassa/webhook/', yookassa_webhook, name='yookassa_webhook'),
 
 
 ]
