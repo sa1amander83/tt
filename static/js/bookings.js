@@ -858,10 +858,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                             quantity: quantity
                         };
                     });
-
                 const formData = {
-                    date: elements.bookingDate.value,
-                    start_time: elements.startTime.value,
+                    date: elements.bookingDate.value, // можно оставить, если серверу нужен
+                    start_time: new Date(`${elements.bookingDate.value}T${elements.startTime.value}:00`).toISOString(),
                     duration: durationMinutes,
                     table_id: parseInt(elements.tableSelect.value),
                     equipment: equipmentData,
@@ -986,6 +985,25 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         }
 
+        function getPeriodDescription() {
+            switch (state.currentView) {
+                case 'day':
+                    return `выбранный день (${state.currentDate.toLocaleDateString('ru-RU')})`;
+                case 'week':
+                    const weekStart = getMonday(state.currentDate);
+                    const weekEnd = new Date(weekStart);
+                    weekEnd.setDate(weekEnd.getDate() + 6);
+                    return `текущую неделю (${weekStart.toLocaleDateString('ru-RU')} - ${weekEnd.toLocaleDateString('ru-RU')})`;
+                case 'month':
+                    return `текущий месяц (${state.currentDate.toLocaleDateString('ru-RU', {
+                        month: 'long',
+                        year: 'numeric'
+                    })})`;
+                default:
+                    return 'этот период';
+            }
+        }
+
         // Навигация по календарю
         async function navigate(direction) {
             const newDate = new Date(state.currentDate);
@@ -1007,17 +1025,12 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
 
             state.currentDate = newDate;
-            //  if (elements.bookingDate) {
-            //     elements.bookingDate.valueAsDate = newDate;
-            // }
             updateDateInput();
             updateUI();
 
-            // Загружаем настройки и ждем завершения
             await loadSiteSettings(newDate);
-
-            // Только после загрузки настроек рендерим календарь
-            renderCalendar();
+            await renderCalendar();
+            renderUserBookings(); // Добавляем обновление списка бронирований
         }
 
         function resetCostDisplay() {
@@ -1657,26 +1670,80 @@ document.addEventListener('DOMContentLoaded', async function () {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            const filtered = bookings.filter(b => {
-                try {
-                    const bookingDate = new Date(b.date);
-                    bookingDate.setHours(0, 0, 0, 0);
-                    return bookingDate >= today;
-                } catch (e) {
-                    console.warn('Ошибка при разборе даты бронирования:', b.date);
-                    return false;
-                }
-            });
+            switch (state.currentView) {
+                case 'day':
+                    // Фильтрация по текущему дню
+                    const dayStr = state.currentDate.toISOString().split('T')[0];
+                    filtered = bookings.filter(b => b.date === dayStr);
+                    break;
 
+                case 'week':
+                    // Фильтрация по текущей неделе
+                    const weekStart = getMonday(state.currentDate);
+                    const weekEnd = new Date(weekStart);
+                    weekEnd.setDate(weekEnd.getDate() + 6);
+
+                    filtered = bookings.filter(b => {
+                        try {
+                            const bookingDate = new Date(b.date);
+                            return bookingDate >= weekStart && bookingDate <= weekEnd;
+                        } catch (e) {
+                            console.warn('Ошибка при разборе даты бронирования:', b.date);
+                            return false;
+                        }
+                    });
+                    break;
+
+                case 'month':
+                    // Фильтрация по текущему месяцу
+                    const monthStart = new Date(state.currentDate.getFullYear(), state.currentDate.getMonth(), 1);
+                    const monthEnd = new Date(state.currentDate.getFullYear(), state.currentDate.getMonth() + 1, 0);
+
+                    filtered = bookings.filter(b => {
+                        try {
+                            const bookingDate = new Date(b.date);
+                            return bookingDate >= monthStart && bookingDate <= monthEnd;
+                        } catch (e) {
+                            console.warn('Ошибка при разборе даты бронирования:', b.date);
+                            return false;
+                        }
+                    });
+                    break;
+
+                default:
+                    // По умолчанию показываем все будущие бронирования
+                    filtered = bookings.filter(b => {
+                        try {
+                            const bookingDate = new Date(b.date);
+                            bookingDate.setHours(0, 0, 0, 0);
+                            return bookingDate >= today;
+                        } catch (e) {
+                            console.warn('Ошибка при разборе даты бронирования:', b.date);
+                            return false;
+                        }
+                    });
+            }
+            const titleElement = document.getElementById('user-bookings-title');
+            if (titleElement) {
+                titleElement.textContent = `Ваши бронирования на ${getPeriodDescription()}`;
+            }
             if (!filtered.length) {
-                container.innerHTML = '<div class="text-gray-400">У вас нет активных бронирований.</div>';
+                container.innerHTML = `<div class="text-gray-400">У вас нет бронирований на ${getPeriodDescription()}.</div>`;
                 return;
             }
 
-            // Сортировка по дате
-            filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+            // Сортировка по дате и времени
+            filtered.sort((a, b) => {
+                const dateCompare = new Date(a.date) - new Date(b.date);
+                if (dateCompare !== 0) return dateCompare;
 
-            // Генерация HTML-таблицы
+                // Если дата одинаковая, сортируем по времени начала
+                const timeA = a.start ? parseInt(a.start.replace(':', '')) : 0;
+                const timeB = b.start ? parseInt(b.start.replace(':', '')) : 0;
+                return timeA - timeB;
+            });
+
+            // Генерация HTML-таблицы (остается без изменений)
             const tableHTML = `
         <table class="min-w-full border text-sm text-left">
             <thead>
@@ -1689,27 +1756,26 @@ document.addEventListener('DOMContentLoaded', async function () {
                 </tr>
             </thead>
             <tbody>
-${filtered.map(b => {
+                ${filtered.map(b => {
                 const dateStr = new Date(b.date).toLocaleDateString('ru-RU');
                 const status = b.status || '—';
                 const statusClass = getStatusColorClass(status);
                 const actions = renderBookingActions(b);
                 const rowClass = status.toLowerCase() === 'отменено' ? 'bg-red-50 text-red-500' : '';
-                console.log('Rendering booking:', b);
 
                 return `
-        <tr class="${rowClass}">
-            <td class="px-3 py-2 border">${dateStr}</td>
-            <td class="px-3 py-2 border">${b.start ?? '—'}-${b.end ?? '—'}</td>
-            <td class="px-3 py-2 border">#${b.table_number ?? '?'} (${b.table_type ?? '—'})</td>
-            <td class="px-3 py-2 border font-semibold ${statusClass}">
-                ${status}
-            </td>
-            <td class="px-3 py-2 border">
-                ${actions ?? '—'}
-            </td>
-        </tr>
-    `;
+                        <tr class="${rowClass}">
+                            <td class="px-3 py-2 border">${dateStr}</td>
+                            <td class="px-3 py-2 border">${b.start ?? '—'}-${b.end ?? '—'}</td>
+                            <td class="px-3 py-2 border">#${b.table_number ?? '?'} (${b.table_type ?? '—'})</td>
+                            <td class="px-3 py-2 border font-semibold ${statusClass}">
+                                ${status}
+                            </td>
+                            <td class="px-3 py-2 border">
+                                ${actions ?? '—'}
+                            </td>
+                        </tr>
+                    `;
             }).join('')}
             </tbody>
         </table>
@@ -1717,6 +1783,7 @@ ${filtered.map(b => {
 
             container.innerHTML = tableHTML;
         }
+
 
         // Обработчики слотов недели
         function attachWeekSlotListeners() {

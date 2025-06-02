@@ -89,7 +89,8 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 
 class CurrentUserView(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+
 
     def get(self, request):
         user = request.user

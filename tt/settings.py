@@ -83,13 +83,27 @@ WSGI_APPLICATION = 'tt.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+if os.environ.get('IS_DOCKER') == 'True':
+    DATABASE_HOST = 'db'
+else:
+    DATABASE_HOST = 'localhost'  # Для локальной разработки
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'mydb',
+        'USER': 'myuser',
+        'PASSWORD': 'mypassword',
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
     }
 }
-
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -112,7 +126,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = 'ru-ru'
-USE_TZ = True
+USE_TZ = False
 TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
@@ -173,31 +187,31 @@ CELERY_RESULT_SERIALIZER = 'json'
 
 
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'file': {
-            'level': 'INFO',  # или DEBUG, если нужно подробнее
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'tt.log',  # путь к файлу логов
-            'encoding': 'utf-8',
-        },
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        # Логгер твоего приложения
-        'tt': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-    },
-}
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'file': {
+#             'level': 'INFO',  # или DEBUG, если нужно подробнее
+#             'class': 'logging.FileHandler',
+#             'filename': BASE_DIR / 'tt.log',  # путь к файлу логов
+#             'encoding': 'utf-8',
+#         },
+#         'console': {
+#             'class': 'logging.StreamHandler',
+#         },
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['console', 'file'],
+#             'level': 'INFO',
+#             'propagate': True,
+#         },
+#         # Логгер твоего приложения
+#         'tt': {
+#             'handlers': ['console', 'file'],
+#             'level': 'DEBUG',
+#             'propagate': False,
+#         },
+#     },
+# }

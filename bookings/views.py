@@ -1,7 +1,7 @@
 import uuid
 from asyncio import Event
 from decimal import Decimal
-
+from django.utils.timezone import is_naive, make_aware
 import pytz
 from django.utils.timezone import make_aware, now
 from datetime import datetime, time
@@ -80,11 +80,8 @@ class CalendarAPIView(APIView):
     def get(self, request, *args, **kwargs):
         view_type = request.query_params.get('view', 'day')
         date_str = request.query_params.get('date')
-        print("Current user:", request.user)  # Логируем пользователя
-        if request.user.is_authenticated:
-            print("User is authenticated")
-        else:
-            print("User is NOT authenticated")
+        user = request.user if request.user.is_authenticated else None
+
         if not date_str:
             return Response({"error": "Parameter 'date' is required."}, status=400)
 
@@ -139,6 +136,8 @@ class CalendarAPIView(APIView):
         return qs
 
     def get_day_view(self, date, user, slot_duration):
+        tz = pytz.timezone('Europe/Moscow')
+
         is_working_day, open_time, close_time, shortened = self.get_open_close_times(date)
         if not is_working_day:
             return Response({
@@ -151,26 +150,22 @@ class CalendarAPIView(APIView):
                 "time_slots": [],
                 "day_schedule": {}
             })
+
+        tz = pytz.timezone('Europe/Moscow')
+        now = timezone.now().astimezone(tz)
+
+        # Создание start_dt и end_dt как aware сразу
+        start_dt = tz.localize(datetime.combine(date, open_time))
+        end_dt = tz.localize(datetime.combine(date, close_time))
+
+        # Пользовательские бронирования
         if user:
-            today = datetime.now().date()
-            moscow_tz = pytz.timezone('Europe/Moscow')
-            today_msk = timezone.localtime(timezone.now(), moscow_tz).date()
-            start_of_today_msk = moscow_tz.localize(datetime.combine(today_msk, time.min))
-            start_of_today_utc = start_of_today_msk.astimezone(pytz.UTC)
-            start_of_today = make_aware(datetime.combine(today, time.min))
-            print("Filter start datetime UTC:", start_of_today_utc)
+            today = now.astimezone(tz).date()
+            start_of_today = tz.localize(datetime.combine(today, time.min))
 
-            # Сколько записей с датой старта >= сегодня в UTC
-            count = Booking.objects.filter(start_time__gte=start_of_today_utc).count()
-            print(f"Count bookings from today onwards: {count}")
-
-            # Например, выведи первые 5:
-            bookings = Booking.objects.filter(start_time__gte=start_of_today_utc)[:5]
-            for b in bookings:
-                print(b.start_time, b.start_time.tzinfo)
             user_bookings_qs = Booking.objects.filter(
                 user=user,
-                start_time__gte=start_of_today_utc
+                start_time__gte=start_of_today
             )
 
             user_bookings = [{
@@ -178,29 +173,25 @@ class CalendarAPIView(APIView):
                 'date': b.start_time.date().isoformat(),
                 'start': b.start_time.strftime('%H:%M'),
                 'end': b.end_time.strftime('%H:%M'),
-                'table_number': b.table.number,
-                'table_type': str(b.table.table_type),
+                'table_number': getattr(b.table, 'number', None) if b.table else None,
+                'table_type': str(b.table.table_type) if b.table and b.table.table_type else None,
                 'status': b.get_status_display()
             } for b in user_bookings_qs]
         else:
             user_bookings = []
-        tables = Table.objects.filter(is_active=True).order_by('number')
-        start_dt = timezone.make_aware(datetime.combine(date, open_time))
-        end_dt = timezone.make_aware(datetime.combine(date, close_time))
-        now = timezone.now()
 
+        tables = Table.objects.filter(is_active=True).order_by('number')
+
+        # Генерация временных слотов
         slots = []
         current = start_dt
         if start_dt.minute != 0:
             next_hour = (start_dt + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
             if next_hour > end_dt:
                 next_hour = end_dt
-            slots.append((start_dt, next_hour))
+            slots.append((current, next_hour))
             current = next_hour
-        else:
-            current = start_dt
 
-        # Обычные слоты по slot_duration
         while current < end_dt:
             slot_end = current + timedelta(minutes=slot_duration)
             if slot_end > end_dt:
@@ -209,12 +200,10 @@ class CalendarAPIView(APIView):
             slots.append((current, slot_end))
             current = slot_end
 
-        # Добавим последний слот, если он заканчивается ровно в close_time
         if current < end_dt and current + timedelta(minutes=slot_duration) == end_dt:
             slots.append((current, end_dt))
 
         bookings = self.get_bookings(start_dt, end_dt, user)
-
         booking_map = defaultdict(list)
         for b in bookings:
             booking_map[b.table_id].append((b.start_time, b.end_time))
@@ -239,7 +228,6 @@ class CalendarAPIView(APIView):
             for table in tables:
                 overlaps = any(s < slot_end and e > slot_start for s, e in booking_map.get(table.id, []))
                 slot_status = '-' if slot_end <= now else ('Занято' if overlaps else 'available')
-
                 pricing = None
                 for p in pricing_data:
                     if p.table_type != table.table_type:
@@ -281,15 +269,14 @@ class CalendarAPIView(APIView):
             'weekday': date.weekday(),
             'slot_duration': slot_duration,
             'working_hours': {
-                'open_time': open_time.strftime('%H:%M'),
-                'close_time': close_time.strftime('%H:%M'),
+                'open_time': open_time.strftime('%H:%M') if open_time else None,
+                'close_time': close_time.strftime('%H:%M') if close_time else None,
             },
             'tables': [{'id': t.id, 'number': t.number, 'table_type': str(t.table_type)} for t in tables],
             'time_slots': time_slots,
             'day_schedule': day_schedule,
             'user_bookings': user_bookings
         })
-
     def get_week_view(self, date, user, slot_duration):
         start = date - timedelta(days=date.weekday())
         return self._get_calendar_range_view(start, 7, user, slot_duration, 'week')
@@ -331,14 +318,16 @@ class CalendarAPIView(APIView):
         return raw_response
 
     def _get_calendar_range_view(self, start_date, num_days, user, slot_duration, view_type):
+        tz = pytz.timezone('Europe/Moscow')
         days = [start_date + timedelta(days=i) for i in range(num_days)]
         tables = Table.objects.filter(is_active=True).order_by('number')
         calendar_schedule = defaultdict(dict)
         time_slots_set = set()
+
         if user:
             user_bookings_qs = Booking.objects.filter(
                 user=user,
-                start_time__date__gte=start_date  # все брони начиная с start_date и далее
+                start_time__date__gte=start_date
             )
             user_bookings = [{
                 'id': b.id,
@@ -349,6 +338,7 @@ class CalendarAPIView(APIView):
             } for b in user_bookings_qs]
         else:
             user_bookings = []
+
         for day in days:
             is_working, open_time, close_time, shortened = self.get_open_close_times(day)
             if not is_working:
@@ -360,18 +350,19 @@ class CalendarAPIView(APIView):
                 }
                 continue
 
-            day_start = timezone.make_aware(datetime.combine(day, open_time))
-            day_end = timezone.make_aware(datetime.combine(day, close_time))
+            # Создаём aware datetime с Moscow timezone
+            day_start = tz.localize(datetime.combine(day, open_time))
+            day_end = tz.localize(datetime.combine(day, close_time))
+
+            # Генерация слотов
             slots = []
             current = day_start
             if day_start.minute != 0:
                 next_hour = (day_start + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
                 if next_hour > day_end:
                     next_hour = day_end
-                slots.append((day_start, next_hour))
+                slots.append((current, next_hour))
                 current = next_hour
-            else:
-                current = day_start
 
             while current < day_end:
                 slot_end = current + timedelta(minutes=slot_duration)
@@ -381,14 +372,20 @@ class CalendarAPIView(APIView):
                 slots.append((current, slot_end))
                 current = slot_end
 
+            # Получаем бронирования
             bookings = self.get_bookings(day_start, day_end, user)
             booking_map = defaultdict(list)
             for b in bookings:
                 booking_map[b.table_id].append((b.start_time, b.end_time))
 
+            # Цены и акции
             pricing_data = TableTypePricing.objects.select_related('pricing_plan', 'table_type')
-            offers = SpecialOffer.objects.filter(is_active=True, valid_from__lte=day,
-                                                 valid_to__gte=day).prefetch_related('tables')
+            offers = SpecialOffer.objects.filter(
+                is_active=True,
+                valid_from__lte=day,
+                valid_to__gte=day
+            ).prefetch_related('tables')
+
             offers_by_table = defaultdict(list)
             for offer in offers:
                 target_tables = tables if offer.apply_to_all else offer.tables.all()
@@ -460,7 +457,6 @@ class CalendarAPIView(APIView):
             'slot_duration': slot_duration,
             'user_bookings': user_bookings
         })
-
 
 @login_required
 def get_booking_info(request):
