@@ -1,0 +1,15 @@
+Watching for file changes with StatReloader
+"GET /bookings/ HTTP/1.1" 200 22239
+"GET /static/js/loader.js HTTP/1.1" 200 456
+"GET /static/js/showNotification.js HTTP/1.1" 200 1814
+"GET /static/css/styles.css HTTP/1.1" 200 5707
+"GET /static/js/bookings.js HTTP/1.1" 200 77531
+"GET /static/css/flowbite.min.css HTTP/1.1" 200 196016
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 4409
+"GET /settings/current_user/ HTTP/1.1" 200 11391
+"GET /bookings/api/rates/ HTTP/1.1" 200 844
+"GET /bookings/api/tables/ HTTP/1.1" 200 1520
+"GET /bookings/api/site-settings/?date=2025-06-02 HTTP/1.1" 200 1120
+"GET /bookings/api/calendar/?date=2025-06-02&view=day&table=all&status=all HTTP/1.1" 200 31134
+/code/tt/settings.py changed, reloading.

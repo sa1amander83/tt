@@ -8,7 +8,10 @@ from django.http import JsonResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.utils import json
+from rest_framework.views import APIView
 
 from .forms import ProfileUpdateForm, PasswordChangeForm, ProfilePhotoForm
 from django.contrib import messages
@@ -85,6 +88,21 @@ from .forms import ProfileUpdateForm, PasswordChangeForm
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 
+class CurrentUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response({
+            'isAuthenticated': True,
+            'username': user.user_name,
+            'user_id': user.id,
+            'email': user.email,
+            'phone': user.phone,
+
+            'is_staff': user.is_staff,
+            'is_superuser': user.is_superuser,
+        })
 
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = 'accounts/profile.html'

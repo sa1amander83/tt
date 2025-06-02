@@ -3,7 +3,7 @@ from django.urls import path, include
 
 
 from . import views
-from .views import yookassa_webhook
+from .views import yookassa_webhook, UserBookingsView
 
 app_name = 'bookings'
 urlpatterns = [
@@ -22,7 +22,7 @@ urlpatterns = [
     path('api/calendar/', views.CalendarAPIView.as_view(), name='api_calendar'),
     # path('api/week/', views.week_calendar_api, name='week_calendar'),
 
-    path('api/user-bookings/', views.get_user_bookings, name='api_user_bookings'),
+    path('api/user-bookings/', UserBookingsView.as_view(), name='user-bookings'),
     path('api/calculate/', views.calculate_booking_api, name='api_calculate'),
     path('api/create/', views.create_booking_api, name='api_create'),
     path('api/payment/', views.create_yookassa_payment, name='api_payment'),

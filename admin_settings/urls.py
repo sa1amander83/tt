@@ -5,7 +5,7 @@ from .views import *
 app_name = 'admin_settings'
 urlpatterns = [
     path('<str:active_tab>/', ClubSettingsView.as_view(), name='club_settings'),
-    path('current_user/', current_user, name='current_user'),
+
     # Таблицы
     path('tables/create/', TableCreateView.as_view(), name='table_create'),
     path('tables/<int:pk>/', TableDetailView.as_view(), name='table_detail'),

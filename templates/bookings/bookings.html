@@ -28,6 +28,14 @@
             </div>
         </div>
 
+
+        {% if user.is_authenticated %}
+            <div class="mt-8">
+                <h2 class="text-lg font-medium mb-4">Ваши бронирования на </h2>
+                <div id="user-bookings-container" class="overflow-x-auto"></div>
+            </div>
+        {% endif %}
+
         <!-- Модальное окно для нового бронирования -->
         {% include 'bookings/booking_modal.html' %}
 
@@ -35,7 +43,7 @@
 {% endblock %}
 {% block extrascripts %}
 
-{#    <script type="module" src="{% static 'js/admin-modals/weekView.js' %}"></script>#}
+    {#    <script type="module" src="{% static 'js/admin-modals/weekView.js' %}"></script>#}
 
 
 

@@ -2,6 +2,9 @@ import uuid
 from asyncio import Event
 from decimal import Decimal
 
+import pytz
+from django.utils.timezone import make_aware, now
+from datetime import datetime, time
 from django.conf import settings
 from django.contrib import messages
 from django.utils.timezone import make_aware, now
@@ -13,6 +16,7 @@ from collections import defaultdict
 from calendar import monthrange
 from django.utils import timezone
 from django.utils.dateparse import parse_date
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -76,7 +80,11 @@ class CalendarAPIView(APIView):
     def get(self, request, *args, **kwargs):
         view_type = request.query_params.get('view', 'day')
         date_str = request.query_params.get('date')
-
+        print("Current user:", request.user)  # Логируем пользователя
+        if request.user.is_authenticated:
+            print("User is authenticated")
+        else:
+            print("User is NOT authenticated")
         if not date_str:
             return Response({"error": "Parameter 'date' is required."}, status=400)
 
@@ -143,7 +151,39 @@ class CalendarAPIView(APIView):
                 "time_slots": [],
                 "day_schedule": {}
             })
+        if user:
+            today = datetime.now().date()
+            moscow_tz = pytz.timezone('Europe/Moscow')
+            today_msk = timezone.localtime(timezone.now(), moscow_tz).date()
+            start_of_today_msk = moscow_tz.localize(datetime.combine(today_msk, time.min))
+            start_of_today_utc = start_of_today_msk.astimezone(pytz.UTC)
+            start_of_today = make_aware(datetime.combine(today, time.min))
+            print("Filter start datetime UTC:", start_of_today_utc)
 
+            # Сколько записей с датой старта >= сегодня в UTC
+            count = Booking.objects.filter(start_time__gte=start_of_today_utc).count()
+            print(f"Count bookings from today onwards: {count}")
+
+            # Например, выведи первые 5:
+            bookings = Booking.objects.filter(start_time__gte=start_of_today_utc)[:5]
+            for b in bookings:
+                print(b.start_time, b.start_time.tzinfo)
+            user_bookings_qs = Booking.objects.filter(
+                user=user,
+                start_time__gte=start_of_today_utc
+            )
+
+            user_bookings = [{
+                'id': b.id,
+                'date': b.start_time.date().isoformat(),
+                'start': b.start_time.strftime('%H:%M'),
+                'end': b.end_time.strftime('%H:%M'),
+                'table_number': b.table.number,
+                'table_type': str(b.table.table_type),
+                'status': b.get_status_display()
+            } for b in user_bookings_qs]
+        else:
+            user_bookings = []
         tables = Table.objects.filter(is_active=True).order_by('number')
         start_dt = timezone.make_aware(datetime.combine(date, open_time))
         end_dt = timezone.make_aware(datetime.combine(date, close_time))
@@ -246,7 +286,8 @@ class CalendarAPIView(APIView):
             },
             'tables': [{'id': t.id, 'number': t.number, 'table_type': str(t.table_type)} for t in tables],
             'time_slots': time_slots,
-            'day_schedule': day_schedule
+            'day_schedule': day_schedule,
+            'user_bookings': user_bookings
         })
 
     def get_week_view(self, date, user, slot_duration):
@@ -294,7 +335,20 @@ class CalendarAPIView(APIView):
         tables = Table.objects.filter(is_active=True).order_by('number')
         calendar_schedule = defaultdict(dict)
         time_slots_set = set()
-
+        if user:
+            user_bookings_qs = Booking.objects.filter(
+                user=user,
+                start_time__date__gte=start_date  # все брони начиная с start_date и далее
+            )
+            user_bookings = [{
+                'id': b.id,
+                'table_id': b.table_id,
+                'start_time': b.start_time.isoformat(),
+                'end_time': b.end_time.isoformat(),
+                'status': b.get_status_display()
+            } for b in user_bookings_qs]
+        else:
+            user_bookings = []
         for day in days:
             is_working, open_time, close_time, shortened = self.get_open_close_times(day)
             if not is_working:
@@ -403,7 +457,8 @@ class CalendarAPIView(APIView):
             'tables': [{'id': t.id, 'number': t.number, 'table_type': str(t.table_type)} for t in tables],
             'time_slots': sorted(time_slots_set),
             'days': calendar_schedule,
-            'slot_duration': slot_duration
+            'slot_duration': slot_duration,
+            'user_bookings': user_bookings
         })
 
 
@@ -623,38 +678,40 @@ def get_site_settings(request):
         return JsonResponse({'error': str(e), 'status': 'error'}, status=500)
 
 
-@login_required
-def get_user_bookings(request):
-    try:
-        # Получаем все брони пользователя, отсортированные по времени начала
-        bookings = (
-            Booking.objects
-            .select_related('table', 'table__table_type')  # Оптимизация JOIN'ов
-            .filter(user=request.user)
-            .order_by('start_time')
-        )
 
-        bookings_data = [
-            {
-                'id': booking.id,
-                'date': booking.start_time.date().isoformat(),
-                'start_time': booking.start_time.strftime('%H:%M'),
-                'end_time': booking.end_time.strftime('%H:%M'),
-                'table': booking.table.number,
-                'table_type': booking.table.table_type.name,
-                'status': booking.get_status_display(),
-                'can_cancel': booking.status in ['pending']
-            }
-            for booking in bookings
-        ]
+class UserBookingsView(APIView):
+    permission_classes = [IsAuthenticated]
 
-        return JsonResponse({'bookings': bookings_data})
+    def get(self, request):
+        try:
+            bookings = (
+                Booking.objects
+                .select_related('table', 'table__table_type')
+                .filter(user=request.user)
+                .order_by('start_time')
+            )
 
-    except ObjectDoesNotExist:
-        return JsonResponse({'bookings': []})
+            bookings_data = [
+                {
+                    'id': booking.id,
+                    'date': booking.start_time.date().isoformat(),
+                    'start_time': booking.start_time.strftime('%H:%M'),
+                    'end_time': booking.end_time.strftime('%H:%M'),
+                    'table': booking.table.number,
+                    'table_type': booking.table.table_type.name,
+                    'status': booking.get_status_display(),
+                    'can_cancel': booking.status in ['pending']
+                }
+                for booking in bookings
+            ]
 
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+            return Response({'bookings': bookings_data}, status=status.HTTP_200_OK)
+
+        except ObjectDoesNotExist:
+            return Response({'bookings': []}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 def create_booking_view(request):
     try:

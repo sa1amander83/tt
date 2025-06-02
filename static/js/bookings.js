@@ -1,37 +1,39 @@
 document.addEventListener('DOMContentLoaded', async function () {
+        // Запуск приложения
 
-async function getCurrentUser() {
-    try {
-        const response = await fetch('/settings/current_user/', {
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include' // Ensure cookies are sent
-        });
 
-        // First check if response is OK and is JSON
-        if (!response.ok) {
-            return null; // Not authenticated
+        async function getCurrentUser() {
+            try {
+                const response = await fetch('/accounts/current_user/', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include' // Ensure cookies are sent
+                });
+
+                // First check if response is OK and is JSON
+                if (!response.ok) {
+                    return null; // Not authenticated
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    // If we're getting HTML, we're probably not authenticated
+                    return null;
+                }
+
+                const data = await response.json();
+                return data.isAuthenticated ? {
+                    userId: data.user_id || data.id || null,
+                    ...data
+                } : null;
+
+            } catch (error) {
+                console.error('Error fetching current user:', error);
+                return null;
+            }
         }
-
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            // If we're getting HTML, we're probably not authenticated
-            return null;
-        }
-
-        const data = await response.json();
-        return data.isAuthenticated ? {
-            userId: data.user_id || data.id || null,
-            ...data
-        } : null;
-
-    } catch (error) {
-        console.error('Error fetching current user:', error);
-        return null;
-    }
-}
 
         // Конфигурация API
         const API_ENDPOINTS = {
@@ -56,7 +58,8 @@ async function getCurrentUser() {
             pricingPlan: null,
             equipment: [],
             isAdmin: isAdmin,
-            isAuthenticated: getCurrentUser()
+            isAuthenticated: false,
+            currentUserId: null,
         }
 
         // Кэш элементов DOM
@@ -100,92 +103,75 @@ async function getCurrentUser() {
         };
 
         // Инициализация приложения
-       async function init() {
-    try {
-        await loadInitialData();
-        setupEventListeners();
-        setupEquipmentHandlers();
+        async function init() {
+            try {
+                await loadInitialData();
 
-        // Default values if settings didn't load
-        if (!state.siteSettings?.close_time) {
-            state.siteSettings = {
-                open_time: "09:00",
-                close_time: "22:00",
-                is_open: true
-            };
+                setupEventListeners();
+                setupEquipmentHandlers();
+
+                // Default values if settings didn't load
+                if (!state.siteSettings?.close_time) {
+                    state.siteSettings = {
+                        open_time: "09:00",
+                        close_time: "22:00",
+                        is_open: true
+                    };
+                }
+
+                await renderCalendar();
+                updateUI();
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showError('Application initialization failed');
+            }
         }
-
-        await renderCalendar();
-        updateUI();
-    } catch (error) {
-        console.error('Initialization error:', error);
-        showError('Application initialization failed');
-    }
-}
 
         // Загрузка начальных данных
-async function loadInitialData() {
-    try {
-        showLoader();
-
-        // First try to get current user
-        const currentUser = await getCurrentUser();
-        state.isAuthenticated = currentUser !== null;
-        state.currentUserId = currentUser?.userId || null;
-
-        // Load other data
-        const [ratesRes, tablesRes] = await Promise.all([
-            fetch(API_ENDPOINTS.RATES),
-            fetch(API_ENDPOINTS.TABLES)
-        ]);
-
-        if (!ratesRes.ok) throw new Error('Failed to load rates');
-        if (!tablesRes.ok) throw new Error('Failed to load tables');
-
-        state.rates = await ratesRes.json();
-        state.tables = await tablesRes.json();
-        state.pricingPlan = state.rates.pricing_plan;
-
-        await loadSiteSettings(state.currentDate);
-
-        // Only try to load user bookings if authenticated
-        if (state.isAuthenticated) {
+        async function loadInitialData() {
             try {
-                const userBookingsRes = await fetch(API_ENDPOINTS.USER_BOOKINGS);
-                if (userBookingsRes.ok) {
-                    const userBookingsData = await userBookingsRes.json();
-                    state.bookings = userBookingsData.bookings || [];
+                showLoader();
+
+                // Get current user first
+                const currentUser = await getCurrentUser();
+                state.isAuthenticated = currentUser !== null;
+                state.currentUserId = currentUser?.userId || null;
+                if (state.isAuthenticated) {
+                    await loadUserBookings();
                 }
-            } catch (e) {
-                console.error('Error loading user bookings:', e);
+
+                // Show/hide bookings container based on auth
+                const bookingsContainer = document.getElementById('user-bookings-container');
+                if (bookingsContainer) {
+                    bookingsContainer.style.display = state.isAuthenticated ? 'block' : 'none';
+                }
+
+                // Load rates and tables regardless of auth
+                const [ratesRes, tablesRes] = await Promise.all([
+                    fetch(API_ENDPOINTS.RATES),
+                    fetch(API_ENDPOINTS.TABLES)
+                ]);
+
+                if (!ratesRes.ok) throw new Error('Failed to load rates');
+                if (!tablesRes.ok) throw new Error('Failed to load tables');
+
+                state.rates = await ratesRes.json();
+                state.tables = await tablesRes.json();
+                state.pricingPlan = state.rates.pricing_plan;
+
+                // Load user bookings only if authenticated
+
+
+                await loadSiteSettings(state.currentDate);
+            } catch (error) {
+                console.error('Error loading initial data:', error);
+                showError('Failed to load application data');
+            } finally {
+                hideLoader();
+                if (state.tables.length) {
+                    initForm();
+                }
             }
-        }
-
-    } catch (error) {
-        console.error('Error loading initial data:', error);
-        showError('Failed to load application data');
-    } finally {
-        hideLoader();
-        initForm();
-    }
-}
-
-        async function fetchWithAuthCheck(url, options = {}) {
-            const response = await fetch(url, options);
-
-            if (response.status === 401 || response.status === 403) {
-                // Перенаправляем на страницу входа или показываем модальное окно авторизации
-                window.location.href = '/login/?next=' + encodeURIComponent(window.location.pathname);
-                setTimeout(() => {
-                }, 3000)
-                throw new Error('Требуется авторизация');
-            }
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            return response;
         }
 
         // Инициализация формы
@@ -267,8 +253,6 @@ async function loadInitialData() {
                 };
                 initTimeSlots();
                 return false;
-            } finally {
-
             }
         }
 
@@ -376,7 +360,7 @@ async function loadInitialData() {
                     const isPastDay = selectedDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
                     // Если пользователь не админ и день прошёл — игнорируем клик
-                    if (isPastDay && !state.IsAdmin) {
+                    if (isPastDay && !state.isAdmin) {
                         return;
                     }
 
@@ -406,7 +390,8 @@ async function loadInitialData() {
         // Обработка кликов по слотам бронирования
         function handleSlotClick(event, slot) {
             event.preventDefault();
-            if (!getCurrentUser()) {
+
+            if (!state.isAuthenticated) {
                 showNotification('Для бронирования стола необходимо войти в систему', 'warning');
                 return;
             }
@@ -618,50 +603,35 @@ async function loadInitialData() {
             }
         }
 
-        function populateTimeOptions(clubOpenTime, clubCloseTime, selectedTime) {
-            const select = document.getElementById('booking-start-time');
-            select.innerHTML = '';
+        function populateTimeOptions(openTime, closeTime, selectedTime) {
+            const timeSelect = elements.startTime;
+            timeSelect.innerHTML = '';
 
-            const now = new Date();
-            let currentTime = new Date(clubOpenTime);
+            const optionIntervalMinutes = 30;
+            const lastAvailableTime = new Date(closeTime.getTime() - optionIntervalMinutes * 60000);
 
-            // Если текущее время находится между XX:30 и XX:59,
-            // начинаем со следующего полного часа
-            if (now.getMinutes() >= 30) {
-                currentTime.setHours(now.getHours() + 1);
-                currentTime.setMinutes(0, 0, 0);
-            } else {
-                // Иначе начинаем со следующего получаса
-                currentTime = new Date(now);
-                currentTime.setMinutes(30, 0, 0);
-            }
+            let currentTime = new Date(openTime);
 
-            // Убедимся, что не вышли за время закрытия
-            if (currentTime > clubCloseTime) {
-                return; // Нет доступных слотов
-            }
+            while (currentTime <= lastAvailableTime) {
+                const hours = currentTime.getHours().toString().padStart(2, '0');
+                const minutes = currentTime.getMinutes().toString().padStart(2, '0');
+                const timeString = `${hours}:${minutes}`;
 
-            // Начинаем с ближайшего получаса или часа
-            while (currentTime <= clubCloseTime) {
-                const timeStr = currentTime.toTimeString().slice(0, 5);
-                const option = new Option(timeStr, timeStr);
-                select.add(option);
-                currentTime.setMinutes(currentTime.getMinutes() + 30);
-            }
+                const option = document.createElement('option');
+                option.value = timeString;
+                option.textContent = timeString;
 
-            // Установим ближайшее доступное время по умолчанию
-            if (select.options.length > 0) {
-                select.selectedIndex = 0;
-            }
+                if (timeString === selectedTime) {
+                    option.selected = true;
+                }
 
-            // Если было передано выбранное время и оно доступно - выбираем его
-            if (selectedTime && [...select.options].some(opt => opt.value === selectedTime)) {
-                select.value = selectedTime;
+                timeSelect.appendChild(option);
+                currentTime = new Date(currentTime.getTime() + optionIntervalMinutes * 60000);
             }
         }
 
         function populateTableOptions(tables, selectedId) {
-            const select = document.getElementById('booking-table');
+            const select = elements.tableSelect;
             if (!select) return;
 
             select.innerHTML = '';
@@ -863,136 +833,152 @@ async function loadInitialData() {
         }
 
         // Обработка отправки формы бронирования
-async function handleBookingSubmit(event) {
-    event.preventDefault();
+        async function handleBookingSubmit(event) {
+            event.preventDefault();
 
-    try {
-        // Получаем данные формы
-        const durationMinutes = parseInt(elements.duration.value) || 60;
+            try {
+                // Получаем данные формы
+                const durationMinutes = parseInt(elements.duration.value) || 60;
 
-        console.log("Form data:", {
-            date: elements.bookingDate.value,
-            start_time: elements.startTime.value,
-            duration: durationMinutes,
-            table_id: elements.tableSelect.value,
-            participants: elements.participants.value,
-            notes: elements.notes.value
-        });
+                console.log("Form data:", {
+                    date: elements.bookingDate.value,
+                    start_time: elements.startTime.value,
+                    duration: durationMinutes,
+                    table_id: elements.tableSelect.value,
+                    participants: elements.participants.value,
+                    notes: elements.notes.value
+                });
 
-        const equipmentData = Array.from(document.querySelectorAll('.equipment-checkbox:checked'))
-            .map(checkbox => {
-                const quantityEl = checkbox.closest('.equipment-item').querySelector('select');
-                const quantity = quantityEl ? parseInt(quantityEl.value) : 1;
-                return {
-                    id: parseInt(checkbox.value),
-                    quantity: quantity
+                const equipmentData = Array.from(document.querySelectorAll('.equipment-checkbox:checked'))
+                    .map(checkbox => {
+                        const quantityEl = checkbox.closest('.equipment-item').querySelector('select');
+                        const quantity = quantityEl ? parseInt(quantityEl.value) : 1;
+                        return {
+                            id: parseInt(checkbox.value),
+                            quantity: quantity
+                        };
+                    });
+
+                const formData = {
+                    date: elements.bookingDate.value,
+                    start_time: elements.startTime.value,
+                    duration: durationMinutes,
+                    table_id: parseInt(elements.tableSelect.value),
+                    equipment: equipmentData,
+                    participants: parseInt(elements.participants.value),
+                    is_group: document.getElementById('is-group').checked,
+                    notes: elements.notes.value,
+                    slot_id: elements.bookingForm.dataset.slotId || null
                 };
-            });
 
-        const formData = {
-            date: elements.bookingDate.value,
-            start_time: elements.startTime.value,
-            duration: durationMinutes,
-            table_id: parseInt(elements.tableSelect.value),
-            equipment: equipmentData,
-            participants: parseInt(elements.participants.value),
-            is_group: document.getElementById('is-group').checked,
-            notes: elements.notes.value,
-            slot_id: elements.bookingForm.dataset.slotId || null
-        };
+                console.log("Full payload:", JSON.stringify(formData, null, 2));
 
-        console.log("Full payload:", JSON.stringify(formData, null, 2));
+                // Создаём бронирование
+                const response = await fetch(API_ENDPOINTS.BOOKINGS, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify(formData)
+                });
 
-        // Создаём бронирование
-        const response = await fetch(API_ENDPOINTS.BOOKINGS, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-            },
-            body: JSON.stringify(formData)
-        });
+                if (!response.ok) {
+                    let errorDetails = {};
+                    try {
+                        errorDetails = await response.json();
+                    } catch (e) {
+                        console.error("Couldn't parse error response", e);
+                    }
 
-        if (!response.ok) {
-            let errorDetails = {};
-            try {
-                errorDetails = await response.json();
-            } catch (e) {
-                console.error("Couldn't parse error response", e);
+                    console.error("Server response:", response.status, errorDetails);
+
+                    const errorMessage = errorDetails.message ||
+                        errorDetails.error ||
+                        `Server error: ${response.status}`;
+
+                    throw new Error(errorMessage);
+                }
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || 'Неизвестная ошибка');
+                }
+
+                showNotification('Бронирование успешно создано!', 'success');
+                closeModal();
+                await renderCalendar();
+                await loadUserBookings();
+
+                // --- Создаём платёж для бронирования ---
+                const paymentResponse = await fetch('/bookings/api/payment/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({booking_id: result.booking_id})
+                });
+
+                if (!paymentResponse.ok) {
+                    let errorPayment = {};
+                    try {
+                        errorPayment = await paymentResponse.json();
+                    } catch (e) {
+                        console.error("Couldn't parse payment error response", e);
+                    }
+
+                    const paymentErrorMessage = errorPayment.error || `Ошибка создания платежа: ${paymentResponse.status}`;
+                    throw new Error(paymentErrorMessage);
+                }
+
+                const paymentResult = await paymentResponse.json();
+
+                if (paymentResult.confirmation_url) {
+                    // Открываем ссылку оплаты в новой вкладке
+                    window.open(paymentResult.confirmation_url, '_blank');
+                } else {
+                    throw new Error('Не получен URL для оплаты');
+                }
+
+            } catch (error) {
+                console.error('Ошибка бронирования:', error);
+                showNotification(`Ошибка бронирования: ${error.message}`, 'error');
+                console.error("Full error:", error);
             }
-
-            console.error("Server response:", response.status, errorDetails);
-
-            const errorMessage = errorDetails.message ||
-                errorDetails.error ||
-                `Server error: ${response.status}`;
-
-            throw new Error(errorMessage);
         }
-
-        const result = await response.json();
-
-        if (!result.success) {
-            throw new Error(result.error || 'Неизвестная ошибка');
-        }
-
-        showNotification('Бронирование успешно создано!', 'success');
-        closeModal();
-        await renderCalendar();
-        await loadUserBookings();
-
-        // --- Создаём платёж для бронирования ---
-        const paymentResponse = await fetch('/bookings/api/payment/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-            },
-            body: JSON.stringify({ booking_id: result.booking_id })
-        });
-
-        if (!paymentResponse.ok) {
-            let errorPayment = {};
-            try {
-                errorPayment = await paymentResponse.json();
-            } catch (e) {
-                console.error("Couldn't parse payment error response", e);
-            }
-
-            const paymentErrorMessage = errorPayment.error || `Ошибка создания платежа: ${paymentResponse.status}`;
-            throw new Error(paymentErrorMessage);
-        }
-
-        const paymentResult = await paymentResponse.json();
-
-        if (paymentResult.confirmation_url) {
-            // Открываем ссылку оплаты в новой вкладке
-            window.open(paymentResult.confirmation_url, '_blank');
-        } else {
-            throw new Error('Не получен URL для оплаты');
-        }
-
-    } catch (error) {
-        console.error('Ошибка бронирования:', error);
-        showNotification(`Ошибка бронирования: ${error.message}`, 'error');
-        console.error("Full error:", error);
-    }
-}
 
         // Загрузка бронирований пользователя
         async function loadUserBookings() {
+            if (!state.isAuthenticated) return;
+
             try {
-                const response = await fetch(API_ENDPOINTS.USER_BOOKINGS);
-                if (!response.ok) throw new Error('Ошибка загрузки бронирований');
+                // запрос к календарю с нужной датой, чтобы получить user_bookings вместе с расписанием
+                const dateStr = new Date().toISOString().slice(0, 10);  // например, текущая дата
+                const response = await fetch(`${API_ENDPOINTS.CALENDAR}?date=${dateStr}&view=day`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
 
                 const data = await response.json();
-                state.bookings = data.bookings || [];
-                renderUserBookings();
+                console.log("Calendar API response:", data);  // Логируем ответ
+
+                if (data.user_bookings) {
+                    state.bookings = data.user_bookings;
+                    renderUserBookings(state.bookings);
+                } else {
+                    console.warn("user_bookings не найден в ответе");
+                    state.bookings = [];
+                    renderUserBookings([]);
+                }
             } catch (error) {
-                console.error('Ошибка загрузки бронирований:', error);
+                console.error('Error loading user bookings:', error);
+                showNotification('Не удалось загрузить ваши бронирования', 'error');
             }
         }
-
 
         function updateDateInput() {
             if (elements.bookingDate) {
@@ -1216,16 +1202,22 @@ async function handleBookingSubmit(event) {
             switch (state.currentView) {
                 case 'day':
                     container.innerHTML = generateDayView(data);
+                    if (elements.userBookingsContainer) {
+                        renderUserBookings(state.bookings);
+                    }
                     break;
                 case 'week':
                     container.innerHTML = renderWeekView(data);
                     if (elements.userBookingsContainer) {
-                        elements.userBookingsContainer.innerHTML = renderUserBookings(data.user_bookings);
+                        renderUserBookings(state.bookings);
                     }
                     attachWeekSlotListeners();
                     break;
                 case 'month':
                     container.innerHTML = generateMonthView(data);
+                    if (elements.userBookingsContainer) {
+                        renderUserBookings(state.bookings);
+                    }
                     break;
             }
         }
@@ -1586,10 +1578,10 @@ async function handleBookingSubmit(event) {
                         'X-CSRFToken': getCSRFToken()
                     }
                 })
-                    .then(response => {
+                    .then(async response => {
                         if (response.ok) {
                             alert('Бронирование успешно отменено');
-                            renderCalendar();
+                            await renderCalendar();
                         } else {
                             throw new Error('Ошибка при отмене бронирования');
                         }
@@ -1637,33 +1629,93 @@ async function handleBookingSubmit(event) {
 
 
         // Отображение бронирований пользователя
-        function renderUserBookings(bookings) {
-            if (!bookings?.length) {
-                return `<div class="text-gray-400">Нет активных бронирований на этой неделе.</div>`;
+        function renderUserBookings(bookingsInput) {
+            const container = document.getElementById('user-bookings-container');
+            if (!container) return;
+
+            // Очистка контейнера по умолчанию
+            container.innerHTML = '';
+
+            // Проверка авторизации
+            if (!state.isAuthenticated) {
+                return;
             }
 
-            return `
-            <table class="min-w-full border text-sm text-left">
-                <thead>
-                    <tr class="bg-gray-100">
-                        <th class="px-3 py-2 border">Дата</th>
-                        <th class="px-3 py-2 border">Время</th>
-                        <th class="px-3 py-2 border">Стол</th>
-                        <th class="px-3 py-2 border">Статус</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${bookings.map(b => `
-                        <tr>
-                            <td class="px-3 py-2 border">${new Date(b.date).toLocaleDateString('ru-RU')}</td>
-                            <td class="px-3 py-2 border">${b.start}-${b.end}</td>
-                            <td class="px-3 py-2 border">#${b.table_number}</td>
-                            <td class="px-3 py-2 border">${b.status}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
+            // Получение данных о бронированиях
+            const bookings = Array.isArray(bookingsInput)
+                ? bookingsInput
+                : Array.isArray(state.bookings)
+                    ? state.bookings
+                    : Object.values(state.bookings || {});
+
+            if (!bookings.length) {
+                container.innerHTML = '<div class="text-gray-400">Данные бронирований не загружены.</div>';
+                return;
+            }
+
+            // Фильтрация: только сегодня и позже
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const filtered = bookings.filter(b => {
+                try {
+                    const bookingDate = new Date(b.date);
+                    bookingDate.setHours(0, 0, 0, 0);
+                    return bookingDate >= today;
+                } catch (e) {
+                    console.warn('Ошибка при разборе даты бронирования:', b.date);
+                    return false;
+                }
+            });
+
+            if (!filtered.length) {
+                container.innerHTML = '<div class="text-gray-400">У вас нет активных бронирований.</div>';
+                return;
+            }
+
+            // Сортировка по дате
+            filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Генерация HTML-таблицы
+            const tableHTML = `
+        <table class="min-w-full border text-sm text-left">
+            <thead>
+                <tr class="bg-gray-100">
+                    <th class="px-3 py-2 border">Дата</th>
+                    <th class="px-3 py-2 border">Время</th>
+                    <th class="px-3 py-2 border">Стол</th>
+                    <th class="px-3 py-2 border">Статус</th>
+                    <th class="px-3 py-2 border">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+${filtered.map(b => {
+                const dateStr = new Date(b.date).toLocaleDateString('ru-RU');
+                const status = b.status || '—';
+                const statusClass = getStatusColorClass(status);
+                const actions = renderBookingActions(b);
+                const rowClass = status.toLowerCase() === 'отменено' ? 'bg-red-50 text-red-500' : '';
+                console.log('Rendering booking:', b);
+
+                return `
+        <tr class="${rowClass}">
+            <td class="px-3 py-2 border">${dateStr}</td>
+            <td class="px-3 py-2 border">${b.start ?? '—'}-${b.end ?? '—'}</td>
+            <td class="px-3 py-2 border">#${b.table_number ?? '?'} (${b.table_type ?? '—'})</td>
+            <td class="px-3 py-2 border font-semibold ${statusClass}">
+                ${status}
+            </td>
+            <td class="px-3 py-2 border">
+                ${actions ?? '—'}
+            </td>
+        </tr>
+    `;
+            }).join('')}
+            </tbody>
+        </table>
+    `;
+
+            container.innerHTML = tableHTML;
         }
 
         // Обработчики слотов недели
@@ -1693,7 +1745,52 @@ async function handleBookingSubmit(event) {
         }
 
 
-        // Запуск приложения
+        function getStatusColorClass(status) {
+            if (!status || typeof status !== 'string') return 'text-yellow-600'; // безопасная защита
+
+            switch (status.toLowerCase()) {
+                case 'ожидает оплаты':
+                    return 'text-green-600';
+                case 'оплачено':
+                    return 'text-blue-600';
+                case 'отменено':
+                    return 'text-red-600';
+                default:
+                    return 'text-yellow-600';
+            }
+        }
+
+        function renderBookingActions(booking) {
+            if (!booking || !booking.date || !booking.end || !booking.status) {
+                console.warn('Некорректные данные бронирования:', booking);
+                return '—';
+            }
+
+            const now = new Date();
+            const bookingDate = new Date(`${booking.date}T${booking.end}:00`);
+            const isPastBooking = isNaN(bookingDate) || bookingDate < now;
+            const isCancellable = !isPastBooking && booking.status.toLowerCase() !== 'отменено';
+
+            let actions = '';
+
+            if (isCancellable) {
+                actions += `<button onclick="cancelBooking(${booking.id})" 
+            class="text-red-600 hover:text-red-800 mr-2">
+            Отменить
+        </button>`;
+            }
+
+            if (booking.status.toLowerCase() === 'ожидает оплаты') {
+                actions += `<button onclick="payBooking(${booking.id})" 
+            class="text-blue-600 hover:text-blue-800">
+            Оплатить
+        </button>`;
+            }
+            console.log('Booking for actions:', booking);
+
+            return actions || '—';
+        }
+
         init();
     }
 )

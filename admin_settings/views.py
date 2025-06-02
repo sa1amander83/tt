@@ -1,3 +1,5 @@
+from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
 from django.core import serializers
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -5,6 +7,9 @@ from django.views import View
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import DetailView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from admin_settings.forms import TableForm, TableTypeForm,  \
      HolidayForm, ClubSettingsForm, WorkingHoursForm
@@ -414,16 +419,12 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods, require_GET
 from django.views.decorators.csrf import csrf_exempt
 import json
-@require_GET
-def current_user(request):
-    if request.user.is_authenticated:
-        return JsonResponse({
-            'isAuthenticated': True,
-            'username': request.user.username,
-            'user_id': request.user.id
-        })
-    else:
-        return JsonResponse({'isAuthenticated': False})
+import logging
+logger = logging.getLogger('tt')
+# @login_required
+
+
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def create_equipment(request):

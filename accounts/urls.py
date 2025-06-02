@@ -10,6 +10,7 @@ urlpatterns = [
     path("logout/", logout_view, name="logout"),
     path("restore/", restore_view, name="restore"),
     path("profile/", ProfileView.as_view(), name="profile"),
+    path('current_user/', CurrentUserView.as_view(), name='current_user'),
     path("profile/update", ProfileUpdateView.as_view(), name="profile-update"),
     path('upload-photo/', upload_profile_photo, name='upload-profile-photo'),
     path('update-slot-view-mode/', update_slot_view_mode, name='update_slot_view_mode')

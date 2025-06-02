@@ -26,11 +26,11 @@ SECRET_KEY = 'django-insecure-3lu!z1ekss$ztv%hu5(5gc+t!4=ww3-1dvkc7&=m=vbjll*oav
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
 
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'rest_framework',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -45,9 +45,12 @@ INSTALLED_APPS = [
     'events',
     'bookings',
     'main',
+
 ]
 
 MIDDLEWARE = [
+'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -55,8 +58,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
 
+]
 ROOT_URLCONF = 'tt.urls'
 
 TEMPLATES = [
@@ -109,12 +112,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = 'ru-ru'
-
+USE_TZ = True
 TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
-USE_TZ = True
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -138,6 +141,17 @@ LOGIN_URL = '/accounts/signin/'
 LOGIN_REDIRECT_URL = '/profile/'
 LOGOUT_REDIRECT_URL = '/accounts/logout/'
 
+
+CORS_ALLOW_CREDENTIALS = True
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    # добавь сюда URL, с которого будешь делать запросы
+]
+
+
+
 load_dotenv()
 
 SHOP_SECRET_KEY = os.getenv('SHOP_SECRET_KEY')
@@ -156,3 +170,34 @@ else:
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
+
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'INFO',  # или DEBUG, если нужно подробнее
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'tt.log',  # путь к файлу логов
+            'encoding': 'utf-8',
+        },
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        # Логгер твоего приложения
+        'tt': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
