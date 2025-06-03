@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <main class="container mx-auto px-4 py-8">
+        <div class="flex items-center mb-6">
+            <a href="{% url 'user_management' %}" class="text-green-600 hover:text-green-700 mr-4">
+                <i class="fas fa-arrow-left"></i> Назад к списку
+            </a>
+            <h1 class="text-2xl font-bold">Профиль пользователя</h1>
+        </div>
+
+        <!-- User Profile Header -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div class="flex items-center">
+                    <div class="h-20 w-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-3xl">
+                        {% if user_profile.photo %}
+                            <img class="h-20 w-20 rounded-full" src="{{ user_profile.photo.url }}" alt="">
+                        {% else %}
+                            <i class="fas fa-user"></i>
+                        {% endif %}
+                    </div>
+                    <div class="ml-6">
+                        <h2 class="text-2xl font-bold">{{ user_profile.user_name }}</h2>
+                        <p class="text-gray-600">ID: {{ user_profile.id }} | Регистрация: {{ user_profile.date_joined|date:"d.m.Y" }}</p>
+                        <div class="mt-2">
+                            {% if user_profile.status == 'active' %}
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активный</span>
+                            {% elif user_profile.status == 'not_active' %}
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Неактивный</span>
+                            {% else %}
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Заблокирован</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{% url 'edit_user' user_profile.id %}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                        <i class="fas fa-edit mr-2"></i> Редактировать
+                    </a>
+                    {% if user_profile.status == 'active' %}
+                        <a href="{% url 'block_user' user_profile.id %}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                            <i class="fas fa-ban mr-2"></i> Блокировать
+                        </a>
+                    {% else %}
+                        <a href="{% url 'unblock_user' user_profile.id %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                            <i class="fas fa-check mr-2"></i> Разблокировать
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'delete_user' user_profile.id %}" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                        <i class="fas fa-trash-alt mr-2"></i> Удалить
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Details Tabs -->
+        <div class="mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8">
+                    <a href="#info" class="border-green-500 text-green-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" id="tab-info">
+                        Информация
+                    </a>
+                    <a href="#visits" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" id="tab-visits">
+                        Посещения
+                    </a>
+                    <a href="#payments" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" id="tab-payments">
+                        Платежи
+                    </a>
+                    <a href="#statistics" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" id="tab-statistics">
+                        Статистика
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tab-content-info" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4">Личная информация</h3>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">ФИО</label>
+                                <p class="text-gray-900">{{ user_profile.user_name }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Дата рождения</label>
+                                <p class="text-gray-900">{{ user_profile.user_age|default:"Не указан" }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <p class="text-gray-900">{{ user_profile.email|default:"Не указан" }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Телефон</label>
+                                <p class="text-gray-900">{{ user_profile.phone }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Уровень игры</label>
+                                <p class="text-gray-900">{{ user_profile.get_level_display }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Роль</label>
+                                <p class="text-gray-900">{{ user_profile.get_role_display }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4">Сводная информация</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-500">Всего посещений</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ total_visits }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-500">Всего бронирований</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ total_bookings }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-500">Всего платежей</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ total_payments }} ₽</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-500">Отмены бронирований</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ cancellations }}</p>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <h4 class="text-md font-semibold mb-2">Активность за последние 6 месяцев</h4>
+                        <div class="h-48">
+                            <canvas id="activityChart" data-labels='{{ activity_data.labels|safe }}' 
+                                    data-values='{{ activity_data.data|safe }}'></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-content-visits" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h3 class="text-lg font-semibold mb-4">Последние посещения</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Время</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Стол</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Тип</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Стоимость</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for booking in recent_bookings %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.start_time|date:"d.m.Y" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.start_time|date:"H:i" }} - {{ booking.end_time|date:"H:i" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Стол #{{ booking.table.id }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Бронирование</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.total_price }} ₽</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if booking.status == 'completed' %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Завершено</span>
+                                    {% else %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{{ booking.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">Посещения не найдены</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-4 text-right">
+                    <a href="{% url 'user_bookings' user_profile.id %}" class="text-green-600 hover:text-green-800 font-medium">
+                        Показать все посещения →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-content-payments" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Сводка по платежам</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Всего платежей</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ total_bookings }}</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Общая сумма</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ total_payments }} ₽</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-500">Средний чек</p>
+                        <p class="text-2xl font-bold text-gray-900">
+                            {% if total_bookings > 0 %}
+                                {{ total_payments|floatformat:0 }} ₽
+                            {% else %}
+                                0 ₽
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <h4 class="text-md font-semibold mb-2">История платежей</h4>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Сумма</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Тип</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for booking in recent_bookings %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.start_time|date:"d.m.Y" }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.total_price }} ₽</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Бронирование</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {% if booking.status == 'paid' or booking.status == 'completed' %}
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Оплачено</span>
+                                        {% else %}
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Ожидает оплаты</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">Платежи не найдены</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-content-statistics" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Статистика активности</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div class="h-80">
+                        <canvas id="monthlyActivityChart" data-labels='{{ activity_data.labels|safe }}' 
+                                data-values='{{ activity_data.data|safe }}'></canvas>
+                    </div>
+                    <div class="h-80">
+                        <canvas id="weekdayDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+{% endblock %}
+
+{% block extrascripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching functionality
+            const tabButtons = document.querySelectorAll('[id^="tab-"]');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all tabs
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('border-green-500', 'text-green-600');
+                        btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-2 border-gray-300');
+                    });
+                    
+                    // Add active class to clicked tab
+                    this.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-2 border-gray-300');
+                    this.classList.add('border-green-500', 'text-green-600');
+                    
+                    // Hide all tab contents
+                    tabContents.forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    
+                    // Show corresponding tab content
+                    const tabId = this.id.replace('tab-', 'tab-content-');
+                    document.getElementById(tabId).classList.remove('hidden');
+                });
+            });
+            
+            // Activity Chart
+            const activityCtx = document.getElementById('activityChart')?.getContext('2d');
+            if (activityCtx) {
+                const labels = JSON.parse(activityCtx.canvas.dataset.labels);
+                const data = JSON.parse(activityCtx.canvas.dataset.values);
+                
+                new Chart(activityCtx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Посещения',
+                            data: data,
+                            borderColor: 'rgba(34, 197, 94, 1)',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %}

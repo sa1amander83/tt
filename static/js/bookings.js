@@ -860,7 +860,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                     });
                 const formData = {
                     date: elements.bookingDate.value, // можно оставить, если серверу нужен
-                    start_time: new Date(`${elements.bookingDate.value}T${elements.startTime.value}:00`).toISOString(),
+                    start_time:elements.startTime.value,
+
                     duration: durationMinutes,
                     table_id: parseInt(elements.tableSelect.value),
                     equipment: equipmentData,
@@ -963,7 +964,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 
                 const data = await response.json();
-                console.log("Calendar API response:", data);  // Логируем ответ
+               // console.log("Calendar API response:", data);  // Логируем ответ
 
                 if (data.user_bookings) {
                     state.bookings = data.user_bookings;
@@ -1853,7 +1854,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             Оплатить
         </button>`;
             }
-            console.log('Booking for actions:', booking);
+            //console.log('Booking for actions:', booking);
 
             return actions || '—';
         }

@@ -130,11 +130,10 @@ class CalendarAPIView(APIView):
         return False, None, None, False
 
     def get_bookings(self, start, end, user):
-        return Booking.objects.filter(
-            start_time__lt=end,
-            end_time__gt=start,
-            status__in=['pending', 'paid']
-        )
+        qs = Booking.objects.filter(start_time__lt=end, end_time__gt=start).select_related('table')
+        if user and not (user.is_staff or user.is_superuser):
+            qs = qs.filter(user=user)
+        return qs
 
     def get_day_view(self, date, user, slot_duration):
 

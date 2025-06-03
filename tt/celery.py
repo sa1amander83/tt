@@ -20,7 +20,7 @@ app.autodiscover_tasks(['bookings'])
 app.conf.beat_schedule = {
     'cleanup-expired-pending-bookings-every-minute': {
         'task': 'bookings.tasks.cleanup_expired_pending_bookings',
-        'schedule': 60.0,  # запускать каждую минуту
+        'schedule': 600.0,  # запускать каждые 10 минут
     },
 }
 

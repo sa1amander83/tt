@@ -1,11 +1,14 @@
+from django.utils.timezone import localtime
+
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.views import View
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView, UpdateView
 from django.http import JsonResponse
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from rest_framework.permissions import IsAuthenticated
@@ -13,6 +16,7 @@ from rest_framework.response import Response
 from rest_framework.utils import json
 from rest_framework.views import APIView
 
+from bookings.models import Booking
 from .forms import ProfileUpdateForm, PasswordChangeForm, ProfilePhotoForm
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
@@ -117,24 +121,43 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         context['profile_form'] = ProfileUpdateForm(instance=user)
         context['password_form'] = PasswordChangeForm(user=user)
         context['slot_view_mode'] = user.slot_view_mode or 60
-        # Пример данных для бронирований (замените на реальные данные из вашей модели)
-        context['bookings'] = [
-            {
-                'date': '15.05.2023',
-                'time': '18:00 - 19:00',
-                'table': 'Стол #3',
-                'status': 'Подтверждено',
-                'status_class': 'bg-green-100 text-green-800'
-            },
-            {
-                'date': '17.05.2023',
-                'time': '19:00 - 20:00',
-                'table': 'Стол #5',
-                'status': 'Ожидание',
-                'status_class': 'bg-yellow-100 text-yellow-800'
-            }
-        ]
 
+        # Получаем бронирования пользователя, упорядоченные по дате начала (свежие первые)
+        bookings_qs = Booking.objects.filter(user=user).order_by('-start_time')
+
+        # Пагинация (опционально, можно убрать если не нужна)
+        paginator = Paginator(bookings_qs, 10)  # по 10 бронирований на страницу
+        page_number = self.request.GET.get('page', 1)
+        bookings_page = paginator.get_page(page_number)
+
+        # Преобразуем бронирования в удобный для шаблона формат с форматированными датами и статусом
+        def format_booking(b):
+            return {
+                'id': b.id,
+                'start_date': localtime(b.start_time).strftime('%d.%m.%Y'),
+                'start_time': localtime(b.start_time).strftime('%H:%M'),
+                'end_time': localtime(b.end_time).strftime('%H:%M'),
+                'table': str(b.table),
+                'status': b.get_status_display(),
+                'status_key': b.status,
+                'participants': b.participants,
+                'is_group': b.is_group,
+                'base_price': b.base_price,
+                'equipment_price': b.equipment_price,
+                'total_price': b.total_price,
+                'promo_code': b.promo_code.code if b.promo_code else None,
+                'promo_code_discount_percent': b.promo_code_discount_percent,
+                'special_offer': b.special_offer.name if b.special_offer else None,
+                'special_offer_discount_percent': b.special_offer_discount_percent,
+                'equipment': [eq.name for eq in b.equipment.all()],
+                'notes': b.notes,
+                'created_at': localtime(b.created_at).strftime('%d.%m.%Y %H:%M'),
+                'updated_at': localtime(b.updated_at).strftime('%d.%m.%Y %H:%M'),
+                'expires_at': localtime(b.expires_at).strftime('%d.%m.%Y %H:%M'),
+            }
+
+        context['bookings'] = [format_booking(b) for b in bookings_page]
+        context['bookings_page'] = bookings_page  # Для вывода пагинации в шаблоне
         # Данные программы лояльности
         context['loyalty_data'] = {
             'current_level': 'Старт',
@@ -306,3 +329,23 @@ def apply_membership_usage(user, duration_minutes):
     if membership and not membership.membership_type.is_unlimited:
         membership.used_minutes += duration_minutes
         membership.save()
+
+
+class StatisticsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'management/management_templates/statistics.html'
+
+    def test_func(self):
+        return self.request.user.is_authenticated and (self.request.user.is_staff or self.request.user.is_superuser)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Добавьте сюда любую статистику, которую хотите вывести
+        # Например:
+        from bookings.models import Booking
+        from django.utils.timezone import now
+        context['total_bookings'] = Booking.objects.count()
+        context['completed_today'] = Booking.objects.filter(
+            status='completed',
+            start_time__date=now().date()
+        ).count()
+        return context

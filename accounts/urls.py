@@ -3,6 +3,7 @@ from django.conf.urls.static import static
 from django.conf import settings
 from accounts.views import *
 
+
 app_name = "accounts"
 urlpatterns = [
     path("signup/", SignUpView.as_view(), name="signup"),
@@ -13,5 +14,6 @@ urlpatterns = [
     path('current_user/', CurrentUserView.as_view(), name='current_user'),
     path("profile/update", ProfileUpdateView.as_view(), name="profile-update"),
     path('upload-photo/', upload_profile_photo, name='upload-profile-photo'),
-    path('update-slot-view-mode/', update_slot_view_mode, name='update_slot_view_mode')
+    path('update-slot-view-mode/', update_slot_view_mode, name='update_slot_view_mode'),
+    path('statistics/', StatisticsView.as_view(), name='statistics'),
 ]

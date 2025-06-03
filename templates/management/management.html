@@ -1,0 +1,73 @@
+    {% extends 'base.html' %}
+    {% load static %}
+
+    {% block content %}
+        <main class="container mx-auto px-4 py-8">
+            <h1 class="text-2xl font-bold mb-8">Управление</h1>
+
+            <!-- Management Tabs -->
+            <div class="mb-8 overflow-x-auto">
+                <div class="border-b border-gray-200 w-max min-w-full">
+                    <nav class="-mb-px flex space-x-8 overflow-x-auto pb-2">
+                        <a href="{% url 'management:bookings'  'bookings'  %}"
+                           class="{% if active_tab == 'bookings' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                            Бронирования                        </a>
+                        <a href="{% url 'management:users'  %}"
+                           class="{% if active_tab == 'users' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                            Посетители клуба
+                        </a>
+
+{#                        <a href="{% url 'management:promocodes'  %}"#}
+{#                           class="{% if active_tab == 'promocodes' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">#}
+{#                            Абонементы и промокоды#}
+{#                        </a>#}
+{##}
+{#                        <a href="{% url 'management:special_offers' 'schedule' %}"#}
+{#                           class="{% if active_tab == 'schedule' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">#}
+{#                            Расписание#}
+{#                        </a>#}
+{#                        <a href="{% url 'admin_settings:club_settings' 'general' %}"#}
+{#                           class="{% if active_tab == 'general' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">#}
+{#                            Общие#}
+{#                        </a>#}
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Остальной код остается без изменений -->
+            {% if active_tab == 'bookings' %}
+                {% include 'management/management_templates/bookings.html' %}
+            {% elif active_tab == 'users' %}
+                {% include 'management/management_templates/users.html' %}
+         
+            {% elif active_tab == 'reports' %}
+              {% include 'management/management_templates/reports.html' %}
+        
+            {% endif %}
+        </main>
+
+        <footer class="bg-gray-800 text-white py-8 mt-12">
+            <div class="container mx-auto px-4">
+                <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                    <p>&copy; {% now "Y" %} PingPong Club. Панель администратора.</p>
+                </div>
+            </div>
+        </footer>
+
+    {% endblock %}
+
+    {% block extrascripts %}
+        {{ block.super }}
+
+    <script src="{% static 'js/ru.js' %}"></script>
+    <script src="{% static 'js/admin_settings.js' %}"></script>
+    <script src="{% static 'js/admin-modals/table_pricing.js' %}"></script>
+    <script src="{% static 'js/admin-modals/special_offers.js' %}"></script>
+    <script src="{% static 'js/admin-modals/other.js' %}"></script>
+    <script src="{% static 'js/admin-modals/tabletypeprice.js' %}"></script>
+    <script src="{% static 'js/admin-modals/schedule.js' %}"></script>
+    <script src="{% static 'js/admin-modals/membership.js' %}"></script>
+    <script src="{% static 'js/admin-modals/equipment.js' %}"></script>
+    <script src="{% static 'js/admin-modals/promocode.js' %}"></script>        
+
+    {% endblock %}

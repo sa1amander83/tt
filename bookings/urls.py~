@@ -31,7 +31,7 @@ urlpatterns = [
     path('api/site-settings/', views.get_site_settings, name='site-settings'),
 
     path('api/yookassa/webhook/', yookassa_webhook, name='yookassa_webhook'),
-    path('api/cancel_booking/<int:booking_id>/', cancel_booking, name='cancel-booking'),
+    path('api/cancel_booking/', cancel_booking, name='cancel-booking'),
 
 
 ]

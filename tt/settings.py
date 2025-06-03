@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'events',
     'bookings',
     'main',
-
+'management'
 ]
 
 MIDDLEWARE = [
@@ -126,7 +126,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = 'ru-ru'
-USE_TZ = False
+USE_TZ = True
 TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
