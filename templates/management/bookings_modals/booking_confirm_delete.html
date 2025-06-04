@@ -13,7 +13,7 @@
                 <strong>Детали бронирования:</strong><br>
                 Стол: {{ booking.table.number }}<br>
                 Время: {{ booking.start_time|date:"d.m.Y H:i" }} - {{ booking.end_time|date:"H:i" }}<br>
-                Клиент: {{ booking.user.get_full_name|default:booking.user.user_name }}
+                Клиент: {{ booking.user.get_full_name|default:booking.user.user_name }} 
             </div>
             
             <form method="post">

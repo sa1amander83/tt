@@ -10,7 +10,8 @@
                 <button onclick="closeModal('edit-booking-modal-{{ booking.id }}')"
                         class="text-gray-500 hover:text-gray-700 focus:outline-none">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
@@ -24,9 +25,11 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label for="id_table" class="block text-sm font-medium text-gray-700 mb-1">Стол</label>
-                            <select name="table" id="id_table" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                            <select name="table" id="id_table"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
                                 {% for table in tables %}
-                                    <option value="{{ table.id }}" {% if table.id == booking.table.id %}selected{% endif %}>
+                                    <option value="{{ table.id }}"
+                                            {% if table.id == booking.table.id %}selected{% endif %}>
                                         Стол #{{ table.id }} ({{ table.table_type.name }})
                                     </option>
                                 {% endfor %}
@@ -34,37 +37,47 @@
                         </div>
                         <div>
                             <label for="id_user" class="block text-sm font-medium text-gray-700 mb-1">Клиент</label>
-                            <select name="user" id="id_user" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                            <select name="user" id="id_user"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
                                 {% for user in users %}
-                                   <option value="{{ user.id }}" {% if user.id == booking.user.id %}selected{% endif %}>
-    {{ user.get_full_name|default:user.user_name }}
-</option>
+                                    <option value="{{ user.id }}"
+                                            {% if user.id == booking.user.id %}selected{% endif %}>
+                                        {{ user.get_full_name|default:user.user_name }} 
+                                    </option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div>
-                            <label for="id_start_time" class="block text-sm font-medium text-gray-700 mb-1">Дата и время начала</label>
-                            <input type="text" name="start_time" id="id_start_time" value="{{ booking.start_time|date:'Y-m-d H:i' }}"
+                            <label for="id_start_time" class="block text-sm font-medium text-gray-700 mb-1">Дата и время
+                                начала</label>
+                            <input type="text" name="start_time" id="id_start_time"
+                                   value="{{ booking.start_time|date:'Y-m-d H:i' }}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                    data-datepicker>
                         </div>
                         <div>
-                            <label for="id_end_time" class="block text-sm font-medium text-gray-700 mb-1">Дата и время окончания</label>
-                            <input type="text" name="end_time" id="id_end_time" value="{{ booking.end_time|date:'Y-m-d H:i' }}"
+                            <label for="id_end_time" class="block text-sm font-medium text-gray-700 mb-1">Дата и время
+                                окончания</label>
+                            <input type="text" name="end_time" id="id_end_time"
+                                   value="{{ booking.end_time|date:'Y-m-d H:i' }}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                    data-datepicker>
                         </div>
                         <div>
                             <label for="id_status" class="block text-sm font-medium text-gray-700 mb-1">Статус</label>
-                            <select name="status" id="id_status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                            <select name="status" id="id_status"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
                                 {% for status, display in status_choices.items %}
-                                    <option value="{{ status }}" {% if status == booking.status %}selected{% endif %}>{{ display }}</option>
+                                    <option value="{{ status }}"
+                                            {% if status == booking.status %}selected{% endif %}>{{ display }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="md:col-span-2">
-                            <label for="id_notes" class="block text-sm font-medium text-gray-700 mb-1">Примечания</label>
-                            <textarea name="notes" id="id_notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">{{ booking.notes }}</textarea>
+                            <label for="id_notes"
+                                   class="block text-sm font-medium text-gray-700 mb-1">Примечания</label>
+                            <textarea name="notes" id="id_notes" rows="3"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">{{ booking.notes }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -75,7 +88,8 @@
                             class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-6 rounded-lg transition duration-200">
                         Отмена
                     </button>
-                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200">
+                    <button type="submit"
+                            class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200">
                         Сохранить изменения
                     </button>
                 </div>
