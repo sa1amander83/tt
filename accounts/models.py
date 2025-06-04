@@ -63,7 +63,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         ADMIN = 'ADMIN', _('Administrator')
         MANAGER = 'MANAGER', _('Manager')
         USER = 'USER', _('User')
-
+        COACH= 'COACH', _('Тренер')
     class Level(models.TextChoices):
         BEGINNER = 'beginner', 'Начинающий'
         INTERMEDIATE = 'intermediate', 'Средний'
@@ -71,13 +71,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         PROFESSIONAL = 'professional', 'Профессиональный'
 
     phone = models.CharField(
-        _("Phone Number"),
+        _("Телефон"),
         max_length=15,
         unique=True,
         help_text="Ex: +1234567890",
     )
     email = models.EmailField(
-        _("Email Address"),
+        _("Почта"),
         max_length=255,
         unique=True,
         blank=True,
@@ -86,14 +86,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         help_text="Ex: example@example.com",
     )
     user_name = models.CharField(
-        _("user name"),
+        _("Имя пользователя"),
         max_length=150,
         blank=True,
     )
 
 
     role = models.CharField(
-        _("Role"),
+        _("Роль пользователя"),
         max_length=10,
         choices=Role.choices,
         default=Role.USER,
@@ -126,6 +126,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     objects = UserManager()
 
+
     USERNAME_FIELD = "phone"
     REQUIRED_FIELDS = ["user_name", "email"]
 
@@ -148,3 +149,5 @@ class User(AbstractBaseUser, PermissionsMixin):
             self.is_staff = True
         super().save(*args, **kwargs)
 
+    def get_full_name(self):
+        return self.user_name or self.email or self.phone or f"Пользователь #{self.id}"

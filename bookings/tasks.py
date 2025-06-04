@@ -8,7 +8,11 @@ from bookings.models import Booking
 @shared_task
 def cleanup_expired_pending_bookings():
     expiration_time = now() - timedelta(minutes=10)
+
+    # Фильтруем просроченные бронирования со статусом "pending"
     expired_bookings = Booking.objects.filter(status='pending', created_at__lt=expiration_time)
-    count = expired_bookings.count()
-    expired_bookings.delete()
-    return f"Deleted {count} expired pending bookings"
+
+    # Обновляем статус на "expired"
+    count = expired_bookings.update(status='expired')
+
+    return f"Marked {count} pending bookings as expired"

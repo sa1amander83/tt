@@ -4,17 +4,21 @@ from datetime import timedelta, datetime, date
 from django.contrib.auth import get_user_model
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Sum, Q, F, Count
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
+from django.utils.timezone import localtime
 from django.utils.translation import gettext_lazy as _
 from django.views import View
-from django.views.generic import ListView, DetailView, TemplateView
+from django.views.generic import ListView, DetailView, TemplateView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.paginator import Paginator
 
 from admin_settings.models import Table
-from bookings.models import Booking
-from buisneslogic.models import Membership
+from bookings.forms import BookingForm
+from bookings.models import Booking, BookingPackage
+from buisneslogic.models import Membership, LoyaltyProfile
+from management.forms import UserAdminForm
 
 UserModel = get_user_model()
 
@@ -66,126 +70,128 @@ class UserProfileView(LoginRequiredMixin, StaffRequiredMixin, View):
                 'data': visits_data,
             },
         }
-        return render(request, 'management/management_templates/users-detail.html', context)
+        return render(request, 'management/users_modals/user_profile.html', context)
 
 
-class BookingListView(LoginRequiredMixin, StaffRequiredMixin, View):
-    def get(self, request):
-        bookings = Booking.objects.select_related('user', 'table').order_by('-created_at')
-
-        date_filter = request.GET.get('date', '')
-        status_filter = request.GET.get('status', 'all')
-        table_filter = request.GET.get('table', 'all')
-
-        if date_filter:
-            try:
-                filter_date = datetime.strptime(date_filter, '%Y-%m-%d').date()
-                bookings = bookings.filter(
-                    Q(start_time__date=filter_date) | Q(end_time__date=filter_date)
-                )
-            except ValueError:
-                pass
-
-        if status_filter != 'all':
-            bookings = bookings.filter(status=status_filter)
-
-        if table_filter != 'all':
-            bookings = bookings.filter(table_id=table_filter)
-
-        paginator = Paginator(bookings, 10)
-        page_obj = paginator.get_page(request.GET.get('page'))
-
-        context = {
-            'bookings': page_obj,
-            'tables': Table.objects.all(),
-            'status_choices': dict(Booking.STATUS_CHOICES),
-            'filters': {
-                'date': date_filter or date.today().strftime('%Y-%m-%d'),
-                'status': status_filter,
-                'table': table_filter,
-            }
-        }
-        return render(request, 'management/management_templates/bookings.html', context)
-
-
-class UserListView(LoginRequiredMixin, StaffRequiredMixin, View):
-    def get(self, request):
-        users = UserModel.objects.all().order_by('-date_joined')
-
-        name_filter = request.GET.get('name', '')
-        role_filter = request.GET.get('role', 'all')
-        status_filter = request.GET.get('status', 'all')
-
-        if name_filter:
-            users = users.filter(
-                Q(user_name__icontains=name_filter) |
-                Q(email__icontains=name_filter)
-            )
-
-        if role_filter != 'all':
-            users = users.filter(role=role_filter)
-
-        if status_filter != 'all':
-            users = users.filter(status=status_filter)
-
-        paginator = Paginator(users, 10)
-        page_obj = paginator.get_page(request.GET.get('page'))
-
-        context = {
-            'users': page_obj,
-            'roles': UserModel.Role.choices,
-            'statuses': [('active', 'Активен'), ('not_active', 'Не активен'), ('blocked', 'Заблокирован')],
-            'filters': {
-                'name': name_filter,
-                'role': role_filter,
-                'status': status_filter,
-            }
-        }
-        return render(request, 'management/management_templates/users.html', context)
-
-class ManagementView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
     template_name = 'management/management.html'
 
-    def test_func(self):
-        return self.request.user.is_authenticated and (self.request.user.is_staff or self.request.user.is_superuser)
-
-
-
-class ReportsView(View):
-    template_name = 'reports/reports.html'
-
-    def get(self, request):
-        # Получаем параметры фильтрации из GET-запроса
-        report_type = request.GET.get('report-type', 'revenue')
-        period = request.GET.get('report-period', 'current-month')
-        start_date = request.GET.get('report-start-date')
-        end_date = request.GET.get('report-end-date')
-
-        # Определяем даты периода
-        today = timezone.now().date()
-        date_range = self._get_date_range(period, start_date, end_date)
-
-        # Готовим контекст для шаблона
-        context = {
-            'report_type': report_type,
-            'period': period,
-            'start_date': date_range['start_date'].strftime('%Y-%m-%d') if date_range['start_date'] else '',
-            'end_date': date_range['end_date'].strftime('%Y-%m-%d') if date_range['end_date'] else '',
-            'period_name': self._get_period_name(period, date_range),
-        }
-
-        # Добавляем данные в зависимости от типа отчета
-        if report_type == 'revenue':
-            context.update(self._get_revenue_data(date_range))
-        elif report_type == 'tables':
-            context.update(self._get_tables_data(date_range))
-        elif report_type == 'users':
-            context.update(self._get_users_data(date_range))
-        elif report_type == 'memberships':
-            context.update(self._get_memberships_data(date_range))
-
+    def get(self, request, *args, **kwargs):
+        active_tab = kwargs.get('active_tab', 'bookings')
+        context = self.get_context_data(active_tab)
         return render(request, self.template_name, context)
 
+    def get_context_data(self, active_tab):
+        context = {
+            'active_tab': active_tab,
+        }
+
+        if active_tab == 'bookings':
+            bookings = Booking.objects.select_related('user', 'table').order_by('-created_at')
+
+            # Фильтрация
+            date_filter = self.request.GET.get('date', '')
+            status_filter = self.request.GET.get('status', 'all')
+            table_filter = self.request.GET.get('table', 'all')
+
+            if date_filter:
+                try:
+                    filter_date = datetime.strptime(date_filter, '%Y-%m-%d').date()
+                    bookings = bookings.filter(
+                        Q(start_time__date=filter_date) | Q(end_time__date=filter_date)
+                    )
+                except ValueError:
+                    pass
+
+            if status_filter != 'all':
+                bookings = bookings.filter(status=status_filter)
+
+            if table_filter != 'all':
+                bookings = bookings.filter(table_id=table_filter)
+
+            # Пагинация
+            paginator = Paginator(bookings, 10)
+            page_obj = paginator.get_page(self.request.GET.get('page'))
+
+            context.update({
+                'bookings': page_obj,
+                'tables': Table.objects.all(),
+                'status_choices': dict(Booking.STATUS_CHOICES),
+                'filters': {
+                    'date': date_filter or date.today().strftime('%Y-%m-%d'),
+                    'status': status_filter,
+                    'table': table_filter,
+                }
+            })
+
+        elif active_tab == 'users':
+            users = UserModel.objects.all().order_by('-date_joined')
+
+            # Фильтрация
+            name_filter = self.request.GET.get('name', '')
+            role_filter = self.request.GET.get('role', 'all')
+            status_filter = self.request.GET.get('status', 'all')
+
+            if name_filter:
+                users = users.filter(
+                    Q(user_name__icontains=name_filter) |
+                    Q(email__icontains=name_filter)
+                )
+
+            if role_filter != 'all':
+                users = users.filter(role=role_filter)
+
+            if status_filter != 'all':
+                users = users.filter(status=status_filter)
+
+            # Пагинация
+            paginator = Paginator(users, 10)
+            page_obj = paginator.get_page(self.request.GET.get('page'))
+
+            context.update({
+                'users': page_obj,
+                'roles': UserModel.Role.choices,
+                'statuses': [('active', 'Активен'), ('not_active', 'Не активен'), ('blocked', 'Заблокирован')],
+                'filters': {
+                    'name': name_filter,
+                    'role': role_filter,
+                    'status': status_filter,
+                }
+            })
+
+        elif active_tab == 'reports':
+            # Получаем параметры фильтрации из GET-запроса
+            report_type = self.request.GET.get('report-type', 'revenue')
+            period = self.request.GET.get('report-period', 'current-month')
+            start_date = self.request.GET.get('report-start-date')
+            end_date = self.request.GET.get('report-end-date')
+
+            # Определяем даты периода
+            today = timezone.now().date()
+            date_range = self._get_date_range(period, start_date, end_date)
+
+            # Готовим контекст для шаблона
+            context.update({
+                'report_type': report_type,
+                'period': period,
+                'start_date': date_range['start_date'].strftime('%Y-%m-%d') if date_range['start_date'] else '',
+                'end_date': date_range['end_date'].strftime('%Y-%m-%d') if date_range['end_date'] else '',
+                'period_name': self._get_period_name(period, date_range),
+            })
+
+            # Добавляем данные в зависимости от типа отчета
+            if report_type == 'revenue':
+                context.update(self._get_revenue_data(date_range))
+            elif report_type == 'tables':
+                context.update(self._get_tables_data(date_range))
+            elif report_type == 'users':
+                context.update(self._get_users_data(date_range))
+            elif report_type == 'memberships':
+                context.update(self._get_memberships_data(date_range))
+
+        return context
+
+    # Методы для работы с отчетами (перенесены из ReportsView)
     def _get_date_range(self, period, custom_start=None, custom_end=None):
         """Определяет диапазон дат на основе выбранного периода"""
         today = timezone.now().date()
@@ -229,7 +235,7 @@ class ReportsView(View):
             return date_range['start_date'].strftime('%B %Y')
         elif period == 'quarter':
             quarter = (date_range['start_date'].month - 1) // 3 + 1
-            return f'{quarter}-й квартал {date_range['start_date'].year}'
+            return f'{quarter}-й квартал {date_range["start_date"].year}'
         elif period == 'year':
             return str(date_range['start_date'].year)
         else:
@@ -251,13 +257,6 @@ class ReportsView(View):
             is_active=True
         ).aggregate(total=Sum('price'))['total'] or 0
 
-        # Доход от мероприятий
-        events_revenue = Booking.objects.filter(
-            date__gte=date_range['start_date'],
-            date__lte=date_range['end_date'],
-            is_paid=True
-        ).aggregate(total=Sum('price'))['total'] or 0
-
         # Данные за предыдущий период для сравнения
         prev_bookings = Booking.objects.filter(
             start_time__date__gte=date_range['prev_period_start'],
@@ -269,32 +268,24 @@ class ReportsView(View):
             created_at__date__lte=date_range['prev_period_end'],
             is_active=True
         ).aggregate(total=Sum('price'))['total'] or 0
-        prev_events = Booking.objects.filter(
-            date__gte=date_range['prev_period_start'],
-            date__lte=date_range['prev_period_end'],
-            is_paid=True
-        ).aggregate(total=Sum('price'))['total'] or 0
 
         # Процент изменения
         bookings_change = self._calculate_change_percent(bookings_revenue, prev_bookings)
         memberships_change = self._calculate_change_percent(memberships_revenue, prev_memberships)
-        events_change = self._calculate_change_percent(events_revenue, prev_events)
         total_change = self._calculate_change_percent(
-            bookings_revenue + memberships_revenue + events_revenue,
-            prev_bookings + prev_memberships + prev_events
+            bookings_revenue + memberships_revenue,
+            prev_bookings + prev_memberships
         )
 
         # Данные для графика по месяцам
         monthly_data = self._get_monthly_revenue_data()
 
         return {
-            'total_revenue': bookings_revenue + memberships_revenue + events_revenue,
+            'total_revenue': bookings_revenue + memberships_revenue,
             'bookings_revenue': bookings_revenue,
             'memberships_revenue': memberships_revenue,
-            'events_revenue': events_revenue,
             'bookings_change': bookings_change,
             'memberships_change': memberships_change,
-            'events_change': events_change,
             'total_change': total_change,
             'monthly_data_json': json.dumps(monthly_data, cls=DjangoJSONEncoder),
         }
@@ -347,8 +338,7 @@ class ReportsView(View):
         ).order_by('-revenue')
 
         # Рассчитываем загрузку для каждого стола (в процентах)
-        total_possible_hours = ((date_range['end_date'] - date_range[
-            'start_date']).days + 1) * 12  # 12 часов работы в день
+        total_possible_hours = ((date_range['end_date'] - date_range['start_date']).days + 1) * 12
         for table in tables_data:
             table.usage_percent = round(
                 (table.booking_hours or 0) / total_possible_hours * 100) if total_possible_hours else 0
@@ -371,22 +361,53 @@ class ReportsView(View):
 
     def _get_users_data(self, date_range):
         """Собирает данные по активности пользователей"""
-        # Здесь должна быть логика сбора данных по пользователям
-        # Возвращаем заглушку для примера
+        new_users = UserModel.objects.filter(
+            date_joined__date__gte=date_range['start_date'],
+            date_joined__date__lte=date_range['end_date']
+        ).count()
+
+        active_users = UserModel.objects.filter(
+            last_login__date__gte=date_range['start_date'],
+            last_login__date__lte=date_range['end_date']
+        ).count()
+
+        repeat_users = UserModel.objects.annotate(
+            booking_count=Count(
+                'booking',
+                filter=Q(
+                    booking__start_time__date__gte=date_range['start_date'],
+                    booking__start_time__date__lte=date_range['end_date'],
+                    booking__status='paid'
+                )
+            )
+        ).filter(booking_count__gt=1).count()
+
         return {
-            'active_users': 0,
-            'new_users': 0,
-            'repeat_visitors': 0,
+            'active_users': active_users,
+            'new_users': new_users,
+            'repeat_users': repeat_users,
         }
 
     def _get_memberships_data(self, date_range):
         """Собирает данные по абонементам"""
-        # Здесь должна быть логика сбора данных по абонементам
-        # Возвращаем заглушку для примера
+        new_memberships = Membership.objects.filter(
+            created_at__date__gte=date_range['start_date'],
+            created_at__date__lte=date_range['end_date']
+        ).count()
+
+        renewed_memberships = Membership.objects.filter(
+            renewed_at__date__gte=date_range['start_date'],
+            renewed_at__date__lte=date_range['end_date']
+        ).count()
+
+        active_members = Membership.objects.filter(
+            is_active=True
+        ).count()
+
         return {
-            'new_memberships': 0,
-            'renewed_memberships': 0,
-            'active_members': 0,
+            'new_memberships': new_memberships,
+            'renewed_memberships': renewed_memberships,
+            'active_members': active_members,
         }
 
     def _calculate_change_percent(self, current, previous):
@@ -401,7 +422,6 @@ class ReportsView(View):
         data = {
             'bookings': [],
             'memberships': [],
-            'events': [],
             'total': []
         }
 
@@ -427,16 +447,382 @@ class ReportsView(View):
             ).aggregate(total=Sum('price'))['total'] or 0
             data['memberships'].append(memberships)
 
-            events = Booking.objects.filter(
-                date__gte=month_start,
-                date__lte=month_end,
-                is_paid=True
-            ).aggregate(total=Sum('price'))['total'] or 0
-            data['events'].append(events)
-
-            data['total'].append(bookings + memberships + events)
+            data['total'].append(bookings + memberships)
 
         return {
             'months': months,
             'data': data
+        }
+
+
+from django.views.generic import DetailView, UpdateView, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
+from django.views import View
+
+
+class SingleBookingView(LoginRequiredMixin, UpdateView):
+    """Просмотр деталей конкретного бронирования"""
+    model = Booking
+    form_class = BookingForm  # или просто 'fields = [...]'
+    template_name = 'management/bookings_modals/booking_form.html'
+    context_object_name = 'booking'
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return Booking.objects.all()
+        return Booking.objects.filter(user=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['users'] = get_user_model().objects.all()
+        return context
+    def form_valid(self, form):
+        messages.success(self.request, "Бронирование успешно обновлено.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('management:booking_detail', kwargs={'pk': self.object.pk})
+
+class BookingUpdateView(LoginRequiredMixin, UpdateView):
+    """Редактирование бронирования"""
+    model = Booking
+    form_class = BookingForm  # Укажите вашу форму для бронирования
+    template_name = 'management/bookings_modals/booking_form.html'
+
+    def get_success_url(self):
+        return reverse_lazy('management:user_bookings', kwargs={'active_tab': 'bookings'})
+
+    def get_queryset(self):
+        # Для администраторов разрешаем редактировать все бронирования
+        if self.request.user.is_staff:
+            return Booking.objects.all()
+        # Для обычных пользователей - только их бронирования
+        return Booking.objects.filter(user=self.request.user)
+
+    def form_valid(self, form):
+        messages.success(self.request, "Бронирование успешно обновлено")
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            context['users'] = get_user_model().objects.all()
+            return context
+class BookingDeleteView(LoginRequiredMixin, DeleteView):
+    """Удаление бронирования"""
+    model = Booking
+    template_name = 'management/bookings_modals/booking_confirm_delete.html'
+
+    def get_success_url(self):
+        return reverse_lazy('management:user_bookings', kwargs={'active_tab': 'bookings'})
+
+    def get_queryset(self):
+        # Для администраторов разрешаем удалять все бронирования
+        if self.request.user.is_staff:
+            return Booking.objects.all()
+        # Для обычных пользователей - только их бронирования
+        return Booking.objects.filter(user=self.request.user)
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, "Бронирование успешно удалено")
+        return super().delete(request, *args, **kwargs)
+
+
+class BookingCancelView(LoginRequiredMixin, View):
+    """Отмена бронирования (меняет статус вместо удаления)"""
+
+    def post(self, request, *args, **kwargs):
+        booking = get_object_or_404(Booking, pk=kwargs['pk'])
+
+        # Проверка прав доступа
+        if not request.user.is_staff and booking.user != request.user:
+            return redirect('permission_denied')
+
+        # Логика отмены бронирования
+        booking.status = 'cancelled'
+        booking.save()
+
+        # Можно добавить отправку уведомления и т.д.
+        messages.success(request, "Бронирование успешно отменено")
+
+        return redirect('management:user_bookings', active_tab='bookings')
+
+
+class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    model = get_user_model()
+    form_class = UserAdminForm
+    template_name = 'management/users_modals/user_form.html'
+    success_url = reverse_lazy('management:management', kwargs={'active_tab': 'users'})
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['is_edit'] = False
+        return context
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, f"Пользователь {self.object.email} успешно создан")
+
+        # Дополнительные действия после создания пользователя
+        # Например, отправка email с приветствием
+        # send_welcome_email(self.object)
+
+        return response
+
+    def form_invalid(self, form):
+        messages.error(self.request, "Ошибка при создании пользователя")
+        return super().form_invalid(form)
+class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = UserModel
+    form_class = UserAdminForm
+    template_name = 'management/users_modals/user_form.html'
+    context_object_name = 'user_obj'
+
+    def test_func(self):
+        return self.request.user.is_staff  # Только для администраторов
+
+    def get_success_url(self):
+        messages.success(self.request, "Данные пользователя успешно обновлены")
+        return reverse_lazy('management:user_profile', kwargs={'pk': self.object.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['is_edit'] = True
+        return context
+
+    def form_valid(self, form):
+        # Дополнительная логика перед сохранением
+        response = super().form_valid(form)
+        # Можно добавить дополнительные действия после сохранения
+        return response
+
+
+class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = UserModel
+    template_name = 'management/users_modals/user_confirm_delete.html'
+    success_url = reverse_lazy('management:management:', kwargs={'active_tab': 'users'})
+
+    def test_func(self):
+        return self.request.user.is_staff and self.request.user != self.get_object()
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, "Пользователь успешно удален")
+        return super().delete(request, *args, **kwargs)
+
+def fmt(dt, fmt_str='%d.%m.%Y %H:%M'):
+    return localtime(dt).strftime(fmt_str) if dt else '—'
+
+
+class AdminUserProfileView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
+    model = get_user_model()
+    template_name = 'management/users_modals/user_profile.html'
+    context_object_name = 'user_profile'
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get_object(self, queryset=None):
+        user_id = self.kwargs.get('pk')
+        return get_object_or_404(get_user_model(), pk=user_id)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.object  # avoids extra DB hit
+
+        # Бронирования
+        bookings = Booking.objects.filter(user=user).select_related(
+            'table', 'promo_code', 'special_offer', 'pricing'
+        ).prefetch_related('equipment').order_by('-start_time')
+
+        context['bookings'] = [{
+            'id': b.id,
+            'start_date': fmt(b.start_time, '%d.%m.%Y'),
+            'start_time': fmt(b.start_time, '%H:%M'),
+            'end_time': fmt(b.end_time, '%H:%M'),
+            'table': str(b.table),
+            'status': b.get_status_display(),
+            'participants': b.participants,
+            'is_group': b.is_group,
+            'base_price': b.base_price,
+            'equipment_price': b.equipment_price,
+            'total_price': b.total_price,
+            'promo_code': b.promo_code.code if b.promo_code else None,
+            'special_offer': b.special_offer.name if b.special_offer else None,
+            'equipment': [eq.name for eq in b.equipment.all()],
+            'notes': b.notes,
+            'created_at': fmt(b.created_at),
+            'updated_at': fmt(b.updated_at),
+            'expires_at': fmt(b.expires_at),
+        } for b in bookings]
+
+        # Пакеты бронирования
+        packages = BookingPackage.objects.filter(user=user)
+        context['booking_packages'] = [{
+            'name': pkg.name,
+            'total_minutes': pkg.total_minutes,
+            'used_minutes': pkg.used_minutes,
+            'remaining_minutes': pkg.remaining_minutes(),
+            'valid_until': fmt(pkg.valid_until, '%d.%m.%Y'),
+            'is_active': pkg.is_valid(),
+        } for pkg in packages]
+
+        # Лояльность
+        loyalty = LoyaltyProfile.objects.filter(user=user).first()
+        if loyalty:
+            level_thresholds = LoyaltyProfile.LEVEL_THRESHOLDS
+            next_level = None
+
+            for lvl, threshold in sorted(level_thresholds.items(), key=lambda x: x[1]):
+                if threshold > loyalty.points:
+                    next_level = {'name': lvl, 'points': threshold}
+                    break
+
+            points_to_next = (next_level['points'] - loyalty.points) if next_level else 0
+            progress_percent = int(loyalty.points / next_level['points'] * 100) if next_level and next_level['points'] > 0 else 100
+
+            context['loyalty_data'] = {
+                'level': loyalty.get_level_display(),
+                'points': loyalty.points,
+                'joined_at': fmt(loyalty.joined_at, '%d.%m.%Y'),
+                'discount': float(loyalty.get_discount()),
+                'next_level': next_level['name'] if next_level else None,
+                'points_to_next': points_to_next,
+                'progress_percent': progress_percent,
+                'birthday_bonus_used': loyalty.birthday_bonus_used,
+                'free_training_used': loyalty.free_training_used,
+                'last_free_training_date': fmt(loyalty.last_free_training_date, '%d.%m.%Y'),
+            }
+        else:
+            context['loyalty_data'] = None
+
+        return context
+
+class AdminUserProfileUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = get_user_model()
+    form_class = UserAdminForm
+    template_name = 'management/users_modals/user_form.html'
+    pk_url_kwarg = 'pk'
+    context_object_name = 'user_obj'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_success_url(self):
+        messages.success(self.request, "Профиль пользователя успешно обновлён.")
+        return reverse_lazy("management:user_profile", kwargs={'pk': self.object.pk})
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(get_user_model(), pk=self.kwargs['pk'])
+
+    def form_valid(self, form):
+        form.save()
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'user_name': form.instance.user_name,
+                'email': form.instance.email,
+                'phone': form.instance.phone,
+                'role': form.instance.role
+            })
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors.get_json_data()
+            }, status=400)
+        return super().form_invalid(form)
+
+
+class UserStatusMixin(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    Общая логика для смены статуса пользователя
+    """
+    model = UserModel
+    status_value = None  # устанавливается в подклассах
+    template_name = None
+    success_message = ''
+    success_url = reverse_lazy('management:management', kwargs={'active_tab': 'users'})
+
+    def get_object(self):
+        return get_object_or_404(self.model, pk=self.kwargs['pk'])
+
+    def test_func(self):
+        user = self.get_object()
+        return self.request.user.is_staff and self.request.user != user
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, {'user_obj': self.get_object()})
+
+    def post(self, request, *args, **kwargs):
+        user = self.get_object()
+        user.status = self.status_value
+        user.save(update_fields=['status'])
+
+        messages.success(request, self.success_message.format(email=user.email))
+        return redirect(self.success_url)
+
+
+class UserDeactivateView(UserStatusMixin):
+    status_value = 'not_active'
+    template_name = 'management/users_modals/user_confirm_deactivate.html'
+    success_message = _("Пользователь {email} был деактивирован.")
+
+
+class UserActivateView(UserStatusMixin):
+    status_value = 'active'
+    template_name = 'management/users_modals/user_confirm_activate.html'
+    success_message = _("Пользователь {email} был активирован.")
+
+
+class AdminUserBookingsView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = Booking
+    template_name = 'management/users_modals/user_bookings.html'
+    context_object_name = 'bookings'
+    paginate_by = 20
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get_queryset(self):
+        user_id = self.kwargs.get('pk')
+        self.user_profile = get_object_or_404(get_user_model(), pk=user_id)
+        return Booking.objects.filter(user=self.user_profile).select_related(
+            'table', 'promo_code', 'special_offer', 'pricing'
+        ).prefetch_related('equipment').order_by('-start_time')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_profile'] = self.user_profile
+        context['bookings_detailed'] = [self.format_booking(b) for b in context['bookings']]
+        context['users'] = get_user_model().objects.all()
+
+        return context
+
+    def format_booking(self, b):
+        return {
+            'id': b.id,
+            'start_date': localtime(b.start_time).strftime('%d.%m.%Y'),
+            'start_time': localtime(b.start_time).strftime('%H:%M'),
+            'end_time': localtime(b.end_time).strftime('%H:%M'),
+            'table': str(b.table),
+            'status': b.get_status_display(),
+            'participants': b.participants,
+            'is_group': b.is_group,
+            'base_price': b.base_price,
+            'equipment_price': b.equipment_price,
+            'total_price': b.total_price,
+            'promo_code': b.promo_code.code if b.promo_code else None,
+            'special_offer': b.special_offer.name if b.special_offer else None,
+            'equipment': [eq.name for eq in b.equipment.all()],
+            'notes': b.notes,
+            'created_at': localtime(b.created_at).strftime('%d.%m.%Y %H:%M'),
+            'updated_at': localtime(b.updated_at).strftime('%d.%m.%Y %H:%M'),
+            'expires_at': localtime(b.expires_at).strftime('%d.%m.%Y %H:%M'),
         }

@@ -1,0 +1,66 @@
+
+{% block content %}
+<div class="p-6 bg-white rounded-xl shadow-md">
+    <h2 class="text-2xl font-bold mb-6">Бронирования пользователя: {{ viewed_user.get_full_name|default:viewed_user.username }}</h2>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full text-sm text-left border rounded-lg">
+            <thead class="bg-gray-100 text-gray-700 uppercase text-xs tracking-wider">
+                <tr>
+                    <th class="px-4 py-2">#</th>
+                    <th class="px-4 py-2">Дата</th>
+                    <th class="px-4 py-2">Время</th>
+                    <th class="px-4 py-2">Стол</th>
+                    <th class="px-4 py-2">Статус</th>
+                    <th class="px-4 py-2">Участники</th>
+                    <th class="px-4 py-2">Группа</th>
+                    <th class="px-4 py-2">Цена</th>
+                    <th class="px-4 py-2">Промо</th>
+                    <th class="px-4 py-2">Оборудование</th>
+                    <th class="px-4 py-2">Создано</th>
+                </tr>
+            </thead>
+            <tbody class="text-gray-800">
+                {% for b in bookings_detailed %}
+                <tr class="border-b hover:bg-gray-50 transition">
+                    <td class="px-4 py-2">{{ b.id }}</td>
+                    <td class="px-4 py-2">{{ b.start_date }}</td>
+                    <td class="px-4 py-2">{{ b.start_time }}–{{ b.end_time }}</td>
+                    <td class="px-4 py-2">{{ b.table }}</td>
+                    <td class="px-4 py-2">{{ b.status }}</td>
+                    <td class="px-4 py-2">{{ b.participants }}</td>
+                    <td class="px-4 py-2">{{ b.is_group|yesno:"Да,Нет" }}</td>
+                    <td class="px-4 py-2">{{ b.total_price }} ₽</td>
+                    <td class="px-4 py-2">{{ b.promo_code|default:"—" }}</td>
+                    <td class="px-4 py-2">{{ b.equipment|join:", " }}</td>
+                    <td class="px-4 py-2">{{ b.created_at }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="11" class="text-center text-gray-500 py-4">Нет бронирований.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="mt-6 flex justify-center">
+        <nav class="inline-flex space-x-2">
+            {% if page_obj.has_previous %}
+                <a href="?page=1" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">« Первая</a>
+                <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">‹ Назад</a>
+            {% endif %}
+
+            <span class="px-3 py-1 bg-blue-500 text-white rounded">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Вперёд ›</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Последняя »</a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

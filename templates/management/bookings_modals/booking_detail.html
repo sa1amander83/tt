@@ -1,0 +1,84 @@
+<div id="detail-booking-modal-{{ booking.id }}" 
+     class="modal hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
+    
+    <div class="modal-container fixed w-full h-full top-0 left-0 flex items-center justify-center px-4">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl relative">
+            <!-- Заголовок -->
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-green-50 rounded-t-xl">
+                <h3 class="text-xl font-semibold text-gray-800">Бронирование #{{ booking.id }}</h3>
+                <button onclick="closeModal('detail-booking-modal-{{ booking.id }}')" 
+                        class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Содержимое -->
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-1">Стол</h4>
+                        <p class="text-gray-800 font-medium">{{ booking.table.number }} ({{ booking.table.table_type.name }})</p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-1">Дата</h4>
+                        <p class="text-gray-800 font-medium">{{ booking.start_time|date:"d.m.Y" }}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-1">Время</h4>
+                        <p class="text-gray-800 font-medium">{{ booking.start_time|date:"H:i" }} - {{ booking.end_time|date:"H:i" }}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-1">Статус</h4>
+                        <span class="px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full 
+                            {% if booking.status == 'confirmed' %}bg-green-100 text-green-800
+                            {% elif booking.status == 'paid' %}bg-blue-100 text-blue-800
+                            {% elif booking.status == 'cancelled' %}bg-gray-100 text-gray-800
+                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {{ booking.get_status_display }}
+                        </span>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-1">Клиент</h4>
+                        <p class="text-gray-800 font-medium">{{ booking.user.get_full_name|default:booking.user.user_name }}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-1">Телефон</h4>
+                        <p class="text-gray-800 font-medium">{{ booking.user.phone|default:"не указан" }}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-1">Стоимость</h4>
+                        <p class="text-gray-800 font-medium">{{ booking.total_price }} руб.</p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-1">Создано</h4>
+                        <p class="text-gray-800 font-medium">{{ booking.created_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                </div>
+                
+                {% if booking.notes %}
+                <div class="mt-6">
+                    <h4 class="text-sm font-medium text-gray-500 mb-1">Дополнительная информация</h4>
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <p class="text-gray-800">{{ booking.notes }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Футер -->
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end bg-gray-50 rounded-b-xl space-x-3">
+                <button onclick="closeModal('detail-booking-modal-{{ booking.id }}')" 
+                        class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-6 rounded-lg transition duration-200">
+                    Закрыть
+                </button>
+                <button onclick="openModal('edit-booking-modal-{{ booking.id }}'); closeModal('detail-booking-modal-{{ booking.id }}')" 
+                        class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200">
+                    Редактировать
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

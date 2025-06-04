@@ -3,7 +3,7 @@
 {% block content %}
     <main class="container mx-auto px-4 py-8">
         <div class="flex items-center mb-6">
-            <a href="{% url 'user_management' %}" class="text-green-600 hover:text-green-700 mr-4">
+            <a href="{% url 'management:management' 'users' %}" class="text-green-600 hover:text-green-700 mr-4">
                 <i class="fas fa-arrow-left"></i> Назад к списку
             </a>
             <h1 class="text-2xl font-bold">Профиль пользователя</h1>
@@ -35,19 +35,19 @@
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <a href="{% url 'edit_user' user_profile.id %}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                    <a href="{% url 'management:user_profile_update' user_profile.id %}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
                         <i class="fas fa-edit mr-2"></i> Редактировать
                     </a>
                     {% if user_profile.status == 'active' %}
-                        <a href="{% url 'block_user' user_profile.id %}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                        <a href="{% url 'management:user_profile_deactivate' user_profile.id %}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-md transition duration-300">
                             <i class="fas fa-ban mr-2"></i> Блокировать
                         </a>
                     {% else %}
-                        <a href="{% url 'unblock_user' user_profile.id %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                        <a href="{% url 'management:user_profile_activate' user_profile.id %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
                             <i class="fas fa-check mr-2"></i> Разблокировать
                         </a>
                     {% endif %}
-                    <a href="{% url 'delete_user' user_profile.id %}" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                    <a href="{% url 'management:user_profile_delete' user_profile.id %}" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
                         <i class="fas fa-trash-alt mr-2"></i> Удалить
                     </a>
                 </div>
@@ -180,7 +180,7 @@
                     </table>
                 </div>
                 <div class="mt-4 text-right">
-                    <a href="{% url 'user_bookings' user_profile.id %}" class="text-green-600 hover:text-green-800 font-medium">
+                    <a href="{% url 'management:user_bookings' user_profile.id %}" class="text-green-600 hover:text-green-800 font-medium">
                         Показать все посещения →
                     </a>
                 </div>

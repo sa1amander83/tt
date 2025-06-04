@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <main class="mt-5 mb-5">
+        <div class="max-w-xl mx-auto bg-white p-6 rounded-lg shadow">
+            <h2 class="text-2xl font-semibold mb-4">
+                {{ is_edit|yesno:"Создать нового пользователя,Редактировать пользователя" }}
+            </h2>
+
+            <form method="post" action="{% if form.instance.pk %}
+    {% url 'management:user_profile_update' form.instance.pk %}
+{% else %}
+    {% url 'management:create_user_profile' %}
+{% endif %}" >
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+
+                {% for field in form %}
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-medium mb-1" for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                        </label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <p class="text-sm text-gray-500">{{ field.help_text }}</p>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <p class="text-sm text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+
+                <div class="flex justify-between">
+                    <a href="{% url 'management:management' active_tab='users' %}"
+                       class="text-gray-600 hover:text-gray-800">
+                        Назад
+                    </a>
+                    <button type="submit"
+                            class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+                        {{ is_edit|yesno:"Создать пользователя, Сохранить изменения" }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+{% endblock %}

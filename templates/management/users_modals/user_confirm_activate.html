@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load static) %}
+{% block content %}
+<div class="max-w-xl mx-auto bg-white p-6 rounded-lg shadow">
+    <h2 class="text-xl font-semibold text-red-600 mb-4">Активация пользователя</h2>
+    <p class="mb-6">
+        Вы уверены, что хотите <strong>активировать</strong> пользователя
+        <strong>{{ user_obj.email }}</strong>? Он получит доступ к системе.
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="flex justify-between">
+            <a href="{% url 'management:management' active_tab='users' %}" class="text-gray-600 hover:text-gray-800">
+                Отмена
+            </a>
+            <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                Активировать
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
