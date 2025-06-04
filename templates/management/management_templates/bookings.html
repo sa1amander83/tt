@@ -57,13 +57,14 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Пользователь</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Время</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Стол</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                        <th scope="col" class="px-6 py-3 text-сenter text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th scope="col" class="px-6 py-3 text-сenter text-xs font-medium text-gray-500 uppercase tracking-wider">Пользователь</th>
+                        <th scope="col" class="px-6 py-3 text-сenter text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+                        <th scope="col" class="px-6 py-3 text-сenter text-xs font-medium text-gray-500 uppercase tracking-wider">Время</th>
+                        <th scope="col" class="px-6 py-3 text-сenter text-xs font-medium text-gray-500 uppercase tracking-wider">Стол</th>
+                        <th scope="col" class="px-6 py-3 text-сenter text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                        <th scope="col" class="px-6 py-3 text-сenter text-xs font-medium text-gray-500 uppercase tracking-wider">Сумма оплаты</th>
+                        <th scope="col" class="px-6 py-3 text-сenter text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -71,6 +72,7 @@
                     <tr class="hover:bg-gray-50 transition duration-150">
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#{{ booking.id }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
+                         <a href ="{% url 'management:user_profile' booking.user.id %}" class="flex items-center">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-10 w-10">
                                     {% if booking.user.photo %}
@@ -88,6 +90,7 @@
                                     <div class="text-sm text-gray-500">{{ booking.user.email|default:"" }}</div>
                                 </div>
                             </div>
+                         </a>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ booking.start_time|date:"d.m.Y" }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ booking.start_time|date:"H:i" }} - {{ booking.end_time|date:"H:i" }}</td>
@@ -101,13 +104,17 @@
                                 {{ booking.get_status_display }}
                             </span>
                         </td>
+                    
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ booking.total_price }} ₽</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button onclick="openModal('detail-booking-modal-{{ booking.id }}')" 
                                     class="text-green-600 hover:text-green-800 mr-3">Подробнее</button>
                             <button onclick="openModal('edit-booking-modal-{{ booking.id }}')" 
                                     class="text-blue-600 hover:text-blue-800 mr-3">Редактировать</button>
+                            {% if booking.status == 'pending' or booking.status == 'paid' %}
                             <button onclick="openModal('cancel-booking-modal-{{ booking.id }}')" 
                                     class="text-red-600 hover:text-red-800">Отменить</button>
+                            {% endif %}
                         </td>
                     </tr>
                     {% empty %}

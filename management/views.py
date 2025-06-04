@@ -121,11 +121,12 @@ class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
                     'date': date_filter or date.today().strftime('%Y-%m-%d'),
                     'status': status_filter,
                     'table': table_filter,
-                }
+                },
+                'users': get_user_model().objects.all().order_by('-date_joined'),
             })
 
         elif active_tab == 'users':
-            users = UserModel.objects.all().order_by('-date_joined')
+            users = get_user_model().objects.all().order_by('-date_joined')
 
             # Фильтрация
             name_filter = self.request.GET.get('name', '')
@@ -150,7 +151,7 @@ class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
 
             context.update({
                 'users': page_obj,
-                'roles': UserModel.Role.choices,
+                'roles': get_user_model().Role.choices,
                 'statuses': [('active', 'Активен'), ('not_active', 'Не активен'), ('blocked', 'Заблокирован')],
                 'filters': {
                     'name': name_filter,
@@ -173,6 +174,8 @@ class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
             # Готовим контекст для шаблона
             context.update({
                 'report_type': report_type,
+                 'users' :get_user_model().objects.all().order_by('-date_joined'),
+
                 'period': period,
                 'start_date': date_range['start_date'].strftime('%Y-%m-%d') if date_range['start_date'] else '',
                 'end_date': date_range['end_date'].strftime('%Y-%m-%d') if date_range['end_date'] else '',

@@ -1,26 +1,26 @@
-<div id="edit-booking-modal-{{ booking.id }}" 
+<div id="edit-booking-modal-{{ booking.id }}"
      class="modal hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
-    
+
     <div class="modal-container fixed w-full h-full top-0 left-0 flex items-center justify-center px-4">
         <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl relative">
             <!-- Заголовок -->
             <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-green-50 rounded-t-xl">
                 <h3 class="text-xl font-semibold text-gray-800">Редактирование бронирования #{{ booking.id }}</h3>
-                <button onclick="closeModal('edit-booking-modal-{{ booking.id }}')" 
+                <button onclick="closeModal('edit-booking-modal-{{ booking.id }}')"
                         class="text-gray-500 hover:text-gray-700 focus:outline-none">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
-            
+
             <!-- Форма -->
             <form method="post" action="{% url 'management:booking_update' booking.id %}" class="modal-form">
                 {% csrf_token %}
                 <div class="p-6">
                     <div class="form-errors hidden mb-4 p-3 bg-red-50 text-red-600 rounded-lg"></div>
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label for="id_table" class="block text-sm font-medium text-gray-700 mb-1">Стол</label>
@@ -36,21 +36,21 @@
                             <label for="id_user" class="block text-sm font-medium text-gray-700 mb-1">Клиент</label>
                             <select name="user" id="id_user" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
                                 {% for user in users %}
-                                    <option value="{{ user.id }}" {% if user.id == booking.user.id %}selected{% endif %}>
-                                        {{ user.get_full_name|default:user.user_name }}
-                                    </option>
+                                   <option value="{{ user.id }}" {% if user.id == booking.user.id %}selected{% endif %}>
+    {{ user.get_full_name|default:user.user_name }}
+</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div>
                             <label for="id_start_time" class="block text-sm font-medium text-gray-700 mb-1">Дата и время начала</label>
-                            <input type="text" name="start_time" id="id_start_time" value="{{ booking.start_time|date:'Y-m-d H:i' }}" 
+                            <input type="text" name="start_time" id="id_start_time" value="{{ booking.start_time|date:'Y-m-d H:i' }}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                    data-datepicker>
                         </div>
                         <div>
                             <label for="id_end_time" class="block text-sm font-medium text-gray-700 mb-1">Дата и время окончания</label>
-                            <input type="text" name="end_time" id="id_end_time" value="{{ booking.end_time|date:'Y-m-d H:i' }}" 
+                            <input type="text" name="end_time" id="id_end_time" value="{{ booking.end_time|date:'Y-m-d H:i' }}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                    data-datepicker>
                         </div>
@@ -68,10 +68,10 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Футер -->
                 <div class="px-6 py-4 border-t border-gray-200 flex justify-end bg-gray-50 rounded-b-xl space-x-3">
-                    <button type="button" onclick="closeModal('edit-booking-modal-{{ booking.id }}')" 
+                    <button type="button" onclick="closeModal('edit-booking-modal-{{ booking.id }}')"
                             class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-6 rounded-lg transition duration-200">
                         Отмена
                     </button>
