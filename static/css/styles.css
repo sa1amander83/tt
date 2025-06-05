@@ -292,7 +292,7 @@ body {
   border: 2px solid #ffc107; /* жёлтый бордер */
 }
 
-.slot--mine-confirmed {
+.slot--mine-paid {
   background-color: #d4edda; /* светло-зелёный фон */
   border: 2px solid #28a745; /* зелёный бордер */
 }

@@ -78,6 +78,12 @@
                         </th>
                         <th scope="col"
                             class="px-6 py-3 text-сenter text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Время создания
+                        </th>
+
+
+                        <th scope="col"
+                            class="px-6 py-3 text-сenter text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Дата
                         </th>
                         <th scope="col"
@@ -94,7 +100,7 @@
                         </th>
                         <th scope="col"
                             class="px-6 py-3 text-сenter text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Сумма оплаты
+                            Сумма
                         </th>
                         <th scope="col"
                             class="px-6 py-3 text-сenter text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -132,6 +138,10 @@
                                     </div>
                                 </a>
                             </td>
+
+                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ booking.created_at|date:"d.m.Y   H:i"}}</td>
+
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {{ booking.start_time|date:"d.m.Y" }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -139,13 +149,15 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Стол
                                 #{{ booking.table.id }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                {% if booking.status == 'confirmed' %}bg-green-100 text-green-800
-                                {% elif booking.status == 'paid' %}bg-blue-100 text-blue-800
-                                {% elif booking.status == 'cancelled' %}bg-gray-100 text-gray-800
-                                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                                {{ booking.get_status_display }}
-                            </span>
+                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                            {% if booking.status == 'pending' %}bg-yellow-100 text-yellow-800
+                            {% elif booking.status == 'paid' %}bg-blue-100 text-blue-800
+                            {% elif booking.status == 'cancelled' %}bg-gray-100 text-gray-800
+                            {% elif booking.status == 'completed' %}bg-green-100 text-green-800
+                            {% elif booking.status == 'expired' %}bg-red-100 text-red-800
+                            {% else %}bg-gray-200 text-gray-600{% endif %}">
+                            {{ booking.get_status_display }}
+                        </span>
                             </td>
 
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ booking.total_price }} ₽
@@ -183,6 +195,8 @@
                 <div class="flex space-x-2">
                     {% if bookings.has_previous %}
                         <a href="?page=
+
+
                                 {{ bookings.previous_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
                            class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                             Предыдущая
@@ -196,6 +210,8 @@
                         </span>
                         {% elif num > bookings.number|add:'-3' and num < bookings.number|add:'3' %}
                             <a href="?page=
+
+
                                     {{ num }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
                                class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                                 {{ num }}
@@ -205,6 +221,8 @@
 
                     {% if bookings.has_next %}
                         <a href="?page=
+
+
                                 {{ bookings.next_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
                            class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                             Следующая
