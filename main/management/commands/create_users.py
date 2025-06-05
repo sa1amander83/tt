@@ -9,59 +9,73 @@ from accounts.models import User
 from admin_settings.models import Table, Equipment
 from bookings.models import  TableTypePricing, Booking, BookingEquipment
 from pricing.models import PricingPlan
-
+from django.utils.timezone import make_aware
 fake = Faker('ru_RU')
 
 def get_valid_booking_datetime(pricing_plans, year, month):
-    """Генерируем случайную дату и время, подходящее под расписание тарифных планов клуба"""
-    valid_days = []
-    valid_times = []
-    # Сначала выбираем тарифный план, который действует в этот месяц (можно усложнить)
+    """
+    Генерирует случайный datetime для бронирования, который соответствует
+    действующему тарифному плану и его расписанию.
+    """
+    possible_slots = []
+
     for plan in pricing_plans:
-        if plan.valid_from <= date(year, month, 1) and (plan.valid_to is None or plan.valid_to >= date(year, month, 28)):
-            valid_days.append(plan.weekdays)  # строки с числами дней недели
-            # Проверим время работы
-            if plan.time_from and plan.time_to:
-                valid_times.append((plan.time_from, plan.time_to))
-            else:
-                valid_times.append((time(8,0), time(22,0)))  # дефолтные часы если не указаны
+        try:
+            valid_from = plan.valid_from
+            valid_to = plan.valid_to or date(year + 1, 1, 1)
 
-    if not valid_days:
-        # Если не нашли, возвращаем None
+            # Пропускаем планы, которые не действуют в выбранном месяце
+            if valid_from > date(year, month, 28) or valid_to < date(year, month, 1):
+                continue
+
+            weekdays = plan.weekdays or '1234567'
+            valid_weekdays = set(weekdays)
+
+            time_from = plan.time_from or time(8, 0)
+            time_to = plan.time_to or time(22, 0)
+
+            for day in range(1, 29):  # Ограничиваемся 28 днями
+                current_date = date(year, month, day)
+                if str(current_date.isoweekday()) not in valid_weekdays:
+                    continue
+
+                for hour in range(time_from.hour, time_to.hour):
+                    for minute in [0, 30]:
+                        naive_dt = datetime.combine(current_date, time(hour, minute))
+                        aware_dt = make_aware(naive_dt)
+                        possible_slots.append(aware_dt)
+
+        except Exception as e:
+            print(f"Ошибка в плане '{plan.name}': {e}")
+            continue
+
+    if not possible_slots:
+        print("Нет подходящих таймслотов.")
         return None
 
-    # Объединим строки с днями недели
-    all_days = set()
-    for days_str in valid_days:
-        all_days.update(days_str)
-
-    all_days = sorted(list(all_days))
-
-    # Выбираем случайный день месяца, который совпадает с одним из рабочих дней недели
-    possible_dates = []
-    for day in range(1, 29):  # ограничимся 28 днями для простоты
-        dt = date(year, month, day)
-        if str(dt.isoweekday()) in all_days:
-            possible_dates.append(dt)
-
-    if not possible_dates:
-        return None
-
-    selected_date = random.choice(possible_dates)
-
-    # Выбираем случайное время в рабочем интервале
-    time_from, time_to = random.choice(valid_times)
-    start_hour = random.randint(time_from.hour, time_to.hour - 1)
-    start_minute = random.choice([0, 30])  # либо ровно час, либо 30 мин
-
-    start_time = datetime.combine(selected_date, time(start_hour, start_minute))
-    return start_time
+    return random.choice(possible_slots)
 
 def create_fake_users_and_bookings(num_users=10):
     tables = list(Table.objects.filter(is_active=True))
     pricings = list(TableTypePricing.objects.select_related('pricing_plan', 'table_type').all())
-    equipment_list = list(Equipment.objects.filter(is_available=True))
 
+    equipment_list = [
+        "Ракетки",
+        "Мячи для КБМ",
+        "Колёса для тренировки",
+        "Робот"
+    ]
+
+    for name in equipment_list:
+        Equipment.objects.get_or_create(
+            name=name,
+            defaults={
+                "description": f"Описание для {name}",
+                "price_per_half_hour": 200,
+                "price_per_hour": 350,
+                "is_available": True
+            }
+        )
     for i in range(num_users):
         phone = f'+7{random.randint(9000000000, 9999999999)}'
         email = fake.email()

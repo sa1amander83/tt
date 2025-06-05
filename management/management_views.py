@@ -10,8 +10,8 @@ from django.shortcuts import render, get_object_or_404
 from django.views.generic import View, TemplateView
 
 from admin_settings.views import IsAdminMixin
-from buisneslogic.forms import MembershipTypeForm, SpecialOfferForm
-from buisneslogic.models import MembershipType, SpecialOffer, PromoCode
+from management.forms import MembershipTypeForm, SpecialOfferForm
+from management.models import  SpecialOffer, MembershipType, PromoCode
 
 User=get_user_model()
 # Create your views here.

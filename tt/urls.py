@@ -31,7 +31,7 @@ urlpatterns = [
     path('pricing/', include('pricing.urls')),
 
     path('management/', include('management.urls')),
-path('buisneslogic/', include('buisneslogic.urls')),
+
 ]
 
 if settings.DEBUG:

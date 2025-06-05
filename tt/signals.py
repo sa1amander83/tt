@@ -3,7 +3,7 @@ from django.dispatch import receiver
 
 from accounts.models import User
 
-from buisneslogic.models import LoyaltyProfile
+from management.models import LoyaltyProfile
 
 
 @receiver(post_save, sender=User)

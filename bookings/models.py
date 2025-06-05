@@ -1,8 +1,10 @@
 from datetime import datetime
+from decimal import Decimal
+
 from django.db import models
 from django.utils import timezone
 
-from buisneslogic.models import PromoCode, SpecialOffer
+from management.models import PromoCode, SpecialOffer
 # from admin_settings.models import Table, Equipment
 from pricing.models import TableTypePricing
 
@@ -119,7 +121,23 @@ class Booking(models.Model):
     )
     total_price = models.PositiveIntegerField(verbose_name="Итоговая стоимость")
     payment_id = models.CharField(max_length=100, blank=True, null=True)
+    class LoyaltyLevel(models.TextChoices):
+        BASIC = 'BASIC', 'Старт'
+        SILVER = 'SILVER', 'Серебряный'
+        GOLD = 'GOLD', 'Золотой'
+        PLATINUM = 'PLATINUM', 'Платиновый'
 
+    loyalty_level = models.CharField(
+        max_length=10,
+        choices=LoyaltyLevel.choices,
+        null=True,
+        blank=True,
+    )
+    loyalty_discount_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('0.00')
+    )
     notes = models.TextField(blank=True, verbose_name="Примечания")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")

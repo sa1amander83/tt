@@ -11,7 +11,7 @@ function openPromoCodeModal(promoId = null) {
 
         // Here you would fetch the promo code data and fill the form
         // Example (you'll need to implement the API endpoint):
-        fetch(`buisneslogic/promocodes/${promoId}/`)
+        fetch(`management/promocodes/${promoId}/`)
             .then(response => response.json())
             .then(data => {
                 document.getElementById('id_promo_code').value = data.code;
@@ -51,7 +51,7 @@ function savePromoCode() {
     });
 
     // Here you would send the data to your API
-    const url = isEdit ? `buisneslogic/promocodes/${promoId}/` : 'buisneslogic/promocodes/';
+    const url = isEdit ? `management/promocodes/${promoId}/` : 'management/promocodes/';
     const method = isEdit ? 'PUT' : 'POST';
 
     fetch(url, {
@@ -80,7 +80,7 @@ function savePromoCode() {
 
 function deletePromoCode(promoId) {
     if (confirm('Вы уверены, что хотите удалить этот промокод?')) {
-        fetch(`/buisneslogic/promocodes/${promoId}/`, {
+        fetch(`/management/promocodes/${promoId}/`, {
             method: 'DELETE',
             headers: {
                 'X-CSRFToken': '{{ csrf_token }}'

@@ -26,7 +26,6 @@ SECRET_KEY = 'django-insecure-3lu!z1ekss$ztv%hu5(5gc+t!4=ww3-1dvkc7&=m=vbjll*oav
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -40,16 +39,15 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts',
     'admin_settings',
-    'buisneslogic',
     'pricing',
     'events',
     'bookings',
     'main',
-'management'
-]
+    'management',
+ ]
 
 MIDDLEWARE = [
-'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -131,8 +129,6 @@ TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
-
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
@@ -155,7 +151,6 @@ LOGIN_URL = '/accounts/signin/'
 LOGIN_REDIRECT_URL = '/profile/'
 LOGOUT_REDIRECT_URL = '/accounts/logout/'
 
-
 CORS_ALLOW_CREDENTIALS = True
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 CORS_ALLOWED_ORIGINS = [
@@ -163,8 +158,6 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     # добавь сюда URL, с которого будешь делать запросы
 ]
-
-
 
 load_dotenv()
 
@@ -184,8 +177,6 @@ else:
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-
-
 
 # LOGGING = {
 #     'version': 1,

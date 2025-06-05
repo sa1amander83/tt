@@ -15,8 +15,8 @@ from admin_settings.forms import TableForm, TableTypeForm,  \
      HolidayForm, ClubSettingsForm, WorkingHoursForm
 from admin_settings.models import ClubSettings, Holiday, WorkingDay, NotificationSettings, Table, TableType, Equipment
 from bookings.models import  TableTypePricing
-from buisneslogic.forms import MembershipTypeForm, SpecialOfferForm
-from buisneslogic.models import MembershipType, SpecialOffer
+from management.forms import MembershipTypeForm, SpecialOfferForm
+from management.models import MembershipType, SpecialOffer
 from pricing.forms import PricingPlanForm, TableTypePricingForm
 from pricing.models import PricingPlan
 
@@ -55,11 +55,7 @@ class ClubSettingsView(LoginRequiredMixin, View):
 
             })
 
-        elif active_tab == 'memberships':
-            context.update({
-                'membership_types': MembershipType.objects.all(),
-                'membership_form': MembershipTypeForm(),
-            })
+
 
         elif active_tab == 'schedule':
             # Создаем недостающие дни недели

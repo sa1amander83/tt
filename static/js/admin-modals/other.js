@@ -551,7 +551,7 @@ async function updateMembership() {
 
             // Отправка данных на сервер
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-            const response = await fetch(`/buisneslogic/membership/${membershipId}/update/`, {
+            const response = await fetch(`/management/membership/${membershipId}/update/`, {
                 method: 'POST',
                 body: formData,
                 headers: {

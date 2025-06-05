@@ -36,8 +36,9 @@ import json
 from yookassa import Payment
 
 from admin_settings.models import WorkingDay, Holiday, Table, Equipment
-from buisneslogic.models import SpecialOffer, PromoCode
+from management.models import SpecialOffer, PromoCode
 from events.forms import BookingForm
+from management.LoyaltyEngine import LoyaltyEngine
 from pricing.models import PricingPlan
 from .BookingEngine import BookingEngine
 from .models import  Booking, BookingEquipment,TableTypePricing
@@ -1067,6 +1068,10 @@ def create_booking_api(request):
             return JsonResponse({
                                     'error': f'У вас уже есть {MAX_PENDING_BOOKINGS} неоплаченных бронирований. Пожалуйста, оплатите их или отмените, чтобы создать новое.'},
                                 status=400)
+
+        loyalty_engine = LoyaltyEngine(request.user)
+
+
         engine = BookingEngine(
             user=request.user,
             table=table,
@@ -1105,6 +1110,8 @@ def create_booking_api(request):
                 equipment_price=engine.equipment_price,
                 pricing=engine.pricing,
                 status='pending',
+                loyalty_level=loyalty_profile.level if loyalty_profile else None,
+            loyalty_discount_percent=loyalty_engine.profile.get_discount(),
 
                 # promo_code=promo,
                 # promo_code_discount_percent=promo.discount_percent if promo else 0,
@@ -1115,7 +1122,8 @@ def create_booking_api(request):
                 # loyalty_level=loyalty_profile.level if loyalty_profile else None,
                 # loyalty_discount_percent=loyalty_profile.get_discount() if loyalty_profile else Decimal('0.00'),
             )
-
+            if booking.status == 'paid':  # или 'pending' в зависимости от логики
+                loyalty_engine.add_points_for_booking(engine.base_price)
             for item in equipment_items:
                 BookingEquipment.objects.create(
                     booking=booking,
@@ -1175,14 +1183,16 @@ def create_yookassa_payment(request):
             return JsonResponse({'error': 'Бронирование не найдено'}, status=404)
 
         # Проверка пересечений с другими бронированиями того же стола и времени
-        conflict = Booking.objects.filter(
+        ACTIVE_BOOKING_STATUSES = ['pending', 'paid']
+
+        conflicts = Booking.objects.filter(
             table=booking.table,
             start_time__lt=booking.end_time,
-            end_time__gt=booking.start_time
-        ).exclude(id=booking.id).exists()
-
-        if conflict:
-            return JsonResponse({'error': 'Стол уже забронирован на это время'}, status=400)
+            end_time__gt=booking.start_time,
+            status__in=ACTIVE_BOOKING_STATUSES
+        ).exclude(id=booking.id)
+        if conflicts.exists():
+            return JsonResponse({'error': 'Стол уже забронирован в это время'}, status=409)
 
         # Пересчет стоимости через BookingEngine
         # Получаем оборудование из связанной модели BookingEquipment

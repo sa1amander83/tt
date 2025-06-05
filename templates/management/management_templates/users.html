@@ -123,10 +123,10 @@
                            class="text-blue-600 hover:text-blue-900 mr-3">Редактировать</a>
                         {% if user.status == 'active' %}
                             <a href="{% url 'management:user_profile_deactivate' user.id %}"
-                               class="text-orange-600 bg-gray-200 rounded-full hover:text-orange-900">Деактивировать</a>
+                               class="text-orange-600 bg-gray-200  px-2 leading-5   inline-flex rounded-full hover:text-orange-900">Деактивировать</a>
                         {% else %}
                             <a href="{% url 'management:user_profile_activate' user.id %}"
-                               class=" ml-2 text-orange-600 rounded-full bg-green-200 hover:text-orange-900">Активировать</a>
+                               class=" ml-2 text-orange-600 rounded-full px-2  inline-flex  leading-5 bg-green-200 hover:text-orange-900">Активировать</a>
                         {% endif %}
                         <a href="{% url 'management:user_profile_delete' user.id %}"
                            class="text-red-600 ml-2  hover:text-red-900">Удалить</a>
@@ -151,7 +151,7 @@
             <div class="flex space-x-2">
                 {% if users.has_previous %}
                     <a href="?page=
-                                
+
                             {{ users.previous_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
                        class="px-3 py-1 border border-2 border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                         Предыдущая
@@ -165,7 +165,7 @@
                             </span>
                     {% elif num > users.number|add:'-3' and num < users.number|add:'3' %}
                         <a href="?page=
-                                    
+
                                 {{ num }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
                            class="px-3 py-1 border border-2 border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                             {{ num }}
@@ -175,7 +175,7 @@
 
                 {% if users.has_next %}
                     <a href="?page=
-                                
+
                             {{ users.next_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
                        class="px-3 py-1 border border-2 border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                         Следующая

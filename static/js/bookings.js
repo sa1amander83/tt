@@ -840,14 +840,14 @@ document.addEventListener('DOMContentLoaded', async function () {
                 // Получаем данные формы
                 const durationMinutes = parseInt(elements.duration.value) || 60;
 
-                console.log("Form data:", {
-                    date: elements.bookingDate.value,
-                    start_time: elements.startTime.value,
-                    duration: durationMinutes,
-                    table_id: elements.tableSelect.value,
-                    participants: elements.participants.value,
-                    notes: elements.notes.value
-                });
+                // console.log("Form data:", {
+                //     date: elements.bookingDate.value,
+                //     start_time: elements.startTime.value,
+                //     duration: durationMinutes,
+                //     table_id: elements.tableSelect.value,
+                //     participants: elements.participants.value,
+                //     notes: elements.notes.value
+                // });
 
                 const equipmentData = Array.from(document.querySelectorAll('.equipment-checkbox:checked'))
                     .map(checkbox => {

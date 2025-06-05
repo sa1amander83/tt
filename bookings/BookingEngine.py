@@ -10,13 +10,16 @@ import re
 from datetime import timedelta, date
 from django.utils.timezone import localtime
 
-from buisneslogic.models import SpecialOffer
+from management.models import SpecialOffer
+from management.LoyaltyEngine import LoyaltyEngine
 
 
 class BookingEngine:
     def __init__(self, user, table, start_time, duration_minutes,
                  participants, equipment_items=None, is_group=False,
                  promo_code=None, manual_discount_percent=0):
+        self.loyalty_level = None
+        self.loyalty_discount_percent = None
         self.special_offer_discount_percent = None
         self.promo_code_discount_percent = None
         self.user = user
@@ -40,6 +43,7 @@ class BookingEngine:
         self.pricing_plan = None
         self.pricing = None
 
+        self.loyalty_engine = LoyaltyEngine(user)
     def _get_membership(self):
         # Активный и валидный абонемент
         membership = self.user.memberships.filter(is_active=True).first()
@@ -125,9 +129,14 @@ class BookingEngine:
         # 4. Скидка по уровню лояльности
         loyalty_profile = getattr(self.user, 'loyaltyprofile', None)
         if loyalty_profile:
-            loyalty_discount = loyalty_profile.get_discount()
+            loyalty_discount = self.loyalty_engine.profile.get_discount()
             if loyalty_discount > 0:
                 total *= (100 - float(loyalty_discount)) / 100
+            self.loyalty_discount_percent = float(loyalty_discount)
+            self.loyalty_level = loyalty_profile.level
+        else:
+            self.loyalty_discount_percent = 0
+            self.loyalty_level = None
 
         # 5. Ручная скидка
         if self.manual_discount_percent:

@@ -18,11 +18,7 @@
                             Цены
                         </a>
 
-                        <a href="{% url 'admin_settings:club_settings' 'memberships' %}"
-                           class="{% if active_tab == 'memberships' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                            Абонементы и промокоды
-                        </a>
-
+                       
                         <a href="{% url 'admin_settings:club_settings' 'schedule' %}"
                            class="{% if active_tab == 'schedule' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                             Расписание
@@ -40,8 +36,7 @@
                 {% include 'admin/settings_templates/tables_settings.html' %}
             {% elif active_tab == 'pricing' %}
                 {% include 'admin/settings_templates/pricing_settings.html' %}
-            {% elif active_tab == 'memberships' %}
-                {% include 'admin/settings_templates/memberships_settings.html' %}
+           
             {% elif active_tab == 'schedule' %}
                 {% include 'admin/settings_templates/schedule_settings.html' %}
             {% elif active_tab == 'general' %}
@@ -69,8 +64,7 @@
     <script src="{% static 'js/admin-modals/other.js' %}"></script>
     <script src="{% static 'js/admin-modals/tabletypeprice.js' %}"></script>
     <script src="{% static 'js/admin-modals/schedule.js' %}"></script>
-    <script src="{% static 'js/admin-modals/membership.js' %}"></script>
+
     <script src="{% static 'js/admin-modals/equipment.js' %}"></script>
-    <script src="{% static 'js/admin-modals/promocode.js' %}"></script>        
 
     {% endblock %}

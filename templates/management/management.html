@@ -11,11 +11,18 @@
                     <nav class="-mb-px flex space-x-8 overflow-x-auto pb-2">
                         <a href="{% url 'management:management'  'bookings'  %}"
                            class="{% if active_tab == 'bookings' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                            Бронирования                        </a>
+                            Бронирования         
+                        </a>
                         <a href="{% url 'management:management'  'users'  %}"
                            class="{% if active_tab == 'users' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                             Посетители клуба
-                        </a> <a href="{% url 'management:management'  'reports'  %}"
+                        </a> 
+                         <a href="{% url 'management:management' 'memberships' %}"
+                           class="{% if active_tab == 'memberships' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                            Абонементы и промокоды
+                        </a>
+
+                        <a href="{% url 'management:management'  'reports'  %}"
                            class="{% if active_tab == 'reports' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                             Отчеты
                         </a>
@@ -42,7 +49,8 @@
                 {% include 'management/management_templates/bookings.html' %}
             {% elif active_tab == 'users' %}
                 {% include 'management/management_templates/users.html' %}
-         
+          {% elif active_tab == 'memberships' %}
+                {% include 'management/management_templates/memberships.html' %}
             {% elif active_tab == 'reports' %}
               {% include 'management/management_templates/reports.html' %}
         
@@ -56,6 +64,7 @@
         {{ block.super }}
 
     <script src="{% static 'js/ru.js' %}"></script>
-  
+      <script src="{% static 'js/admin-modals/promocode.js' %}"></script>        
+    <script src="{% static 'js/admin-modals/membership.js' %}"></script>
 
     {% endblock %}

@@ -41,6 +41,7 @@ class TableTypePricing(models.Model):
     hour_rate = models.PositiveIntegerField(verbose_name="Цена за час (стандарт)",default=400)
     half_hour_rate = models.PositiveIntegerField(verbose_name="Цена за полчаса (стандарт)",default=250)
     hour_rate_group = models.PositiveIntegerField(verbose_name="Цена за час (группа)")
+    half_hour_rate_group = models.PositiveIntegerField(verbose_name="Цена за полчаса (группа)")
     min_duration = models.PositiveIntegerField(default=30, verbose_name="Минимальная длительность (минуты)")
     max_duration = models.PositiveIntegerField(default=180, verbose_name="Максимальная длительность (минуты)")
 

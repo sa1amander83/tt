@@ -2,6 +2,7 @@ import json
 from datetime import timedelta, datetime, date
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import user_passes_test
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Sum, Q, F, Count
 from django.http import JsonResponse
@@ -13,12 +14,16 @@ from django.views import View
 from django.views.generic import ListView, DetailView, TemplateView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.paginator import Paginator
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 from admin_settings.models import Table
 from bookings.forms import BookingForm
 from bookings.models import Booking, BookingPackage
-from buisneslogic.models import Membership, LoyaltyProfile
-from management.forms import UserAdminForm
+
+from management.LoyaltyEngine import LoyaltyEngine
+from management.forms import UserAdminForm, MembershipTypeForm
+from management.models import LoyaltyProfile, MembershipType, Membership, LoyaltySettings
 
 UserModel = get_user_model()
 
@@ -72,7 +77,39 @@ class UserProfileView(LoginRequiredMixin, StaffRequiredMixin, View):
         }
         return render(request, 'management/users_modals/user_profile.html', context)
 
+@api_view(['GET'])
+def get_loyalty_info(request):
+    engine = LoyaltyEngine(request.user)
+    return Response({
+        'level': engine.profile.level,
+        'level_name': engine.profile.get_level_display(),
+        'points': engine.profile.points,
+        'active_points': engine.get_active_points(),
+        'next_level': engine.get_next_level_info(),
+        'benefits': [{
+            'type': b.benefit_type,
+            'name': b.get_benefit_type_display(),
+            'value': b.value,
+            'description': b.description
+        } for b in engine.get_available_benefits()]
+    })
 
+@api_view(['POST'])
+def redeem_points(request):
+    points = request.data.get('points')
+    try:
+        points = int(points)
+        engine = LoyaltyEngine(request.user)
+        discount_amount = engine.redeem_points_for_discount(points)
+        return Response({
+            'success': True,
+            'discount_amount': discount_amount,
+            'remaining_points': engine.profile.points
+        })
+    except ValueError as e:
+        return Response({'error': str(e)}, status=400)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
 class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
     template_name = 'management/management.html'
 
@@ -118,7 +155,7 @@ class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
                 'tables': Table.objects.all(),
                 'status_choices': dict(Booking.STATUS_CHOICES),
                 'filters': {
-                    'date': date_filter or date.today().strftime('%Y-%m-%d'),
+                    'date': date_filter,  # без default на текущую дату
                     'status': status_filter,
                     'table': table_filter,
                 },
@@ -159,7 +196,11 @@ class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
                     'status': status_filter,
                 }
             })
-
+        elif active_tab == 'memberships':
+            context.update({
+                'membership_types': MembershipType.objects.all(),
+                'membership_form': MembershipTypeForm(),
+            })
         elif active_tab == 'reports':
             # Получаем параметры фильтрации из GET-запроса
             report_type = self.request.GET.get('report-type', 'revenue')
@@ -829,3 +870,60 @@ class AdminUserBookingsView(LoginRequiredMixin, UserPassesTestMixin, ListView):
             'updated_at': localtime(b.updated_at).strftime('%d.%m.%Y %H:%M'),
             'expires_at': localtime(b.expires_at).strftime('%d.%m.%Y %H:%M'),
         }
+
+
+@user_passes_test(lambda u: u.is_staff)
+def loyalty_settings_view(request):
+    # Получаем настройки
+    settings = LoyaltySettings.load()
+
+    # Получаем все уровни лояльности
+    levels = LoyaltyProfile.Level.choices
+
+    # Формируем данные для таблицы уровней
+    loyalty_levels = []
+    for level in levels:
+        level_data = {
+            'code': level[0],
+            'name': level[1],
+            'description': '',
+            'threshold': LoyaltyProfile.LEVEL_THRESHOLDS.get(level[0], 0),
+            'discount': LoyaltyProfile.LEVEL_DISCOUNTS.get(level[0], 0),
+            'status': 'Активен',
+            'icon': 'fa-star',
+            'color': 'green'
+        }
+
+        # Настройки для каждого уровня
+        if level[0] == 'SILVER':
+            level_data['description'] = 'Средний уровень'
+            level_data['icon'] = 'fa-award'
+            level_data['color'] = 'gray'
+        elif level[0] == 'GOLD':
+            level_data['description'] = 'Продвинутый уровень'
+            level_data['icon'] = 'fa-medal'
+            level_data['color'] = 'yellow'
+        elif level[0] == 'PLATINUM':
+            level_data['description'] = 'Премиум уровень'
+            level_data['icon'] = 'fa-crown'
+            level_data['color'] = 'purple'
+        else:
+            level_data['description'] = 'Базовый уровень'
+
+        loyalty_levels.append(level_data)
+
+    # Получаем привилегии уровней
+    level_benefits = {}
+    for level in levels:
+        benefits = LevelBenefit.objects.filter(level=level[0])
+        level_benefits[level[0]] = {benefit.benefit_type: benefit.is_active for benefit in benefits}
+
+    context = {
+        'loyalty_levels': loyalty_levels,
+        'points_settings': settings,
+        'redemption_settings': settings,
+        'level_benefits': level_benefits,
+        'active_tab': 'loyalty',
+    }
+
+    return render(request, 'admin/loyalty_settings.html', context)

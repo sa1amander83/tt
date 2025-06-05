@@ -5,7 +5,7 @@ from random import randint, choice
 
 from admin_settings.models import WorkingDay, TableType, Table
 from bookings.models import  TableTypePricing
-from buisneslogic.models import SpecialOffer
+from management.models import SpecialOffer
 from pricing.models import PricingPlan
 
 
@@ -74,20 +74,19 @@ class Command(BaseCommand):
         all_plans = list(PricingPlan.objects.all())
         all_types = list(TableType.objects.all())
 
-        for _ in range(10):
-            plan = choice(all_plans)
-            table_type = choice(all_types)
-            TableTypePricing.objects.update_or_create(
-                pricing_plan=plan,
-                table_type=table_type,
-                defaults={
-                    'hour_rate': randint(300, 500),
-                    'half_hour_rate': randint(150, 300),
-                    'hour_rate_group': randint(400, 700),
-                    'min_duration': 30,
-                    'max_duration': 180
-                }
-            )
+        for plan in PricingPlan.objects.all():
+            for table_type in TableType.objects.all():
+                TableTypePricing.objects.update_or_create(
+                    pricing_plan=plan,
+                    table_type=table_type,
+                    defaults={
+                        'hour_rate': randint(300, 500),
+                        'half_hour_rate': randint(150, 300),
+                        'hour_rate_group': randint(400, 700),
+                        'min_duration': 30,
+                        'max_duration': 180
+                    }
+                )
 
         SpecialOffer.objects.get_or_create(
             name='Скидка 10% на утренние занятия',

@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .management_views import *
 from .views import *
 
 app_name = 'management'
@@ -21,5 +22,21 @@ urlpatterns = [
     path('users/<int:pk>/', AdminUserProfileView.as_view(), name='user_profile'),
     path('users/<int:pk>/update/', AdminUserProfileUpdateView.as_view(), name='user_profile_update'),
     path('users/<int:pk>/bookings/', AdminUserBookingsView.as_view(), name='user_bookings'),
+
+    path('special-offers/create/', SpecialOfferCreateView.as_view(), name='special_offer_create'),
+    path('special-offers/<int:pk>/', SpecialOfferView.as_view(), name='special_offer_view'),
+    path('special-offers/<int:pk>/update/', SpecialOfferUpdateView.as_view(), name='special_offer_update'),
+    path('special-offers/<int:pk>/delete/', SpecialOfferDeleteView.as_view(), name='special_offer_delete'),
+
+
+    path('membership/create/', MembershipCreateView.as_view(), name='membership_type_create'),
+    path('membership/<int:pk>/update/', MembershipUpdateView.as_view(), name='membership_type_update'),
+    path('membership/<int:pk>/view/', MembershipView.as_view(), name='membership_type_view'),
+    path('membership/<int:pk>/delete/', MembershipDeleteView.as_view(), name='membership_type_delete'),
+
+    path('promocodes/', PromoCodeListCreate.as_view(), name='promocode-list'),
+    path('promocodes/<int:pk>/', PromoCodeRetrieveUpdateDestroy.as_view(), name='promocode-detail'),
+    path('promocodes/', PromoCodeManagementView.as_view(), name='promocode-management'),
+    path('validate-promo/', ValidatePromoCode.as_view(), name='validate-promo'),
 
 ]

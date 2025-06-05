@@ -399,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const formData = new FormData(form);
       const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-      const response = await fetch(`/buisneslogic/special-offers/${offerId}/update/`, {
+      const response = await fetch(`/management/special-offers/${offerId}/update/`, {
         method: 'POST',
         body: formData,
         headers: {

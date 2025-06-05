@@ -5,7 +5,7 @@ from admin_settings.models import Table
 
 
 from django import forms
-from .models import Table
+
 
 class TableSettingsForm(forms.ModelForm):
     class Meta:

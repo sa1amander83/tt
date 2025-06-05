@@ -10,7 +10,7 @@ from django.contrib.auth.models import (
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import validate_email, MinValueValidator, MaxValueValidator
 
-from buisneslogic.models import LoyaltyProfile
+from management.models import LoyaltyProfile
 
 
 def user_photo_upload_path(instance, filename):
