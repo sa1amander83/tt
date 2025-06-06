@@ -271,24 +271,26 @@ class LoyaltySettings(models.Model):
         points_from_amount = (booking_amount / settings.rubles_per_point) * settings.points_per_ruble
         profile.add_points(int(points_from_amount))
 
-class LevelBenefit(models.Model):
-    BENEFIT_TYPES = [
-        ('EARLY_BOOKING', 'Раннее бронирование'),
-        ('EQUIPMENT_DISCOUNT', 'Скидка на инвентарь'),
-        ('FREE_CANCELLATION', 'Бесплатная отмена'),
-        ('BIRTHDAY_BONUS', 'Бонус на день рождения'),
-        ('PRIORITY_SUPPORT', 'Приоритетная поддержка'),
-        ('FREE_TRAINING', 'Бесплатная тренировка'),
-    ]
 
+
+
+class BenefitType(models.Model):
+    code = models.CharField(max_length=50, unique=True, verbose_name="Код")
+    name = models.CharField(max_length=100, verbose_name="Название")
+
+    class Meta:
+        verbose_name = "Тип привилегии"
+        verbose_name_plural = "Типы привилегий"
+
+    def __str__(self):
+        return self.name
+
+class LevelBenefit(models.Model):
     level = models.CharField(
         max_length=10,
         choices=LoyaltyProfile.Level.choices,
     )
-    benefit_type = models.CharField(
-        max_length=20,
-        choices=BENEFIT_TYPES,
-    )
+    benefit_type = models.ForeignKey(BenefitType, on_delete=models.CASCADE, verbose_name="Тип привилегии")
     is_active = models.BooleanField(default=True)
     value = models.CharField(max_length=100, blank=True, help_text="Значение (например, размер скидки)")
     description = models.TextField(blank=True)
@@ -299,7 +301,8 @@ class LevelBenefit(models.Model):
         unique_together = ('level', 'benefit_type')
 
     def __str__(self):
-        return f"{self.get_level_display()} - {self.get_benefit_type_display()}"
+        return f"{self.get_level_display()} - {self.benefit_type}"
+
 
 
 # промокоды абонементы и спецпредложения

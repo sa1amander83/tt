@@ -41,7 +41,8 @@ class Booking(models.Model):
         ('paid', 'Оплачено'),
         ('cancelled', 'Отменено'),
         ('completed', 'Завершено'),
-        ('expired', 'Просрочено')
+        ('expired', 'Просрочено'),
+        ('processing', 'Идет сейчас'),
     )
 
     user = models.ForeignKey(

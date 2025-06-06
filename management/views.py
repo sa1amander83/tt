@@ -170,7 +170,7 @@ class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
                 'membership_types': MembershipType.objects.all(),
                 'membership_form': MembershipTypeForm(),
             })
-        elif active_tab == 'loyalty_modals':
+        elif active_tab == 'loyalty':
             loyalty_levels = []
             for level_code, level_name in LoyaltyProfile.Level.choices:
                 benefits = LevelBenefit.objects.filter(level=level_code, is_active=True)
@@ -962,7 +962,7 @@ def loyalty_settings_view(request):
         'active_tab': 'loyalty_modals',
     }
 
-    return render(request, 'admin/loyalty_settings.html', context)
+    return render(request, 'management/management_templates/loyalty.html', context)
 
 def add_level_benefit(request):
     if request.method == 'POST':

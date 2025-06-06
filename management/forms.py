@@ -294,14 +294,47 @@ class SpecialOfferForm(forms.ModelForm):
 
 
 
+from django import forms
+from .models import LevelBenefit, BenefitType
+
+
+
 class LevelBenefitForm(forms.ModelForm):
     class Meta:
         model = LevelBenefit
         fields = ['level', 'benefit_type', 'is_active', 'value', 'description']
         widgets = {
-            'level': forms.Select(choices=LoyaltyProfile.Level.choices, attrs={'class': 'form-select'}),
-            'benefit_type': forms.Select(choices=LevelBenefit.BENEFIT_TYPES, attrs={'class': 'form-select'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
-            'value': forms.TextInput(attrs={'class': 'form-input'}),
-            'description': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 3}),
+            'level': forms.Select(
+                choices=LoyaltyProfile.Level.choices,
+                attrs={
+                    'class': 'form-select block w-full mt-1 rounded-md border-gray-300 shadow-sm '
+                             'focus:border-indigo-500 focus:ring-indigo-500'
+                }
+            ),
+            'benefit_type': forms.Select(
+                attrs={
+                    'class': 'form-select block w-full mt-1 rounded-md border-gray-300 shadow-sm '
+                             'focus:border-indigo-500 focus:ring-indigo-500'
+                }
+            ),
+            'is_active': forms.CheckboxInput(
+                attrs={'class': 'form-checkbox h-5 w-5 text-indigo-600'}
+            ),
+            'value': forms.TextInput(
+                attrs={
+                    'class': 'form-input block w-full mt-1 rounded-md border-gray-300 shadow-sm '
+                             'focus:border-indigo-500 focus:ring-indigo-500'
+                }
+            ),
+            'description': forms.Textarea(
+                attrs={
+                    'class': 'form-textarea block w-full mt-1 rounded-md border-gray-300 shadow-sm '
+                             'focus:border-indigo-500 focus:ring-indigo-500',
+                    'rows': 3
+                }
+            ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['benefit_type'].queryset = BenefitType.objects.all()
