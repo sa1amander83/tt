@@ -182,7 +182,7 @@ class LoyaltyProfile(models.Model):
         return rubles
 
     def get_next_level_info(self):
-        """Возвращает информацию о следующем уровне"""
+        """Возвращает информацию о следующем уровне, включая прогресс"""
         current_threshold = self.LEVEL_THRESHOLDS.get(self.level, 0)
         next_level = None
         next_threshold = None
@@ -194,25 +194,25 @@ class LoyaltyProfile(models.Model):
                 break
 
         if next_level:
+            total = next_threshold - current_threshold
+            current = self.points - current_threshold
+            progress = min(100, int((current / total) * 100)) if total > 0 else 0
+
             return {
                 'level': next_level,
                 'level_name': dict(self.Level.choices).get(next_level),
                 'required_points': next_threshold,
                 'points_remaining': next_threshold - self.points,
-                'discount': self.LEVEL_DISCOUNTS.get(next_level, 0)
+                'discount': self.LEVEL_DISCOUNTS.get(next_level, 0),
+                'progress_percent': progress,
             }
         return None
-
     @property
     def progress_to_next_level(self):
-        """Прогресс до следующего уровня в процентах"""
         next_info = self.get_next_level_info()
         if not next_info:
             return 100
-
-        total = next_info['required_points'] - self.LEVEL_THRESHOLDS.get(self.level, 0)
-        current = self.points - self.LEVEL_THRESHOLDS.get(self.level, 0)
-        return min(100, int((current / total) * 100)) if total > 0 else 0
+        return next_info.get('progress_percent', 0)
 
 
     def get_active_points(self):

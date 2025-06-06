@@ -1,70 +1,76 @@
-    {% extends 'base.html' %}
-    {% load static %}
+{% extends 'base.html' %}
+{% load static %}
 
-    {% block content %}
-        <main class="container mx-auto px-4 py-8">
-            <h1 class="text-2xl font-bold mb-8">Управление</h1>
+{% block content %}
+    <main class="container mx-auto px-4 py-8">
+        <h1 class="text-2xl font-bold mb-8">Управление</h1>
 
-            <!-- Management Tabs -->
-            <div class="mb-8 overflow-x-auto">
-                <div class="border-b border-gray-200 w-max min-w-full">
-                    <nav class="-mb-px flex space-x-8 overflow-x-auto pb-2">
-                        <a href="{% url 'management:management'  'bookings'  %}"
-                           class="{% if active_tab == 'bookings' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                            Бронирования         
-                        </a>
-                        <a href="{% url 'management:management'  'users'  %}"
-                           class="{% if active_tab == 'users' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                            Посетители клуба
-                        </a> 
-                         <a href="{% url 'management:management' 'memberships' %}"
-                           class="{% if active_tab == 'memberships' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                            Абонементы и промокоды
-                        </a>
+        <!-- Management Tabs -->
+        <div class="mb-8 overflow-x-auto">
+            <div class="border-b border-gray-200 w-max min-w-full">
+                <nav class="-mb-px flex space-x-8 overflow-x-auto pb-2">
+                    <a href="{% url 'management:management'  'bookings' %}"
+                       class="{% if active_tab == 'bookings' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Бронирования
+                    </a>
+                    <a href="{% url 'management:management'  'users' %}"
+                       class="{% if active_tab == 'users' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Посетители клуба
+                    </a>
+                    <a href="{% url 'management:management' 'memberships' %}"
+                       class="{% if active_tab == 'memberships' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Абонементы и промокоды
+                    </a>
+                    <a href="{% url 'management:management' 'loyalty_modals' %}"
+                       class="{% if active_tab == 'loyalty_modals' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                       Программа лояльности
+                    </a>
+                    <a href="{% url 'management:management'  'reports' %}"
+                       class="{% if active_tab == 'reports' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                        Отчеты
+                    </a>
 
-                        <a href="{% url 'management:management'  'reports'  %}"
-                           class="{% if active_tab == 'reports' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                            Отчеты
-                        </a>
-
-{#                        <a href="{% url 'management:promocodes'  %}"#}
-{#                           class="{% if active_tab == 'promocodes' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">#}
-{#                            Абонементы и промокоды#}
-{#                        </a>#}
-{##}
-{#                        <a href="{% url 'management:special_offers' 'schedule' %}"#}
-{#                           class="{% if active_tab == 'schedule' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">#}
-{#                            Расписание#}
-{#                        </a>#}
-{#                        <a href="{% url 'admin_settings:club_settings' 'general' %}"#}
-{#                           class="{% if active_tab == 'general' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">#}
-{#                            Общие#}
-{#                        </a>#}
-                    </nav>
-                </div>
+                    {#                        <a href="{% url 'management:promocodes'  %}"#}
+                    {#                           class="{% if active_tab == 'promocodes' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">#}
+                    {#                            Абонементы и промокоды#}
+                    {#                        </a>#}
+                    {##}
+                    {#                        <a href="{% url 'management:special_offers' 'schedule' %}"#}
+                    {#                           class="{% if active_tab == 'schedule' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">#}
+                    {#                            Расписание#}
+                    {#                        </a>#}
+                    {#                        <a href="{% url 'admin_settings:club_settings' 'general' %}"#}
+                    {#                           class="{% if active_tab == 'general' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-2 border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">#}
+                    {#                            Общие#}
+                    {#                        </a>#}
+                </nav>
             </div>
+        </div>
 
-            <!-- Остальной код остается без изменений -->
-            {% if active_tab == 'bookings' %}
-                {% include 'management/management_templates/bookings.html' %}
-            {% elif active_tab == 'users' %}
-                {% include 'management/management_templates/users.html' %}
-          {% elif active_tab == 'memberships' %}
-                {% include 'management/management_templates/memberships.html' %}
-            {% elif active_tab == 'reports' %}
-              {% include 'management/management_templates/reports.html' %}
-        
-            {% endif %}
-        </main>
+        <!-- Остальной код остается без изменений -->
+        {% if active_tab == 'bookings' %}
+            {% include 'management/management_templates/bookings.html' %}
+        {% elif active_tab == 'users' %}
+            {% include 'management/management_templates/users.html' %}
+        {% elif active_tab == 'loyalty_modals' %}
+            {% include 'management/management_templates/loyalty.html' %}
+        {% elif active_tab == 'memberships' %}
+            {% include 'management/management_templates/memberships.html' %}
+            
+        {% elif active_tab == 'reports' %}
+            {% include 'management/management_templates/reports.html' %}
 
-   
-    {% endblock %}
+        {% endif %}
+    </main>
 
-    {% block extrascripts %}
-        {{ block.super }}
+
+{% endblock %}
+
+{% block extrascripts %}
+    {{ block.super }}
 
     <script src="{% static 'js/ru.js' %}"></script>
-      <script src="{% static 'js/admin-modals/promocode.js' %}"></script>        
+    <script src="{% static 'js/admin-modals/promocode.js' %}"></script>
     <script src="{% static 'js/admin-modals/membership.js' %}"></script>
 
-    {% endblock %}
+{% endblock %}

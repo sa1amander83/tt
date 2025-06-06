@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from management.models import MembershipType, SpecialOffer
+from management.models import MembershipType, SpecialOffer, LevelBenefit, LoyaltyProfile
 
 
 class UserAdminForm(UserChangeForm):
@@ -291,3 +291,17 @@ class SpecialOfferForm(forms.ModelForm):
     def clean_weekdays(self):
         weekdays_list = self.cleaned_data.get('weekdays', [])
         return ','.join(weekdays_list)  # Преобразуем в строку: "1,3,5"
+
+
+
+class LevelBenefitForm(forms.ModelForm):
+    class Meta:
+        model = LevelBenefit
+        fields = ['level', 'benefit_type', 'is_active', 'value', 'description']
+        widgets = {
+            'level': forms.Select(choices=LoyaltyProfile.Level.choices, attrs={'class': 'form-select'}),
+            'benefit_type': forms.Select(choices=LevelBenefit.BENEFIT_TYPES, attrs={'class': 'form-select'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+            'value': forms.TextInput(attrs={'class': 'form-input'}),
+            'description': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 3}),
+        }

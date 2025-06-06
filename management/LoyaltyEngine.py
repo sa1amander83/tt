@@ -43,7 +43,7 @@ class LoyaltyEngine:
         if self.profile.points < points:
             raise ValueError("Недостаточно баллов")
 
-        rubles = (points / self.settings.points_to_rubles) * self.settings.rubles_from_points
+        rubles = (Decimal(points) / Decimal(self.settings.points_to_rubles)) * Decimal(self.settings.rubles_from_points)
         self.profile.points -= points
         self.profile.save()
         return rubles
@@ -60,15 +60,20 @@ class LoyaltyEngine:
             is_active=True
         ).exists()
 
+    def get_next_level_info(self):
+        """Обертка для получения информации о следующем уровне из профиля"""
+        return self.profile.get_next_level_info()
+
     def apply_birthday_bonus(self):
         """Применение бонуса на день рождения"""
-        if not self.profile.birthday_bonus_used:
-            bonus = self.profile.get_birthday_bonus()
-            self.profile.add_points(bonus)
-            self.profile.birthday_bonus_used = True
-            self.profile.save()
-            return bonus
-        return 0
+        if self.profile.birthday_bonus_used:
+            return 0  # или raise AlreadyUsed("Bonus already used")
+
+        bonus = self.profile.get_birthday_bonus()
+        self.profile.add_points(bonus)
+        self.profile.birthday_bonus_used = True
+        self.profile.save()
+        return bonus
 
     def apply_monthly_free_training(self):
         """Применение бесплатной тренировки"""
@@ -84,7 +89,8 @@ class LoyaltyEngine:
         if not self.settings.enable_points_expiration:
             return self.profile.points
 
-        expiration_date = timezone.now() - timedelta(days=30 * self.settings.points_expiration_months)
-        if self.profile.joined_at > expiration_date:
-            return self.profile.points
-        return 0
+        expiration_threshold = timezone.now() - timedelta(days=30 * self.settings.points_expiration_months)
+        if self.profile.joined_at <= expiration_threshold:
+            return 0
+
+        return self.profile.points

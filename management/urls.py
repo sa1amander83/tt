@@ -39,4 +39,6 @@ urlpatterns = [
     path('promocodes/', PromoCodeManagementView.as_view(), name='promocode-management'),
     path('validate-promo/', ValidatePromoCode.as_view(), name='validate-promo'),
 
+    path('loyalty/add-benefit/', add_level_benefit, name='add_level_benefit'),
+
 ]

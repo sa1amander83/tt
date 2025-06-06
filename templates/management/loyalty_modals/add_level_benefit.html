@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">Добавить привилегию уровня</h1>
+    <form method="post" class="max-w-lg bg-white p-6 rounded-lg shadow-md">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg">Добавить</button>
+        <a href="{% url 'loyalty_program' %}" class="ml-4 text-gray-600 hover:text-gray-800">Отмена</a>
+    </form>
+</div>
+{% endblock %}

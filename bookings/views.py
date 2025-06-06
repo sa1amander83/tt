@@ -221,14 +221,21 @@ class CalendarAPIView(APIView):
 
         time_slots = []
         day_schedule = defaultdict(dict)
-
+        print("now:", now)  # для дебага
+        print("first_slot_start:", slots[0][0])
+        print("first_slot_end:", slots[0][1])
         for slot_start, slot_end in slots:
             label = slot_start.strftime('%H:%M')
             time_slots.append(label)
 
             for table in tables:
                 overlaps = any(s < slot_end and e > slot_start for s, e in booking_map.get(table.id, []))
-                slot_status = '-' if slot_end <= now else ('Занято' if overlaps else 'available')
+                if slot_start < now:
+                    slot_status = '-'
+                elif overlaps:
+                    slot_status = 'Занято'
+                else:
+                    slot_status = 'available'
                 pricing = None
                 for p in pricing_data:
                     if p.table_type != table.table_type:
@@ -403,7 +410,12 @@ class CalendarAPIView(APIView):
 
                 for table in tables:
                     overlaps = any(s < slot_end and e > slot_start for s, e in booking_map.get(table.id, []))
-                    slot_status = 'booked' if overlaps else 'available'
+                    if slot_start < timezone.now().astimezone(tz):
+                        slot_status = '-'
+                    elif overlaps:
+                        slot_status = 'booked'
+                    else:
+                        slot_status = 'available'
 
                     pricing = None
                     for p in pricing_data:

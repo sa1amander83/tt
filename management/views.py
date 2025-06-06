@@ -22,15 +22,16 @@ from bookings.forms import BookingForm
 from bookings.models import Booking, BookingPackage
 
 from management.LoyaltyEngine import LoyaltyEngine
-from management.forms import UserAdminForm, MembershipTypeForm
-from management.models import LoyaltyProfile, MembershipType, Membership, LoyaltySettings
+from management.forms import UserAdminForm, MembershipTypeForm, LevelBenefitForm
+from management.models import LoyaltyProfile, MembershipType, Membership, LoyaltySettings, LevelBenefit
 
 UserModel = get_user_model()
+
 
 class StaffRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_authenticated and (
-            self.request.user.is_staff or self.request.user.is_superuser
+                self.request.user.is_staff or self.request.user.is_superuser
         )
 
 
@@ -77,39 +78,7 @@ class UserProfileView(LoginRequiredMixin, StaffRequiredMixin, View):
         }
         return render(request, 'management/users_modals/user_profile.html', context)
 
-@api_view(['GET'])
-def get_loyalty_info(request):
-    engine = LoyaltyEngine(request.user)
-    return Response({
-        'level': engine.profile.level,
-        'level_name': engine.profile.get_level_display(),
-        'points': engine.profile.points,
-        'active_points': engine.get_active_points(),
-        'next_level': engine.get_next_level_info(),
-        'benefits': [{
-            'type': b.benefit_type,
-            'name': b.get_benefit_type_display(),
-            'value': b.value,
-            'description': b.description
-        } for b in engine.get_available_benefits()]
-    })
 
-@api_view(['POST'])
-def redeem_points(request):
-    points = request.data.get('points')
-    try:
-        points = int(points)
-        engine = LoyaltyEngine(request.user)
-        discount_amount = engine.redeem_points_for_discount(points)
-        return Response({
-            'success': True,
-            'discount_amount': discount_amount,
-            'remaining_points': engine.profile.points
-        })
-    except ValueError as e:
-        return Response({'error': str(e)}, status=400)
-    except Exception as e:
-        return Response({'error': str(e)}, status=500)
 class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
     template_name = 'management/management.html'
 
@@ -201,6 +170,44 @@ class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
                 'membership_types': MembershipType.objects.all(),
                 'membership_form': MembershipTypeForm(),
             })
+        elif active_tab == 'loyalty_modals':
+            loyalty_levels = []
+            for level_code, level_name in LoyaltyProfile.Level.choices:
+                benefits = LevelBenefit.objects.filter(level=level_code, is_active=True)
+                loyalty_levels.append({
+                    'code': level_code,
+                    'name': level_name,
+                    'benefits': benefits,
+                })
+
+            # Профиль текущего пользователя
+            engine = LoyaltyEngine(self.request.user)
+            profile = engine.profile
+
+            # Список типов бенефитов, которые есть у текущего пользователя
+            active_benefits = LevelBenefit.objects.filter(level=profile.level, is_active=True)
+            user_benefit_types = set(active_benefits.values_list('benefit_type', flat=True))
+            user_benefit_map = {
+                benefit_type: True
+                for benefit_type in user_benefit_types
+            }
+
+            active_benefits = LevelBenefit.objects.filter(level=profile.level, is_active=True)
+            user_checked_benefit_types = {
+                benefit.benefit_type for benefit in active_benefits
+            }
+            context.update({
+                'loyalty_levels': loyalty_levels,
+                'profile': profile,
+                'level': profile.level,
+                'level_name': profile.get_level_display(),
+                'points': profile.points,
+                'active_points': profile.get_active_points(),
+                'next_level': profile.get_next_level_info(),
+                'user_benefit_types': user_benefit_map,
+                'user_checked_benefit_types': user_checked_benefit_types,
+            })
+
         elif active_tab == 'reports':
             # Получаем параметры фильтрации из GET-запроса
             report_type = self.request.GET.get('report-type', 'revenue')
@@ -215,7 +222,7 @@ class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
             # Готовим контекст для шаблона
             context.update({
                 'report_type': report_type,
-                 'users' :get_user_model().objects.all().order_by('-date_joined'),
+                'users': get_user_model().objects.all().order_by('-date_joined'),
 
                 'period': period,
                 'start_date': date_range['start_date'].strftime('%Y-%m-%d') if date_range['start_date'] else '',
@@ -234,6 +241,26 @@ class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
                 context.update(self._get_memberships_data(date_range))
 
         return context
+
+    def post(self, request, *args, **kwargs):
+        active_tab = kwargs.get('active_tab', 'bookings')
+
+        if active_tab == 'loyalty_modals':
+            points = request.POST.get('points')
+            try:
+                points = int(points)
+                engine = LoyaltyEngine(request.user)
+                discount_amount = engine.redeem_points_for_discount(points)
+
+                messages.success(request, f'Списано {points} баллов. Скидка: {discount_amount}')
+            except ValueError as e:
+                messages.error(request, f'Ошибка: {str(e)}')
+            except Exception as e:
+                messages.error(request, f'Внутренняя ошибка: {str(e)}')
+
+            return redirect(reverse('management:management', kwargs={'active_tab': 'loyalty_modals'}))
+
+        return self.get(request, *args, **kwargs)
 
     # Методы для работы с отчетами (перенесены из ReportsView)
     def _get_date_range(self, period, custom_start=None, custom_end=None):
@@ -501,7 +528,7 @@ class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
 
 from django.views.generic import DetailView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
@@ -523,12 +550,14 @@ class SingleBookingView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['users'] = get_user_model().objects.all()
         return context
+
     def form_valid(self, form):
         messages.success(self.request, "Бронирование успешно обновлено.")
         return super().form_valid(form)
 
     def get_success_url(self):
         return reverse_lazy('management:booking_detail', kwargs={'pk': self.object.pk})
+
 
 class BookingUpdateView(LoginRequiredMixin, UpdateView):
     """Редактирование бронирования"""
@@ -551,9 +580,11 @@ class BookingUpdateView(LoginRequiredMixin, UpdateView):
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
-            context = super().get_context_data(**kwargs)
-            context['users'] = get_user_model().objects.all()
-            return context
+        context = super().get_context_data(**kwargs)
+        context['users'] = get_user_model().objects.all()
+        return context
+
+
 class BookingDeleteView(LoginRequiredMixin, DeleteView):
     """Удаление бронирования"""
     model = Booking
@@ -621,6 +652,8 @@ class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     def form_invalid(self, form):
         messages.error(self.request, "Ошибка при создании пользователя")
         return super().form_invalid(form)
+
+
 class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = UserModel
     form_class = UserAdminForm
@@ -657,6 +690,7 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         messages.success(request, "Пользователь успешно удален")
         return super().delete(request, *args, **kwargs)
+
 
 def fmt(dt, fmt_str='%d.%m.%Y %H:%M'):
     return localtime(dt).strftime(fmt_str) if dt else '—'
@@ -727,7 +761,8 @@ class AdminUserProfileView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
                     break
 
             points_to_next = (next_level['points'] - loyalty.points) if next_level else 0
-            progress_percent = int(loyalty.points / next_level['points'] * 100) if next_level and next_level['points'] > 0 else 100
+            progress_percent = int(loyalty.points / next_level['points'] * 100) if next_level and next_level[
+                'points'] > 0 else 100
 
             context['loyalty_data'] = {
                 'level': loyalty.get_level_display(),
@@ -745,6 +780,7 @@ class AdminUserProfileView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
             context['loyalty_data'] = None
 
         return context
+
 
 class AdminUserProfileUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = get_user_model()
@@ -923,7 +959,22 @@ def loyalty_settings_view(request):
         'points_settings': settings,
         'redemption_settings': settings,
         'level_benefits': level_benefits,
-        'active_tab': 'loyalty',
+        'active_tab': 'loyalty_modals',
     }
 
     return render(request, 'admin/loyalty_settings.html', context)
+
+def add_level_benefit(request):
+    if request.method == 'POST':
+        form = LevelBenefitForm(request.POST)
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(request, 'Привилегия успешно добавлена')
+                return redirect('loyalty_program')  # Название URL вашей страницы с программой лояльности
+            except Exception as e:
+                form.add_error(None, f'Ошибка при сохранении: {e}')
+    else:
+        form = LevelBenefitForm()
+
+    return render(request, 'management/loyalty_modals/add_level_benefit.html', {'form': form})
