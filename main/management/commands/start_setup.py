@@ -83,6 +83,7 @@ class Command(BaseCommand):
                         'hour_rate': randint(300, 500),
                         'half_hour_rate': randint(150, 300),
                         'hour_rate_group': randint(400, 700),
+                        'half_hour_rate_group': randint(400, 700),
                         'min_duration': 30,
                         'max_duration': 180
                     }

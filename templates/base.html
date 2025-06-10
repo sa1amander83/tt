@@ -234,6 +234,42 @@
 
 
 {% block extrascripts %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+    // Для всех полей с атрибутом data-datepicker
+    const dateInputs = document.querySelectorAll('[data-datepicker]');
+    dateInputs.forEach(input => {
+        flatpickr(input, {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            locale: "ru",
+          
+            time_24hr: true,
+            minuteIncrement: 15,
+            static: true,
+            onChange: function () {
+                input.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+
+    // Для полей времени
+    const timeInputs = document.querySelectorAll('[data-timepicker]');
+    timeInputs.forEach(input => {
+        flatpickr(input, {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            locale: "ru",
+            time_24hr: true,
+            minuteIncrement: 15,
+            onChange: function () {
+                input.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+});
+    </script>
     <link rel="preload" href="{% static 'js/loader.js' %}" as="script">
     {{ block.super }}
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>

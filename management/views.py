@@ -7,6 +7,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Sum, Q, F, Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.timezone import localtime
 from django.utils.translation import gettext_lazy as _
@@ -85,8 +86,35 @@ class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         active_tab = kwargs.get('active_tab', 'bookings')
         context = self.get_context_data(active_tab)
-        return render(request, self.template_name, context)
 
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' and active_tab == 'bookings':
+            # Для AJAX-запросов создаем отдельный контекст с фильтрацией
+            bookings = Booking.objects.select_related('user', 'table').order_by('-created_at')
+
+            # Применяем фильтры из GET-параметров
+            date_filter = request.GET.get('date', '')
+            status_filter = request.GET.get('status', 'all')
+
+            if date_filter:
+                try:
+                    filter_date = datetime.strptime(date_filter, '%Y-%m-%d').date()
+                    bookings = bookings.filter(
+                        Q(start_time__date=filter_date) | Q(end_time__date=filter_date)
+                    )
+                except ValueError:
+                    pass
+
+            if status_filter != 'all':
+                bookings = bookings.filter(status=status_filter)
+
+            paginator = Paginator(bookings, 10)
+            page_obj = paginator.get_page(request.GET.get('page'))
+
+            context['bookings'] = page_obj
+            html = render_to_string('management/bookings_modals/bookings_table.html', context, request=request)
+            return JsonResponse({'html': html})
+
+        return render(request, self.template_name, context)
     def get_context_data(self, active_tab):
         context = {
             'active_tab': active_tab,
@@ -525,6 +553,36 @@ class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
             'data': data
         }
 
+
+class ManagementBookingsAjaxView(LoginRequiredMixin, StaffRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        status = request.GET.get('status', 'all')
+        date_filter = request.GET.get('date', None)
+
+        bookings = Booking.objects.select_related('user', 'table').order_by('-created_at')
+
+        if status != 'all':
+            bookings = bookings.filter(status=status)
+
+        if date_filter:
+            try:
+                # Преобразуем строку даты в datetime объект
+                filter_date = datetime.strptime(date_filter, '%Y-%m-%d').date()
+                bookings = bookings.filter(
+                    start_time__date=filter_date
+                )
+            except ValueError:
+                # Если дата в неправильном формате, игнорируем фильтр
+                pass
+
+        paginator = Paginator(bookings, 10)
+        page_obj = paginator.get_page(request.GET.get('page'))
+
+        context = {
+            'bookings': page_obj,
+        }
+
+        return render(request, 'management/bookings_modals/bookings_table.html', context)
 
 from django.views.generic import DetailView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -978,3 +1036,14 @@ def add_level_benefit(request):
         form = LevelBenefitForm()
 
     return render(request, 'management/loyalty_modals/add_level_benefit.html', {'form': form})
+
+
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from .models import PromoCode
+from .serializers import PromoCodeSerializer
+
+class PromoCodeViewSet(viewsets.ModelViewSet):
+    queryset = PromoCode.objects.select_related('user').all()
+    serializer_class = PromoCodeSerializer
+
