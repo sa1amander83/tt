@@ -301,7 +301,7 @@ def promocode_detail(request, promo_id=None):
     return HttpResponseNotAllowed(['GET', 'POST', 'PUT', 'DELETE'])
 
 class PromoCodeManagementView(LoginRequiredMixin, TemplateView):
-    template_name = 'admin/promo_codes.html'
+    template_name = 'management/management_templates/promocodes.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -517,6 +517,20 @@ class PromoCodeRetrieveUpdateDestroy(LoginRequiredMixin, View):
             return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+from rest_framework import viewsets, filters
+from .models import PromoCode
+from .serializers import PromoCodeSerializer
+from rest_framework.pagination import PageNumberPagination
+
+class PromoPagination(PageNumberPagination):
+    page_size = 10
+
+class PromoCodeViewSet(viewsets.ModelViewSet):
+    queryset = PromoCode.objects.all().order_by('-valid_to')
+    serializer_class = PromoCodeSerializer
+    pagination_class = PromoPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['code', 'description']
 
 
 class ValidatePromoCode(View):
@@ -560,3 +574,17 @@ class ValidatePromoCode(View):
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+
+from django.utils.timezone import localdate
+
+def promocodes_page(request):
+    promocodes = PromoCode.objects.all().order_by('-valid_to')
+    users = get_user_model().objects.all().order_by('first_name')  # Для выпадающего списка ограничения по пользователю
+    today = localdate()  # Передадим сегодняшнюю дату, чтобы проверить активность
+
+    context = {
+        'promocodes': promocodes,
+        'users': users,
+        'today': today,
+    }
+    return render(request, 'management/management_templates/promocodes.html', context)

@@ -197,6 +197,8 @@ class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
             context.update({
                 'membership_types': MembershipType.objects.all(),
                 'membership_form': MembershipTypeForm(),
+                'promocodes': PromoCode.objects.all().order_by('-used_count'),
+
             })
         elif active_tab == 'loyalty':
             loyalty_levels = []

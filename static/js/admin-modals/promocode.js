@@ -1,51 +1,50 @@
-    // Promo Code Modal Functions
-    async function openPromoCodeModal(promoId = null) {
-        const modal = document.getElementById('promocode-modal');
-        const title = document.getElementById('promo-modal-title');
-        const form = document.getElementById('promoCodeForm');
+// Открыть модалку
+async function openPromoCodeModal(promoId = null) {
+    const modal = document.getElementById('promocode-modal');
+    const title = document.getElementById('promo-modal-title');
+    const form = document.getElementById('promoCodeForm');
 
-        if (promoId) {
-            title.textContent = 'Редактировать промокод';
-            document.getElementById('promo_id').value = promoId;
+    if (promoId) {
+        title.textContent = 'Редактировать промокод';
+        document.getElementById('promo_id').value = promoId;
 
-            try {
-                const response = await fetch(`/management/promocodes/${promoId}/`);
+        try {
+            const response = await fetch(`/management/api/promocodes/${promoId}/`);
+            if (!response.ok) throw new Error(`Ошибка ${response.status}`);
 
-                if (!response.ok) {
-                    throw new Error(`Failed to load promo code: ${response.status}`);
-                }
+            const data = await response.json();
 
-                const data = await response.json();
-
-                // Fill form fields
-                document.getElementById('id_promo_code').value = data.code;
-                document.getElementById('id_promo_description').value = data.description || '';
-                document.getElementById('id_discount_percent').value = data.discount_percent;
-                document.getElementById('id_usage_limit').value = data.usage_limit || '';
-                document.getElementById('id_valid_from').value = data.valid_from;
-                document.getElementById('id_valid_to').value = data.valid_to;
-                document.getElementById('id_promo_user').value = data.user || '';
-                document.getElementById('id_promo_active').checked = data.is_active;
-            } catch (error) {
-                console.error('Error loading promo code:', error);
-                alert('Failed to load promo code details');
-                closePromoCodeModal();
-                return;
-            }
-        } else {
-            title.textContent = 'Добавить промокод';
-            form.reset();
-            document.getElementById('promo_id').value = '';
-            document.getElementById('id_promo_active').checked = true;
+            // Заполнение полей формы
+            document.getElementById('id_promo_code').value = data.code;
+            document.getElementById('id_promo_description').value = data.description || '';
+            document.getElementById('id_discount_percent').value = data.discount_percent;
+            document.getElementById('id_usage_limit').value = data.usage_limit ?? '';
+            document.getElementById('id_valid_from').value = data.valid_from;
+            document.getElementById('id_valid_to').value = data.valid_to;
+            document.getElementById('id_promo_user').value = data.user ?? '';
+            document.getElementById('id_promo_active').checked = data.is_active;
+        } catch (err) {
+            console.error('Ошибка загрузки промокода:', err);
+            alert('Не удалось загрузить данные промокода');
+            closePromoCodeModal();
+            return;
         }
-
-        modal.classList.remove('hidden');
+    } else {
+        title.textContent = 'Добавить промокод';
+        form.reset();
+        document.getElementById('promo_id').value = '';
+        document.getElementById('id_promo_active').checked = true;
     }
 
-    function closePromoCodeModal() {
-        document.getElementById('promocode-modal').classList.add('hidden');
-    }
+    modal.classList.remove('hidden');
+}
 
+// Закрыть модалку
+function closePromoCodeModal() {
+    document.getElementById('promocode-modal').classList.add('hidden');
+}
+
+// Сохранить промокод
 async function savePromoCode() {
     const form = document.getElementById('promoCodeForm');
     const formData = new FormData(form);
@@ -63,18 +62,26 @@ async function savePromoCode() {
         user: formData.get('user') || null
     };
 
-    // Числовая проверка
     if (data.usage_limit !== null) {
         data.usage_limit = parseInt(data.usage_limit, 10);
         if (isNaN(data.usage_limit)) data.usage_limit = null;
     }
 
-    const url = isEdit ? `/management/promocodes/${promoId}/` : '/management/promocodes/create/';
+    // Валидация
+    if (!data.code) return alert('Введите код');
+    if (isNaN(data.discount_percent) || data.discount_percent < 1 || data.discount_percent > 100)
+        return alert('Скидка должна быть от 1 до 100');
+    if (!data.valid_from || !data.valid_to)
+        return alert('Укажите даты');
+    if (data.valid_from > data.valid_to)
+        return alert('Дата окончания не может быть раньше начала');
+
+    const url = isEdit ? `/management/api/promocodes/${promoId}/` : '/management/api/promocodes/';
     const method = isEdit ? 'PUT' : 'POST';
 
     try {
         const response = await fetch(url, {
-            method: method,
+            method,
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
@@ -82,45 +89,44 @@ async function savePromoCode() {
             body: JSON.stringify(data)
         });
 
-        const contentType = response.headers.get("content-type") || "";
-        const isJson = contentType.includes("application/json");
-        const responseData = isJson ? await response.json() : null;
-
         if (!response.ok) {
-            const message = responseData?.error || `Ошибка ${response.status}: ${response.statusText}`;
-            throw new Error(message);
+            const errData = await response.json();
+            const msg = errData.detail || JSON.stringify(errData);
+            throw new Error(msg);
         }
 
         closePromoCodeModal();
         window.location.reload();
-    } catch (error) {
-        console.error('Ошибка сохранения промокода:', error);
-        alert(error.message || 'Не удалось сохранить промокод');
+    } catch (err) {
+        console.error('Ошибка сохранения:', err);
+        alert(err.message || 'Не удалось сохранить промокод');
     }
 }
 
-    function deletePromoCode(promoId) {
-        if (confirm('Вы уверены, что хотите удалить этот промокод?')) {
-            fetch(`/management/promocodes/${promoId}/`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}'
-                }
-            })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.reload();
-                    } else {
-                        alert('Ошибка при удалении промокода');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Произошла ошибка при удалении');
-                });
-        }
-    }
+// Удаление промокода
+function deletePromoCode(promoId) {
+    if (!confirm('Удалить промокод?')) return;
 
-    function openEditPromoCodeModal(promoId) {
-        openPromoCodeModal(promoId);
-    }
+    fetch(`/api/promocodes/${promoId}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+        .then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                alert('Ошибка при удалении');
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка удаления:', error);
+            alert('Не удалось удалить промокод');
+        });
+}
+
+// Открыть модалку редактирования
+function openEditPromoCodeModal(promoId) {
+    openPromoCodeModal(promoId);
+}
