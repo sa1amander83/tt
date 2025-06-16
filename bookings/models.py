@@ -37,12 +37,13 @@ class BookingPackage(models.Model):
 class Booking(models.Model):
     from admin_settings.models import Table, Equipment
     STATUS_CHOICES = (
+    ('processing', 'Идет сейчас'),
         ('pending', 'Ожидает оплаты'),
         ('paid', 'Оплачено'),
         ('cancelled', 'Отменено'),
         ('completed', 'Завершено'),
         ('expired', 'Просрочено'),
-        ('processing', 'Идет сейчас'),
+
     )
 
     user = models.ForeignKey(

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts',
     'admin_settings',
+    'site_settings',
     'pricing',
     'events',
     'bookings',

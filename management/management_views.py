@@ -1,13 +1,16 @@
 import json
-from datetime import date
+from datetime import date, datetime
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseNotAllowed
 from django.shortcuts import render, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from django.views.generic import View, TemplateView
+from rest_framework import serializers
 
 from admin_settings.views import IsAdminMixin
 from management.forms import MembershipTypeForm, SpecialOfferForm
@@ -197,10 +200,108 @@ class MembershipDeleteView(LoginRequiredMixin, View):
                 'status': 'error',
                 'message': str(e)
             }, status=500)
+# views.py
 
+
+
+@csrf_exempt  # Только для теста, лучше использовать csrf_token
+@require_http_methods(["POST"])
+def create_promocode(request):
+    try:
+        data = json.loads(request.body)
+
+        code = data.get('code')
+        discount = data.get('discount_percent')
+        valid_from = data.get('valid_from')
+        valid_to = data.get('valid_to')
+        is_active = data.get('is_active', True)
+        usage_limit = data.get('usage_limit')
+        description = data.get('description', '')
+        user_id = data.get('user')
+
+        promocode = PromoCode(
+            code=code,
+            discount_percent=discount,
+            valid_from=valid_from,
+            valid_to=valid_to,
+            is_active=is_active,
+            usage_limit=usage_limit if usage_limit is not None else None,
+            description=description
+        )
+
+        if user_id:
+            try:
+                promocode.user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return JsonResponse({'error': 'User not found'}, status=400)
+
+        promocode.save()
+        return JsonResponse({'success': True, 'id': promocode.id})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@csrf_exempt
+def promocode_detail(request, promo_id=None):
+    if request.method == "GET":
+        promo = get_object_or_404(PromoCode, id=promo_id)
+        return JsonResponse({
+            "id": promo.id,
+            "code": promo.code,
+            "description": promo.description,
+            "discount_percent": promo.discount_percent,
+            "valid_from": promo.valid_from.isoformat(),
+            "valid_to": promo.valid_to.isoformat(),
+            "is_active": promo.is_active,
+            "usage_limit": promo.usage_limit,
+            "used_count": promo.used_count,
+            "user": promo.user.id if promo.user else None
+        })
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    if request.method == "POST":
+        try:
+            promo = PromoCode(
+                code=data["code"],
+                description=data.get("description", ""),
+                discount_percent=int(data["discount_percent"]),
+                valid_from=datetime.strptime(data["valid_from"], "%Y-%m-%d").date(),
+                valid_to=datetime.strptime(data["valid_to"], "%Y-%m-%d").date(),
+                is_active=data.get("is_active", True),
+                usage_limit=data.get("usage_limit") or None,
+                user=get_user_model()   .objects.get(id=data["user"]) if data.get("user") else None
+            )
+            promo.save()
+            return JsonResponse({"id": promo.id}, status=201)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+    if request.method == "PUT":
+        promo = get_object_or_404(PromoCode, id=promo_id)
+        promo.code = data["code"]
+        promo.description = data.get("description", "")
+        promo.discount_percent = int(data["discount_percent"])
+        promo.valid_from = datetime.strptime(data["valid_from"], "%Y-%m-%d").date()
+        promo.valid_to = datetime.strptime(data["valid_to"], "%Y-%m-%d").date()
+        promo.is_active = data.get("is_active", True)
+        promo.usage_limit = data.get("usage_limit") or None
+        promo.user = User.objects.get(id=data["user"]) if data.get("user") else None
+        promo.save()
+        return JsonResponse({"id": promo.id})
+
+    if request.method == "DELETE":
+        promo = get_object_or_404(PromoCode, id=promo_id)
+        promo.delete()
+        return JsonResponse({"deleted": True})
+
+    return HttpResponseNotAllowed(['GET', 'POST', 'PUT', 'DELETE'])
 
 class PromoCodeManagementView(LoginRequiredMixin, TemplateView):
-    template_name = 'admin/promo_codes.html'
+    template_name = 'management/management_templates/promocodes.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -210,68 +311,130 @@ class PromoCodeManagementView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class PromoCodeListCreate(LoginRequiredMixin, View):
-    def get(self, request):
-        promocodes = PromoCode.objects.all().order_by('-valid_to')
-        data = [{
-            'id': pc.id,
-            'code': pc.code,
-            'description': pc.description,
-            'discount_percent': pc.discount_percent,
-            'valid_from': pc.valid_from.strftime('%Y-%m-%d'),
-            'valid_to': pc.valid_to.strftime('%Y-%m-%d'),
-            'is_active': pc.is_active,
-            'usage_limit': pc.usage_limit,
-            'used_count': pc.used_count,
-            'user': pc.user.id if pc.user else None
-        } for pc in promocodes]
-        return JsonResponse(data, safe=False)
+# class PromoCodeListCreate(LoginRequiredMixin, View):
+#     def get(self, request):
+#         promocodes = PromoCode.objects.all().order_by('-valid_to')
+#         data = [{
+#             'id': pc.id,
+#             'code': pc.code,
+#             'description': pc.description,
+#             'discount_percent': pc.discount_percent,
+#             'valid_from': pc.valid_from.strftime('%Y-%m-%d'),
+#             'valid_to': pc.valid_to.strftime('%Y-%m-%d'),
+#             'is_active': pc.is_active,
+#             'usage_limit': pc.usage_limit,
+#             'used_count': pc.used_count,
+#             'user': pc.user.id if pc.user else None
+#         } for pc in promocodes]
+#         return JsonResponse(data, safe=False)
+#
+#     def post(self, request):
+#         try:
+#             data = json.loads(request.body)
+#
+#             # Валидация
+#             required_fields = ['code', 'discount_percent', 'valid_from', 'valid_to']
+#             missing = [field for field in required_fields if field not in data]
+#             if missing:
+#                 return JsonResponse({'error': f'Missing required fields: {", ".join(missing)}'}, status=400)
+#
+#             if data['valid_from'] > data['valid_to']:
+#                 return JsonResponse({'error': 'End date must be after start date'}, status=400)
+#
+#             if int(data['discount_percent']) <= 0 or int(data['discount_percent']) > 100:
+#                 return JsonResponse({'error': 'Discount must be between 1 and 100 percent'}, status=400)
+#
+#             # Создание промокода
+#             promo_code = PromoCode(
+#                 code=data['code'].strip().upper(),
+#                 description=data.get('description', ''),
+#                 discount_percent=data['discount_percent'],
+#                 valid_from=data['valid_from'],
+#                 valid_to=data['valid_to'],
+#                 is_active=data.get('is_active', True),
+#                 usage_limit=data.get('usage_limit'),
+#                 user_id=data.get('user')
+#             )
+#
+#             promo_code.full_clean()
+#             promo_code.save()
+#
+#             return JsonResponse({
+#                 'success': True,
+#                 'id': promo_code.id,
+#                 'code': promo_code.code
+#             })
+#
+#         except json.JSONDecodeError:
+#             return JsonResponse({'error': 'Invalid JSON'}, status=400)
+#         except ValidationError as e:
+#             return JsonResponse({'error': str(e)}, status=400)
+#         except Exception as e:
+#             return JsonResponse({'error': str(e)}, status=500)
 
-    def post(self, request):
+
+class PromoCodeDetail(LoginRequiredMixin, View):
+    def get(self, request, pk):
         try:
+            pc = PromoCode.objects.get(pk=pk)
+            data = {
+                'id': pc.id,
+                'code': pc.code,
+                'description': pc.description,
+                'discount_percent': pc.discount_percent,
+                'valid_from': pc.valid_from.strftime('%Y-%m-%d'),
+                'valid_to': pc.valid_to.strftime('%Y-%m-%d'),
+                'is_active': pc.is_active,
+                'usage_limit': pc.usage_limit,
+                'used_count': pc.used_count,
+                'user': pc.user.id if pc.user else None
+            }
+            return JsonResponse(data)
+        except PromoCode.DoesNotExist:
+            return JsonResponse({'error': 'Promo code not found'}, status=404)
+
+    def put(self, request, pk):
+        try:
+            pc = PromoCode.objects.get(pk=pk)
             data = json.loads(request.body)
 
-            # Валидация
-            required_fields = ['code', 'discount_percent', 'valid_from', 'valid_to']
-            missing = [field for field in required_fields if field not in data]
-            if missing:
-                return JsonResponse({'error': f'Missing required fields: {", ".join(missing)}'}, status=400)
-
-            if data['valid_from'] > data['valid_to']:
+            # Validation
+            if 'valid_from' in data and 'valid_to' in data and data['valid_from'] > data['valid_to']:
                 return JsonResponse({'error': 'End date must be after start date'}, status=400)
 
-            if int(data['discount_percent']) <= 0 or int(data['discount_percent']) > 100:
+            if 'discount_percent' in data and (
+                    int(data['discount_percent']) <= 0 or int(data['discount_percent']) > 100):
                 return JsonResponse({'error': 'Discount must be between 1 and 100 percent'}, status=400)
 
-            # Создание промокода
-            promo_code = PromoCode(
-                code=data['code'].strip().upper(),
-                description=data.get('description', ''),
-                discount_percent=data['discount_percent'],
-                valid_from=data['valid_from'],
-                valid_to=data['valid_to'],
-                is_active=data.get('is_active', True),
-                usage_limit=data.get('usage_limit'),
-                user_id=data.get('user')
-            )
+            # Update fields
+            for field in ['code', 'description', 'discount_percent', 'valid_from', 'valid_to',
+                          'is_active', 'usage_limit', 'user']:
+                if field in data:
+                    setattr(pc, field, data[field] if data[field] != '' else None)
 
-            promo_code.full_clean()
-            promo_code.save()
+            pc.full_clean()
+            pc.save()
 
-            return JsonResponse({
-                'success': True,
-                'id': promo_code.id,
-                'code': promo_code.code
-            })
+            return JsonResponse({'success': True, 'id': pc.id, 'code': pc.code})
 
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
         except ValidationError as e:
             return JsonResponse({'error': str(e)}, status=400)
+        except PromoCode.DoesNotExist:
+            return JsonResponse({'error': 'Promo code not found'}, status=404)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
-
+    def delete(self, request, pk):
+        try:
+            pc = PromoCode.objects.get(pk=pk)
+            pc.delete()
+            return JsonResponse({'success': True})
+        except PromoCode.DoesNotExist:
+            return JsonResponse({'error': 'Promo code not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
 class PromoCodeRetrieveUpdateDestroy(LoginRequiredMixin, View):
     def get_object(self, pk):
         try:
@@ -354,6 +517,20 @@ class PromoCodeRetrieveUpdateDestroy(LoginRequiredMixin, View):
             return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+from rest_framework import viewsets, filters
+from .models import PromoCode
+from .serializers import PromoCodeSerializer
+from rest_framework.pagination import PageNumberPagination
+
+class PromoPagination(PageNumberPagination):
+    page_size = 10
+
+class PromoCodeViewSet(viewsets.ModelViewSet):
+    queryset = PromoCode.objects.all().order_by('-valid_to')
+    serializer_class = PromoCodeSerializer
+    pagination_class = PromoPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['code', 'description']
 
 
 class ValidatePromoCode(View):
@@ -397,3 +574,17 @@ class ValidatePromoCode(View):
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+
+from django.utils.timezone import localdate
+
+def promocodes_page(request):
+    promocodes = PromoCode.objects.all().order_by('-valid_to')
+    users = get_user_model().objects.all().order_by('first_name')  # Для выпадающего списка ограничения по пользователю
+    today = localdate()  # Передадим сегодняшнюю дату, чтобы проверить активность
+
+    context = {
+        'promocodes': promocodes,
+        'users': users,
+        'today': today,
+    }
+    return render(request, 'management/management_templates/promocodes.html', context)
