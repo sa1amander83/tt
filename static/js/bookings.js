@@ -50,6 +50,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         const isAdmin = userRoleEl ? userRoleEl.innerText === 'True' : false;
         // Состояние приложения
         const state = {
+            promoCode: null, // Будет хранить {code, discount_percent, description}
+            promoApplied: false,
             currentDate: new Date(),
             currentView: 'day',
             rates: {},
@@ -545,7 +547,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
 
                 elements.bookingForm.dataset.discount = data.discount || 0;
-
+                document.getElementById('promo-code').value = '';
+                document.getElementById('promo-code-message').classList.add('hidden');
+                state.promoCode = null;
+                state.promoApplied = false;
                 const {open_time, close_time} = state.siteSettings;
                 const clubOpenTime = new Date(`${date}T${open_time}:00`);
                 const clubCloseTime = new Date(`${date}T${close_time}:00`);
@@ -715,25 +720,28 @@ document.addEventListener('DOMContentLoaded', async function () {
                                              tablePriceHalfHour,
                                              tariffName = "Стандартный тариф"
                                          } = {}) {
+           let baseTableCost = 0;
+let finalTableCost = 0;
+let equipmentCost = 0;
+let totalCost = 0;
+
+
             try {
-                // Если цены не переданы, пытаемся получить из elements.bookingForm
+                // 1. Получаем базовые цены
                 if (!tablePriceHour || !tablePriceHalfHour) {
                     if (elements.bookingForm) {
-                        // Безопасно читаем из dataset, если элемент существует
-                        tablePriceHour = tablePriceHour ?? (parseFloat(elements.bookingForm.dataset.pricePerHour) || 1000);
-                        tablePriceHalfHour = tablePriceHalfHour ?? (parseFloat(elements.bookingForm.dataset.pricePerHalfHour) || 500);
+                        tablePriceHour = tablePriceHour ?? (parseFloat(elements.bookingForm.dataset.pricePerHour) || 600);
+                        tablePriceHalfHour = tablePriceHalfHour ?? (parseFloat(elements.bookingForm.dataset.pricePerHalfHour) || 300);
                     } else {
-                        // Дефолтные значения для незалогиненных пользователей
-                        tablePriceHour = tablePriceHour ?? 1000;
-                        tablePriceHalfHour = tablePriceHalfHour ?? 500;
+                        tablePriceHour = tablePriceHour ?? 600;
+                        tablePriceHalfHour = tablePriceHalfHour ?? 300;
                     }
                 }
 
-                // Получаем длительность брони, если нет - по умолчанию 60 минут
+                // 2. Получаем длительность брони
                 const duration = (parseInt(elements.duration?.value) || 60);
-                const blocks = Math.ceil(duration / 30);
 
-                // Рассчитываем базовую стоимость за стол без скидок
+                // 3. Рассчитываем базовую стоимость стола
                 let baseTableCost = 0;
                 if (duration <= 30) {
                     baseTableCost = tablePriceHalfHour;
@@ -745,19 +753,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     baseTableCost = (hours * tablePriceHour) + (extra * tablePriceHalfHour);
                 }
 
-                // Получаем скидку, если форма есть и есть скидка
-                let discount = 0;
-                if (elements.bookingForm && elements.bookingForm.dataset.discount) {
-                    discount = parseFloat(elements.bookingForm.dataset.discount) || 0;
-                }
-
-                // Применяем скидку
-                let tableCost = baseTableCost;
-                if (discount > 0) {
-                    tableCost = baseTableCost * (1 - discount / 100);
-                }
-
-                // Рассчитываем стоимость оборудования
+                // 4. Рассчитываем стоимость оборудования
                 const equipmentCost = [...document.querySelectorAll('.equipment-checkbox:checked')].reduce((sum, el) => {
                     const priceHalf = parseFloat(el.dataset.priceHalfHour) || 0;
                     const priceHour = parseFloat(el.dataset.priceHour) || priceHalf * 2;
@@ -775,29 +771,81 @@ document.addEventListener('DOMContentLoaded', async function () {
                     return sum + cost;
                 }, 0);
 
-                // Общая стоимость
-                const totalCost = Math.round(tableCost + equipmentCost);
+                // 5. Применяем скидки (промокоды и другие)
+                let finalTableCost = baseTableCost;
+                let discountApplied = false;
+                let discountMessage = "";
 
-                // Обновляем отображение цены
+                // 5.1. Проверяем промокод
+                if (state.promoApplied && state.promoCode) {
+                    if (state.promoCode.promo_type === 'fixed') {
+                        // Фиксированная скидка (вычитаем из общей суммы)
+                        const discountAmount = Math.min(state.promoCode.discount_percent, baseTableCost);
+                        finalTableCost = baseTableCost - discountAmount;
+                        discountMessage = `Скидка ${discountAmount}₽ по промокоду`;
+                    } else {
+                        // Процентная скидка (по умолчанию)
+                        const discountPercent = state.promoCode.discount_percent;
+                        finalTableCost = baseTableCost * (1 - discountPercent / 100);
+                        discountMessage = `Скидка ${discountPercent}% по промокоду`;
+                    }
+                    discountApplied = true;
+                    console.log(discountMessage);
+                }
+
+                // 5.2. Проверяем другие скидки (если нет промокода)
+                if (!discountApplied && elements.bookingForm && elements.bookingForm.dataset.discount) {
+                    const discountPercent = parseFloat(elements.bookingForm.dataset.discount) || 0;
+                    if (discountPercent > 0) {
+                        finalTableCost = baseTableCost * (1 - discountPercent / 100);
+                        discountMessage = `Скидка ${discountPercent}%`;
+                        console.log(discountMessage);
+                    }
+                }
+
+                // 6. Рассчитываем итоговую стоимость
+                const totalCost = Math.round(finalTableCost + equipmentCost);
+
+                // 7. Обновляем отображение
                 updateTariffSummary(
                     tariffName,
-                    Math.round(tableCost),
+                    Math.round(finalTableCost),
                     Math.round(equipmentCost),
                     totalCost
                 );
 
                 updateCostDisplay({
-                    table_cost: Math.round(tableCost),
+                    table_cost: Math.round(finalTableCost),
                     equipment_cost: Math.round(equipmentCost),
                     total_cost: totalCost
                 });
+
+                // 8. Обновляем сообщение о скидке (если есть)
+                const promoMessageEl = document.getElementById('promo-code-message');
+                if (promoMessageEl) {
+                    if (discountMessage) {
+                        promoMessageEl.textContent = discountMessage;
+                        promoMessageEl.classList.remove('hidden', 'text-red-600');
+                        promoMessageEl.classList.add('text-green-600');
+                    } else {
+                        promoMessageEl.textContent = '';
+                        promoMessageEl.classList.add('hidden');
+                    }
+                }
 
             } catch (error) {
                 console.error('Ошибка расчета стоимости:', error);
                 showNotification(`Ошибка расчета стоимости: ${error.message}`, 'error');
             }
-        }
 
+            return {
+                baseTableCost: Math.round(baseTableCost),
+                finalTableCost: Math.round(finalTableCost),
+                equipmentCost: Math.round(equipmentCost),
+                totalCost: totalCost
+            };
+
+        }
 
         function updateDurationOptions(minMinutes, maxMinutes) {
             const select = document.getElementById('duration-select');
@@ -816,6 +864,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         // Закрытие модального окна
         function closeModal() {
+            document.getElementById('promo-code').value = '';
+            document.getElementById('promo-code-message').classList.add('hidden');
+            state.promoCode = null;
+            state.promoApplied = false;
+
+
             elements.modal.classList.add('hidden');
         }
 
@@ -860,7 +914,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     });
                 const formData = {
                     date: elements.bookingDate.value, // можно оставить, если серверу нужен
-                    start_time:elements.startTime.value,
+                    start_time: elements.startTime.value,
 
                     duration: durationMinutes,
                     table_id: parseInt(elements.tableSelect.value),
@@ -964,7 +1018,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 
                 const data = await response.json();
-               // console.log("Calendar API response:", data);  // Логируем ответ
+                // console.log("Calendar API response:", data);  // Логируем ответ
 
                 if (data.user_bookings) {
                     state.bookings = data.user_bookings;
@@ -1859,6 +1913,71 @@ document.addEventListener('DOMContentLoaded', async function () {
             return actions || '—';
         }
 
+        document.getElementById("apply-promo-btn").addEventListener("click", async () => {
+            const codeInput = document.getElementById("promo-code");
+            const message = document.getElementById("promo-code-message");
+            const code = codeInput.value.trim();
+
+            if (!code) {
+                message.textContent = "Введите промокод.";
+                message.classList.remove("hidden");
+                message.classList.replace("text-green-600", "text-red-600");
+                return;
+            }
+
+            try {
+                const response = await fetch("/management/validate-promo/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        user_id: state.currentUserId || null
+                    })
+                });
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(text || "Ошибка сервера");
+                }
+
+                const data = await response.json();
+
+                if (!data.valid) {
+                    throw new Error(data.error || "Недействительный промокод");
+                }
+
+                // Сохраняем промокод в состоянии
+                state.promoCode = {
+                    code: code,
+                    discount_percent: data.discount_percent || 0,
+                    description: data.description || code,
+                    promo_type: data.promo_type || 'percent'
+                };
+                state.promoApplied = true;
+
+                message.textContent = `Промокод применен: ${state.promoCode.description}`;
+                message.classList.remove("hidden");
+                message.classList.replace("text-red-600", "text-green-600");
+
+                // Обновляем стоимость с учетом скидки
+                updateBookingCost();
+
+            } catch (err) {
+                console.error("Ошибка промокода:", err);
+                state.promoCode = null;
+                state.promoApplied = false;
+
+                message.textContent = err.message || "Ошибка применения";
+                message.classList.remove("hidden");
+                message.classList.replace("text-green-600", "text-red-600");
+
+                // Пересчитываем стоимость без скидки
+                updateBookingCost();
+            }
+        });
         init();
     }
 )

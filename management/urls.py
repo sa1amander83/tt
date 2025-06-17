@@ -11,7 +11,7 @@ router = DefaultRouter()
 router.register(r'promocodes', PromoCodeViewSet, basename='promocode')
 urlpatterns = [
     path('', ManagementView.as_view(), {'active_tab': 'bookings'}, name='management-default'),  # URL /management/
-
+    path('validate-promo/', validate_promo, name='validate-promo'),
     path('<str:active_tab>/', ManagementView.as_view(), name='management'),
     # path('bookings/', BookingListView.as_view(), name='bookings'),
     path('bookings/<int:pk>/', SingleBookingView.as_view(), name='booking_detail'),
@@ -45,7 +45,7 @@ urlpatterns = [
     # path('promocodes/', PromoCodeListCreate.as_view(), name='promocode-list'),
     path('promocodes/<int:pk>/', PromoCodeDetail.as_view(), name='promocode-detail'),
     path('promocodes/', PromoCodeManagementView.as_view(), name='promocode-management'),
-    path('validate-promo/', ValidatePromoCode.as_view(), name='validate-promo'),
+
     path('api/', include(router.urls)),  # Это добавит /api/promocodes/
 
     path('loyalty/add-benefit/', add_level_benefit, name='add_level_benefit'),

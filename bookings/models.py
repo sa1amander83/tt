@@ -13,7 +13,7 @@ User='accounts.User'
 
 
 class BookingPackage(models.Model):
-    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     total_minutes = models.PositiveIntegerField()
     used_minutes = models.PositiveIntegerField(default=0)
@@ -73,7 +73,7 @@ class Booking(models.Model):
     )
 
     promo_code = models.ForeignKey(
-        PromoCode,
+        'management.PromoCode',
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -86,7 +86,7 @@ class Booking(models.Model):
     )
 
     special_offer = models.ForeignKey(
-     SpecialOffer,
+     'management.SpecialOffer',
         null=True,
         blank=True,
         on_delete=models.SET_NULL,

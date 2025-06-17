@@ -532,49 +532,92 @@ class PromoCodeViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['code', 'description']
 
+def validate_promo(request):
+    try:
+        data = json.loads(request.body)
+        code = data.get('code', '').strip()
+        user_id = data.get('user_id')
 
-class ValidatePromoCode(View):
-    def post(self, request):
+        if not code:
+            return JsonResponse({'valid': False, 'error': 'Промокод обязателен'}, status=400)
+
         try:
-            data = json.loads(request.body)
-            code = data.get('code')
-            user_id = data.get('user_id')
+            promo = PromoCode.objects.get(code__iexact=code)
+        except PromoCode.DoesNotExist:
+            return JsonResponse({'valid': False, 'error': 'Промокод не найден'}, status=404)
 
-            if not code:
-                return JsonResponse({'error': 'Promo code is required'}, status=400)
-
+        user = None
+        if user_id:
             try:
-                promo = PromoCode.objects.get(code=code.upper())
-            except PromoCode.DoesNotExist:
-                return JsonResponse({'valid': False, 'error': 'Invalid promo code'})
+                user = User.objects.get(pk=user_id)
+            except User.DoesNotExist:
+                return JsonResponse({'valid': False, 'error': 'Пользователь не найден'}, status=400)
 
-            user = None
-            if user_id:
-                try:
-                    user = User.objects.get(pk=user_id)
-                except User.DoesNotExist:
-                    pass
+        if not promo.is_valid_for_user(user):
+            return JsonResponse({'valid': False, 'error': 'Промокод недоступен или истёк'}, status=400)
 
-            is_valid = promo.is_valid_for_user(user) if user else promo.is_active
+        response_data = {
+            'valid': True,
+            'promo_type': promo.promo_type,
+            'code': promo.code,
+            'description': promo.description,
+            'discount_percent': promo.discount_percent if promo.promo_type == 'percent' else None,
+            'fixed_amount': promo.fixed_amount if promo.promo_type == 'fixed' else None,
+            'gift': promo.promo_type == 'gift',
+            'free': promo.promo_type == 'free',
+        }
 
-            if not is_valid:
-                return JsonResponse({
-                    'valid': False,
-                    'error': 'This promo code is not valid for your account'
-                })
+        return JsonResponse(response_data)
 
-            return JsonResponse({
-                'valid': True,
-                'discount_percent': promo.discount_percent,
-                'code': promo.code,
-                'description': promo.description
-            })
+    except json.JSONDecodeError:
+        return JsonResponse({'valid': False, 'error': 'Неверный формат JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'valid': False, 'error': str(e)}, status=500)
 
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON'}, status=400)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-
+# class ValidatePromoCode(View):
+#     def post(self, request):
+#         try:
+#             data = json.loads(request.body)
+#             code = data.get('code', '').strip()
+#             user_id = data.get('user_id')
+#
+#             if not code:
+#                 return JsonResponse({'valid': False, 'error': 'Промокод обязателен'}, status=400)
+#
+#             try:
+#                 promo = PromoCode.objects.get(code__iexact=code)
+#             except PromoCode.DoesNotExist:
+#                 return JsonResponse({'valid': False, 'error': 'Промокод не найден'}, status=404)
+#
+#             user = None
+#             if user_id:
+#                 try:
+#                     user = User.objects.get(pk=user_id)
+#                 except User.DoesNotExist:
+#                     return JsonResponse({'valid': False, 'error': 'Пользователь не найден'}, status=400)
+#
+#             if not promo.is_valid_for_user(user):
+#                 return JsonResponse({'valid': False, 'error': 'Промокод недоступен или истёк'}, status=400)
+#
+#             response_data = {
+#                 'valid': True,
+#                 'promo_type': promo.promo_type,
+#                 'code': promo.code,
+#                 'description': promo.description,
+#                 'discount_percent': promo.discount_percent if promo.promo_type == 'percent' else None,
+#                 'fixed_amount': promo.fixed_amount if promo.promo_type == 'fixed' else None,
+#                 'gift': promo.promo_type == 'gift',
+#                 'free': promo.promo_type == 'free',
+#             }
+#
+#             return JsonResponse(response_data)
+#
+#         except json.JSONDecodeError:
+#             return JsonResponse({'valid': False, 'error': 'Неверный формат JSON'}, status=400)
+#         except Exception as e:
+#             return JsonResponse({'valid': False, 'error': str(e)}, status=500)
+#     def get(self, request, *args, **kwargs):
+#         return HttpResponseNotAllowed(['POST']).
 from django.utils.timezone import localdate
 
 def promocodes_page(request):

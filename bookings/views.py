@@ -1125,14 +1125,13 @@ def create_booking_api(request):
                 loyalty_level=loyalty_profile.level if loyalty_profile else None,
             loyalty_discount_percent=loyalty_engine.profile.get_discount(),
 
-                # promo_code=promo,
-                # promo_code_discount_percent=promo.discount_percent if promo else 0,
-                # special_offer=engine.special_offer,
-                # special_offer_discount_percent=engine.special_offer.discount_percent if engine.special_offer else 0,
+                promo_code=promo,
+                promo_code_discount_percent=promo.discount_percent if promo else 0,
+                special_offer=engine.special_offer,
+                special_offer_discount_percent=engine.special_offer.discount_percent if engine.special_offer else 0,
                 # membership=membership,
                 # membership_discount_percent=membership.membership_type.discount_percent if membership else 0,
-                # loyalty_level=loyalty_profile.level if loyalty_profile else None,
-                # loyalty_discount_percent=loyalty_profile.get_discount() if loyalty_profile else Decimal('0.00'),
+
             )
             if booking.status == 'paid':  # или 'pending' в зависимости от логики
                 loyalty_engine.add_points_for_booking(engine.base_price)

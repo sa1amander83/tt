@@ -198,6 +198,7 @@ class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
                 'membership_types': MembershipType.objects.all(),
                 'membership_form': MembershipTypeForm(),
                 'promocodes': PromoCode.objects.all().order_by('-used_count'),
+                'today': timezone.now().date(),
 
             })
         elif active_tab == 'loyalty':

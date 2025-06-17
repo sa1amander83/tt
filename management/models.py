@@ -1,5 +1,7 @@
 from django import forms
-from django.db import models
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
 
 # Create your models here.
 from datetime import date, timedelta
@@ -10,6 +12,8 @@ from django.db import models
 from django.utils import timezone
 
 from admin_settings.models import Table
+
+User ='accounts.User'
 
 #Модели относящиеся к программе лояльности
 class LoyaltyProfile(models.Model):
@@ -261,6 +265,7 @@ class LoyaltySettings(models.Model):
 
 
     def add_points_for_booking(self,user, booking_amount):
+        from bookings.models import Booking
         settings = LoyaltySettings.load()
         profile = LoyaltyProfile.objects.get_or_create(user=user)[0]
 
@@ -307,6 +312,15 @@ class LevelBenefit(models.Model):
 
 # промокоды абонементы и спецпредложения
 class PromoCode(models.Model):
+    PROMO_TYPE_CHOICES = [
+        ('percent', 'Скидка в процентах'),
+        ('fixed', 'Фиксированная скидка'),
+        ('free', 'Бесплатное посещение'),
+        ('gift', 'Подарок'),
+    ]
+
+    promo_type = models.CharField(max_length=10, choices=PROMO_TYPE_CHOICES, default='percent')
+    fixed_amount = models.PositiveIntegerField(null=True, blank=True)
     code = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True)
     discount_percent = models.PositiveIntegerField(
@@ -339,11 +353,26 @@ class PromoCode(models.Model):
 
     def apply_code(self):
         if self.usage_limit is not None:
-            self.used_count = models.F('used_count') + 1
-            self.save(update_fields=['used_count'])
+            with transaction.atomic():
+                self.used_count = models.F('used_count') + 1
+                self.save(update_fields=['used_count'])
 
+    def clean(self):
+        if self.valid_to < self.valid_from:
+            raise ValidationError("Дата окончания не может быть раньше даты начала.")
     def __str__(self):
         return f"{self.code} ({self.discount_percent}% off)"
+
+class PromoCodeUsage(models.Model):
+    promo_code = models.ForeignKey(PromoCode, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    used_at = models.DateTimeField(auto_now_add=True)
+    booking = models.ForeignKey('bookings.Booking', null=True, blank=True, on_delete=models.SET_NULL)
+
+    def __str__(self):
+        return f"{self.user} used {self.promo_code} on {self.used_at}"
+
+
 
 class MembershipType(models.Model):
     """Типы абонементов"""
@@ -370,7 +399,7 @@ class MembershipType(models.Model):
         return self.name
 
 class Membership(models.Model):
-    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='memberships')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='memberships')
     membership_type = models.ForeignKey(MembershipType, on_delete=models.CASCADE, verbose_name="Тип абонемента")
     start_date = models.DateField(verbose_name="Дата начала")
     end_date = models.DateField(verbose_name="Дата окончания")

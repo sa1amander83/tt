@@ -130,3 +130,5 @@ function deletePromoCode(promoId) {
 function openEditPromoCodeModal(promoId) {
     openPromoCodeModal(promoId);
 }
+
+
