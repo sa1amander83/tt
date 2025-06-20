@@ -60,10 +60,11 @@ class Booking(models.Model):
     pricing = models.ForeignKey(
         TableTypePricing,
         on_delete=models.PROTECT,
-        verbose_name="Ценообразование"
+        verbose_name="Ценообразование",
+        null=True
     )
-    start_time = models.DateTimeField(verbose_name="Время начала")
-    end_time = models.DateTimeField(verbose_name="Время окончания")
+    start_time = models.DateTimeField(verbose_name="Время начала", default=timezone.now)
+    end_time = models.DateTimeField(verbose_name="Время окончания", default=timezone.now)
     status = models.CharField(
         max_length=10,
         choices=STATUS_CHOICES,

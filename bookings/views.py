@@ -41,8 +41,7 @@ from events.forms import BookingForm
 from management.LoyaltyEngine import LoyaltyEngine
 from pricing.models import PricingPlan
 from .BookingEngine import BookingEngine
-from .models import  Booking, BookingEquipment,TableTypePricing
-
+from .models import Booking, BookingEquipment, TableTypePricing
 
 
 def booking_view(request):
@@ -285,6 +284,7 @@ class CalendarAPIView(APIView):
             'day_schedule': day_schedule,
             'user_bookings': user_bookings
         })
+
     def get_week_view(self, date, user, slot_duration):
         start = date - timedelta(days=date.weekday())
         return self._get_calendar_range_view(start, 7, user, slot_duration, 'week')
@@ -471,6 +471,7 @@ class CalendarAPIView(APIView):
             'user_bookings': user_bookings
         })
 
+
 @login_required
 def get_booking_info(request):
     if not request.user.is_authenticated:
@@ -534,7 +535,7 @@ def get_booking_info(request):
             equipment_items.append({'equipment': eq, 'quantity': quantity})
 
     # Импорт BookingEngine
-   # замените yourapp на свое приложение
+    # замените yourapp на свое приложение
 
     engine = BookingEngine(
         user=request.user,
@@ -614,7 +615,6 @@ def get_booking_info(request):
 
 @require_GET
 def get_site_settings(request):
-
     try:
         # Получаем дату или используем текущую
         date_str = request.GET.get('date')
@@ -687,7 +687,6 @@ def get_site_settings(request):
         return JsonResponse({'error': str(e), 'status': 'error'}, status=500)
 
 
-
 class UserBookingsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -721,6 +720,7 @@ class UserBookingsView(APIView):
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 def create_booking_view(request):
     try:
@@ -945,7 +945,6 @@ def tables_api(request):
     return JsonResponse(tables_data, safe=False)
 
 
-
 @csrf_exempt
 @require_POST
 def calculate_booking_api(request):
@@ -1078,11 +1077,10 @@ def create_booking_api(request):
 
         if pending_bookings_count >= MAX_PENDING_BOOKINGS:
             return JsonResponse({
-                                    'error': f'У вас уже есть {MAX_PENDING_BOOKINGS} неоплаченных бронирований. Пожалуйста, оплатите их или отмените, чтобы создать новое.'},
-                                status=400)
+                'error': f'У вас уже есть {MAX_PENDING_BOOKINGS} неоплаченных бронирований. Пожалуйста, оплатите их или отмените, чтобы создать новое.'},
+                status=400)
 
         loyalty_engine = LoyaltyEngine(request.user)
-
 
         engine = BookingEngine(
             user=request.user,
@@ -1123,7 +1121,7 @@ def create_booking_api(request):
                 pricing=engine.pricing,
                 status='pending',
                 loyalty_level=loyalty_profile.level if loyalty_profile else None,
-            loyalty_discount_percent=loyalty_engine.profile.get_discount(),
+                loyalty_discount_percent=loyalty_engine.profile.get_discount(),
 
                 promo_code=promo,
                 promo_code_discount_percent=promo.discount_percent if promo else 0,
@@ -1164,9 +1162,6 @@ def create_booking_api(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
-
-
-
 from yookassa import Configuration, Payment
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -1174,6 +1169,7 @@ from django.views.decorators.csrf import csrf_exempt
 # Настройте ЮКассу (лучше вынести в settings.py)
 Configuration.account_id = settings.ACCOUNT_ID
 Configuration.secret_key = settings.SHOP_SECRET_KEY
+
 
 @csrf_exempt
 def create_yookassa_payment(request):
@@ -1275,7 +1271,6 @@ def create_yookassa_payment(request):
         return JsonResponse({'error': f'Ошибка при создании платежа: {str(e)}'}, status=500)
 
 
-
 def payment_callback(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
 
@@ -1284,12 +1279,10 @@ def payment_callback(request, booking_id):
         # Можно показать страницу с подтверждением
         messages.success(request, "Оплата прошла успешно! Ваше бронирование подтверждено.")
         # Перенаправляем в профиль (например, на страницу с бронированиями)
-        return redirect('/accounts/profile/#my-bookings') # <-- тут укажи свой URL name для профиля
+        return redirect('/accounts/profile/#my-bookings')  # <-- тут укажи свой URL name для профиля
     else:
         messages.error(request, "Оплата не была завершена или возникла ошибка.")
         return redirect('/accounts/profile/#my-bookings')
-
-
 
 
 @csrf_exempt

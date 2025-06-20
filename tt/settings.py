@@ -37,14 +37,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'accounts',
     'admin_settings',
-    'site_settings',
     'pricing',
-    'events',
-    'bookings',
-    'main',
+    'accounts',
     'management',
+    'bookings',
+    'site_settings',
+       'events',
+      'main',
+
  ]
 
 MIDDLEWARE = [
@@ -99,7 +100,7 @@ DATABASES = {
         'NAME': 'mydb',
         'USER': 'myuser',
         'PASSWORD': 'mypassword',
-        'HOST': DATABASE_HOST,
+        'HOST':    DATABASE_HOST,
         'PORT': '5432',
     }
 }

@@ -720,10 +720,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                                              tablePriceHalfHour,
                                              tariffName = "Стандартный тариф"
                                          } = {}) {
-           let baseTableCost = 0;
-let finalTableCost = 0;
-let equipmentCost = 0;
-let totalCost = 0;
+            let baseTableCost = 0;
+            let finalTableCost = 0;
+            let equipmentCost = 0;
+            let totalCost = 0;
 
 
             try {
@@ -779,15 +779,16 @@ let totalCost = 0;
                 // 5.1. Проверяем промокод
                 if (state.promoApplied && state.promoCode) {
                     if (state.promoCode.promo_type === 'fixed') {
-                        // Фиксированная скидка (вычитаем из общей суммы)
-                        const discountAmount = Math.min(state.promoCode.discount_percent, baseTableCost);
+                        const discountAmount = Math.min(state.promoCode.fixed_amount || 0, baseTableCost);
                         finalTableCost = baseTableCost - discountAmount;
                         discountMessage = `Скидка ${discountAmount}₽ по промокоду`;
-                    } else {
-                        // Процентная скидка (по умолчанию)
-                        const discountPercent = state.promoCode.discount_percent;
+                    } else if (state.promoCode.promo_type === 'percent') {
+                        const discountPercent = state.promoCode.discount_percent || 0;
                         finalTableCost = baseTableCost * (1 - discountPercent / 100);
                         discountMessage = `Скидка ${discountPercent}% по промокоду`;
+                    } else if (state.promoCode.promo_type === 'free') {
+                        finalTableCost = 0;
+                        discountMessage = `Бронирование бесплатно по промокоду`;
                     }
                     discountApplied = true;
                     console.log(discountMessage);
@@ -915,14 +916,14 @@ let totalCost = 0;
                 const formData = {
                     date: elements.bookingDate.value, // можно оставить, если серверу нужен
                     start_time: elements.startTime.value,
-
-                    duration: durationMinutes,
+                                    duration: durationMinutes,
                     table_id: parseInt(elements.tableSelect.value),
                     equipment: equipmentData,
                     participants: parseInt(elements.participants.value),
                     is_group: document.getElementById('is-group').checked,
                     notes: elements.notes.value,
-                    slot_id: elements.bookingForm.dataset.slotId || null
+                    slot_id: elements.bookingForm.dataset.slotId || null,
+                    promo_code: state.promoCode?.code || null
                 };
 
                 console.log("Full payload:", JSON.stringify(formData, null, 2));
@@ -1857,8 +1858,11 @@ let totalCost = 0;
 
         // Получение CSRF токена
         function getCSRFToken() {
-            const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
-            return csrfInput ? csrfInput.value : '';
+            const cookieValue = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('csrftoken='))
+                ?.split('=')[1];
+            return cookieValue;
         }
 
         // Показать ошибку

@@ -124,9 +124,14 @@ class BookingEngine:
 
         # 3. Промокод
         if self.promo_code:
-            total *= (100 - self.promo_code.discount_percent) / 100
-
-        # 4. Скидка по уровню лояльности
+            if self.promo_code.promo_type == 'free':
+                self.total_price = 0
+                self.base_price = 0
+                self.equipment_price = 0
+                return
+            else:
+                total *= (100 - self.promo_code.discount_percent) / 100
+            # 4. Скидка по уровню лояльности
         loyalty_profile = getattr(self.user, 'loyaltyprofile', None)
         if loyalty_profile:
             loyalty_discount = self.loyalty_engine.profile.get_discount()
