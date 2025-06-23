@@ -196,6 +196,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (elements.bookingForm) {
                 elements.bookingForm.addEventListener('input', handleFormChange);
                 elements.bookingForm.addEventListener('change', handleFormChange);
+
+                document.getElementById('booking-table')?.addEventListener('change', handleFormChange);
+                elements.duration?.addEventListener('change', handleFormChange);
+
             }
 
             // Установка текущей даты
@@ -524,10 +528,18 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         }
 
-        // Открытие модального окна бронирования
-        async function openBookingModal(date, time, tableId, slotId) {
-            const formattedTime = time.includes(':') ? time : `${time}:00`;
+        document.getElementById("new-booking-btn").addEventListener("click", () => {
+            openBookingModal();
+        });
 
+        // Открытие модального окна бронирования
+        async function openBookingModal(date = '', time = '', tableId = null, slotId = null) {
+            const formattedTime = time.includes(':') ? time : `${time}:00`;
+            if (!date || !time || tableId === null) {
+                resetBookingForm();
+                elements.modal.classList.remove('hidden');
+                return;
+            }
             try {
                 const response = await fetch(`/bookings/api/get-booking-info/?date=${date}&time=${formattedTime}&table_id=${tableId}`, {
                     redirect: 'manual' // Отключаем автоматическое следование редиректам
@@ -606,6 +618,51 @@ document.addEventListener('DOMContentLoaded', async function () {
                     alert("Не удалось получить информацию о бронировании. Повторите попытку позже.");
                 }
             }
+        }
+
+        function resetBookingForm() {
+            // Сброс инпутов формы
+            if (elements.bookingDate) elements.bookingDate.value = '';
+            if (elements.startTime) elements.startTime.value = '';
+            if (elements.participants) elements.participants.value = '2';
+            if (elements.notes) elements.notes.value = '';
+
+            // Промокод и сообщение
+            const promoCodeInput = document.getElementById('promo-code');
+            const promoCodeMessage = document.getElementById('promo-code-message');
+            if (promoCodeInput) promoCodeInput.value = '';
+            if (promoCodeMessage) promoCodeMessage.classList.add('hidden');
+
+            // Чекбокс "Группа"
+            const isGroupCheckbox = document.getElementById('is-group');
+            if (isGroupCheckbox) isGroupCheckbox.checked = false;
+
+            // Сброс состояния формы
+            if (elements.bookingForm) {
+                elements.bookingForm.dataset.slotId = '';
+                elements.bookingForm.dataset.discount = '0';
+                elements.bookingForm.dataset.pricePerHour = '0';
+                elements.bookingForm.dataset.pricePerHalfHour = '0';
+            }
+
+            // Сброс состояния приложения
+            state.promoCode = null;
+            state.promoApplied = false;
+
+            // Очистка UI (если нужно скрыть расчёты и т.п.)
+            updateTariffSummary("Стандартный тариф", 0, 0, 0);
+            updateCostDisplay({
+                table_cost: 0,
+                equipment_cost: 0,
+                total_cost: 0
+            });
+
+            // Очистка списков, если требуется
+            populateTimeOptions(new Date(), new Date(), '');     // можно передать фиктивные значения
+            populateTableOptions([], null);
+            populateParticipants([], null);
+            populateDurationOptions(30, 180, 30);  // минимальная заглушка
+            populateEquipmentOptions([]);
         }
 
         function populateTimeOptions(openTime, closeTime, selectedTime) {
@@ -916,7 +973,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const formData = {
                     date: elements.bookingDate.value, // можно оставить, если серверу нужен
                     start_time: elements.startTime.value,
-                                    duration: durationMinutes,
+                    duration: durationMinutes,
                     table_id: parseInt(elements.tableSelect.value),
                     equipment: equipmentData,
                     participants: parseInt(elements.participants.value),
@@ -1916,6 +1973,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             return actions || '—';
         }
+
 
         document.getElementById("apply-promo-btn").addEventListener("click", async () => {
             const codeInput = document.getElementById("promo-code");
