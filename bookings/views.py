@@ -130,12 +130,23 @@ class CalendarAPIView(APIView):
         return False, None, None, False
 
     def get_bookings(self, start, end, user):
-        return Booking.objects.filter(
-            start_time__lt=end,
-            end_time__gt=start,
-            status__in=['pending', 'paid']
-        )
+        # Для админа возвращаем все бронирования
+        if user and user.is_staff:
+            return Booking.objects.filter(
+                start_time__lt=end,
+                end_time__gt=start
+            )
 
+        # Для обычных пользователей возвращаем только их бронирования
+        if user and user.is_authenticated:
+            return Booking.objects.filter(
+                start_time__lt=end,
+                end_time__gt=start,
+                user=user
+            )
+
+        # Для анонимных пользователей не возвращаем бронирования
+        return Booking.objects.none()
     def get_day_view(self, date, user, slot_duration):
 
         is_working_day, open_time, close_time, shortened = self.get_open_close_times(date)
@@ -173,7 +184,7 @@ class CalendarAPIView(APIView):
                 'date': b.start_time.date().isoformat(),
                 'start': b.start_time.strftime('%H:%M'),
                 'end': b.end_time.strftime('%H:%M'),
-                'table_number': getattr(b.table, 'number', None) if b.table else None,
+                'table_number': b.table.number if b.table else None,
                 'table_type': str(b.table.table_type) if b.table and b.table.table_type else None,
                 'status': b.get_status_display()
             } for b in user_bookings_qs]
@@ -294,29 +305,36 @@ class CalendarAPIView(APIView):
         _, last_day = monthrange(start.year, start.month)
         end = start.replace(day=last_day)
 
-        # Коррекция начала и конца по неделям
-        start -= timedelta(days=start.weekday())
-        end += timedelta(days=(6 - end.weekday()))
+        # Расширяем границы по неделям
+        start -= timedelta(days=start.weekday())  # к понедельнику
+        end += timedelta(days=(6 - end.weekday()))  # к воскресенью
         num_days = (end - start).days + 1
 
         raw_response = self._get_calendar_range_view(start, num_days, user, slot_duration, 'month')
         days_data = raw_response.data["days"]
 
-        # Группируем по неделям
+        # Добавим информацию о пользовательских бронированиях в каждый день
+        for booking in raw_response.data.get("user_bookings", []):
+            booking_date = booking['start_time'].split('T')[0]
+            if booking_date in days_data:
+                if 'user_bookings' not in days_data[booking_date]:
+                    days_data[booking_date]['user_bookings'] = []
+                days_data[booking_date]['user_bookings'].append(booking)
+
+        # Формируем недели
         sorted_dates = sorted(days_data.keys())
         weeks = []
         current_week = []
 
         for d in sorted_dates:
-            current_week.append({
-                "date": d,
-                **days_data[d]
-            })
+            day_obj = days_data[d]
+            day_obj['date'] = d  # обязательно проставляем дату
+            current_week.append(day_obj)
             if len(current_week) == 7:
                 weeks.append(current_week)
                 current_week = []
 
-        if current_week:  # Последняя неполная неделя
+        if current_week:
             weeks.append(current_week)
 
         raw_response.data["month"] = date.strftime('%Y-%m')
@@ -351,6 +369,7 @@ class CalendarAPIView(APIView):
             is_working, open_time, close_time, shortened = self.get_open_close_times(day)
             if not is_working:
                 calendar_schedule[day.isoformat()] = {
+                    'date': day.isoformat(),
                     'is_working_day': False,
                     'shortened': False,
                     'working_hours': None,
@@ -410,10 +429,16 @@ class CalendarAPIView(APIView):
 
                 for table in tables:
                     overlaps = any(s < slot_end and e > slot_start for s, e in booking_map.get(table.id, []))
-                    if slot_start < timezone.now().astimezone(tz):
-                        slot_status = '-'
-                    elif overlaps:
+                    is_user_booking = any(
+                        s < slot_end and e > slot_start
+                        for s, e in booking_map.get(table.id, [])
+                        if user and not user.is_staff and b.user_id == user.id
+                    )
+
+                    if overlaps:
                         slot_status = 'booked'
+                    elif slot_start < timezone.now().astimezone(tz):
+                        slot_status = '-'
                     else:
                         slot_status = 'available'
 
@@ -443,21 +468,31 @@ class CalendarAPIView(APIView):
 
                     day_schedule[table.id][label] = {
                         'status': slot_status,
+                        'is_user_booking': is_user_booking,
                         'start': slot_start.strftime('%H:%M'),
                         'end': slot_end.strftime('%H:%M'),
                         'price': int(final_price),
                         'discount_applied': discount > 0,
                         'discount_percent': discount
                     }
+            booking_date_str = day.isoformat()
+            user_bookings_count = sum(
+                1 for b in user_bookings if b['start_time'].startswith(booking_date_str)
+            )
 
             calendar_schedule[day.isoformat()] = {
+                'user_bookings': [],
+                'date': day.isoformat(),
+                'time_slots': time_slots_for_day,
                 'is_working_day': True,
                 'shortened': shortened,
                 'working_hours': {
                     'open_time': open_time.strftime('%H:%M'),
                     'close_time': close_time.strftime('%H:%M'),
                 },
-                'day_schedule': day_schedule
+                'day_schedule': day_schedule,
+                'total_bookings': sum(len(slots) for slots in booking_map.values()),
+                'user_bookings_count': user_bookings_count
             }
 
         return Response({

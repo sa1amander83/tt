@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             rates: {},
             tables: [],
             bookings: [],
+            filteredBookings: [],
             pricingPlan: null,
             equipment: [],
             isAdmin: isAdmin,
@@ -1067,8 +1068,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             try {
                 // запрос к календарю с нужной датой, чтобы получить user_bookings вместе с расписанием
-                const dateStr = new Date().toISOString().slice(0, 10);  // например, текущая дата
-                const response = await fetch(`${API_ENDPOINTS.CALENDAR}?date=${dateStr}&view=day`, {
+                const dateStr = formatDateForAPI(state.currentDate);
+
+                // const dateStr = new Date().toISOString().slice(0, 10);  // например, текущая дата
+                const response = await fetch(`${API_ENDPOINTS.CALENDAR}?date=${dateStr}&view=${state.currentView}`, {
                     credentials: 'include'
                 });
 
@@ -1080,6 +1083,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                 if (data.user_bookings) {
                     state.bookings = data.user_bookings;
+
                     renderUserBookings(state.bookings);
                 } else {
                     console.warn("user_bookings не найден в ответе");
@@ -1143,7 +1147,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             await loadSiteSettings(newDate);
             await renderCalendar();
+            await loadUserBookings();
             renderUserBookings(); // Добавляем обновление списка бронирований
+        }
+
+        function updateBookingsTitle() {
+            const titleElement = document.getElementById('bookings-period-display');
+            if (titleElement) {
+                titleElement.textContent = getPeriodDescription();
+            }
         }
 
         function resetCostDisplay() {
@@ -1179,6 +1191,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             updateCalendarTitle();
             updateActiveView();
             updateNavigationButtons();
+            updateBookingsTitle();
         }
 
         function updateNavigationButtons() {
@@ -1270,6 +1283,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             // if (state.isAuthenticated) {
             //     return;
             // }
+
             try {
                 const container = elements[`${state.currentView}Container`];
 
@@ -1306,8 +1320,11 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (!response.ok) throw new Error('Ошибка загрузки календаря');
 
                 const data = await response.json();
-
+                if (data.user_bookings) {
+                    state.bookings = data.user_bookings;
+                }
                 renderView(data);
+                renderUserBookings();
             } catch (error) {
                 console.error('Ошибка рендеринга календаря:', error);
                 showError('Не удалось загрузить данные календаря');
@@ -1434,52 +1451,50 @@ document.addEventListener('DOMContentLoaded', async function () {
             slotDate.setHours(slotHour, slotMinute, 0, 0);
 
             const isPast = slotDate < now;
+            const isUserBooking = slot?.is_user_booking || false;
 
-            const closingTime = state.siteSettings.close_time || "22:00";
-            const [closingHour, closingMinute] = closingTime.split(':').map(Number);
-            const closingDate = new Date(selectedDate);
-            closingDate.setHours(closingHour, closingMinute, 0, 0);
+            let status, cellClass, textClass, pointerClass;
 
-            let status, isAvailable, cellClass, textClass, pointerClass;
-
-            // 👇 Показываем "Прошло" только для админа
             if (isPast) {
-                if (!state.isAdmin) return '';  // скрыть от обычных пользователей
-
-                status = '-';
-                isAvailable = false;
-                cellClass = 'bg-gray-200';
-                textClass = 'text-gray-500 italic';
+                if (state.isAdmin) {
+                    // Для админа показываем статус даже для прошедших слотов
+                    status = slot?.status || '-';
+                    cellClass = 'bg-gray-200';
+                    textClass = 'text-gray-500 italic';
+                } else {
+                    // Для обычного пользователя показываем только его брони
+                    if (isUserBooking) {
+                        status = 'Ваша бронь';
+                        cellClass = 'bg-blue-100';
+                        textClass = 'text-blue-800';
+                    } else {
+                        status = '-';
+                        cellClass = 'bg-gray-100';
+                        textClass = 'text-gray-400';
+                    }
+                }
                 pointerClass = 'cursor-default pointer-events-none';
             } else if (slot && slot.status !== 'available') {
                 status = slot.status || 'Занято';
-                isAvailable = false;
                 cellClass = 'bg-red-100';
                 textClass = 'text-red-800';
                 pointerClass = 'cursor-default pointer-events-none';
-            } else if (slotDate >= closingDate) {
-                status = 'закрыто';
-                isAvailable = false;
-                cellClass = 'bg-gray-100';
-                textClass = 'text-gray-500';
-                pointerClass = 'cursor-default pointer-events-none';
             } else {
                 status = 'Свободно';
-                isAvailable = true;
                 cellClass = 'bg-green-100 hover:bg-green-200';
                 textClass = 'text-green-800';
                 pointerClass = 'cursor-pointer';
             }
 
             return `
-<div class="flex items-center justify-center border-b mt-1 ml-1 rounded-xl p-2 min-h-12 ${cellClass} ${pointerClass} ${isAvailable ? 'booking-slot-available' : ''}"
-     data-date="${data.date}" 
-     data-time="${slotTime}" 
-     data-table="${tableId}" 
-     data-slot-id="${slot?.slot_id || ''}">
-    <span class="text-sm ${textClass}">${status}</span>
-</div>
-`;
+        <div class="flex items-center justify-center border-b mt-1 ml-1 rounded-xl p-2 min-h-12 ${cellClass} ${pointerClass} ${pointerClass.includes('cursor-pointer') ? 'booking-slot-available' : ''}"
+             data-date="${data.date}" 
+             data-time="${slotTime}" 
+             data-table="${tableId}" 
+             data-slot-id="${slot?.slot_id || ''}">
+            <span class="text-sm ${textClass}">${status}</span>
+        </div>
+    `;
         }
 
         function renderWeekView(data) {
@@ -1529,8 +1544,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         function renderWeekDayColumn(data, day) {
             const today = new Date();
             const dayDate = new Date(day.date);
-            // Сравниваем только даты без времени
             const isPastDay = dayDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const bookedStatuses = ['processing', 'pending', 'paid', 'completed', 'booked'];
 
             return `
         <div class="flex flex-col gap-y-2">
@@ -1538,30 +1553,57 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const tableSchedule = day.day_schedule?.[table.id] || {};
                 const slotEntries = Object.entries(tableSchedule).filter(([key]) => key !== '_meta');
 
-                if (!day.is_working_day || !slotEntries.length) {
-                    return `<div class="bg-gray-100 mt-1 text-gray-400 h-14 border-b rounded-xl flex text-right justify-center shadow-sm">–</div>`;
+                if (!day.is_working_day || slotEntries.length === 0) {
+                    return `<div class="bg-gray-100 mt-1 text-gray-400 h-14 border-b rounded-xl flex justify-center items-center shadow-sm">–</div>`;
                 }
 
-                const booked = slotEntries.filter(([_, slot]) => slot.status !== 'available').length;
-                const total = slotEntries.length;
-                const statusClass = booked === total ? 'bg-red-100 text-red-800' : booked > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800';
+                let total = slotEntries.length; // считаем ВСЕ
+                let booked = 0;
+                let userBooked = 0;
 
-                // Для прошедших дней и обычных пользователей делаем неактивный слот
-                const isDisabled = isPastDay && !state.isAdmin;
-                const disabledClass = isDisabled ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : statusClass;
-                const pointerEvents = isDisabled ? 'pointer-events-none' : '';
+                for (const [_, slot] of slotEntries) {
+                    if (bookedStatuses.includes(slot.status?.toLowerCase())) booked++;
+                    if (slot.is_user_booking) userBooked++;
+                }
 
-                return `<div class="h-14 border-b flex mt-1  items-center justify-center rounded-xl cursor-pointer px-2 py-1 shadow-sm ${disabledClass} ${pointerEvents} slot-available"
-                             title="Занято ${booked} из ${total}"
-                             data-date="${day.date}"
-                             data-table="${table.id}">
-                             ${booked}/${total}
+                const title = `Занято ${booked} из ${total}`;
+                const baseClass = "h-14 border-b flex mt-1 items-center justify-center rounded-xl px-2 py-1 shadow-sm";
+
+                // ————— Прошедший день
+                if (isPastDay) {
+                    if (state.isAdmin) {
+                        return `<div class="${baseClass} bg-gray-200 text-gray-600 cursor-default pointer-events-none"
+                                    title="${title}" data-date="${day.date}" data-table="${table.id}">
+                                    ${booked}/${total}
+                                </div>`;
+                    } else if (userBooked > 0) {
+                        return `<div class="${baseClass} bg-blue-100 text-blue-800 cursor-default pointer-events-none"
+                                    title="Ваше бронирование" data-date="${day.date}" data-table="${table.id}">
+                                    ${userBooked}/${total}
+                                </div>`;
+                    } else {
+                        return `<div class="${baseClass} bg-gray-100 text-gray-400 cursor-not-allowed pointer-events-none"
+                                    title="Прошедший день" data-date="${day.date}" data-table="${table.id}">
+                                    –
+                                </div>`;
+                    }
+                }
+
+                // ————— Будущий день (или текущий)
+                const statusClass = booked === total
+                    ? 'bg-red-100 text-red-800'
+                    : booked > 0
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-green-100 text-green-800';
+
+                return `<div class="${baseClass} ${statusClass} cursor-pointer slot-available"
+                            title="${title}" data-date="${day.date}" data-table="${table.id}">
+                            ${booked}/${total}
                         </div>`;
             }).join('')}
         </div>
     `;
         }
-
 
         function generateMonthView(data) {
             if (!data.weeks || !data.tables) {
@@ -1622,7 +1664,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return classes;
             };
 
-            const renderBookingsInfo = (dayObj) => {
+
+            function renderBookingsInfo(dayObj) {
                 if (!dayObj || !dayObj.date) return '';
 
                 const date = new Date(dayObj.date);
@@ -1643,16 +1686,27 @@ document.addEventListener('DOMContentLoaded', async function () {
                     return `<div class="text-xs text-yellow-600 mt-1">Сокращенный день (${workingHours?.open_time ?? '?'}-${workingHours?.close_time ?? '?'})</div>`;
                 }
 
+                // Для прошедших дней
+                if (isPast) {
+                    if (state.isAdmin) {
+                        const total = dayObj.total_bookings || 0;
+                        return `<div class="text-xs text-gray-600 mt-1">${total} броней</div>`;
+                    } else {
+                        const userBookings = dayObj.user_bookings_count || 0;
+                        return userBookings > 0
+                            ? `<div class="text-xs text-blue-600 mt-1">Ваших броней: ${userBookings}</div>`
+                            : '<div class="text-xs text-gray-400 mt-1">Нет броней</div>';
+                    }
+                }
+
+                // Для будущих дней
                 const bookings = bookingsByDate[dayObj.date] || [];
                 const count = bookings.length;
 
-                if (count === 0) {
-                    return '<div class="text-xs text-gray-500 mt-1">Нет бронирований</div>';
-                }
-
-                const textColor = isPast ? 'text-gray-400' : 'text-green-600';
-                return `<div class="text-xs ${textColor} mt-1">${count} бронирование${count > 1 ? 'й' : ''}</div>`;
-            };
+                return count > 0
+                    ? `<div class="text-xs text-blue-600 mt-1">Забронировано: ${count}</div>`
+                    : '<div class="text-xs text-green-600 mt-1">Свободно</div>';
+            }
 
             const weekdaysHeader = `
         <div class="grid grid-cols-7 gap-2 mb-4">
@@ -1757,46 +1811,47 @@ document.addEventListener('DOMContentLoaded', async function () {
         // Отображение бронирований пользователя
         function renderUserBookings(bookingsInput) {
             const container = document.getElementById('user-bookings-container');
-            if (!container) return;
+            const titleElement = document.getElementById('user-bookings-title');
+            if (!container || !titleElement) return;
 
-            // Очистка контейнера по умолчанию
+            // Очищаем контейнер
             container.innerHTML = '';
 
-            // Проверка авторизации
+            // Проверяем авторизацию
             if (!state.isAuthenticated) {
+                container.innerHTML = '<div class="text-gray-500">Для просмотра бронирований войдите в систему</div>';
                 return;
             }
 
-            // Получение данных о бронированиях
+            // Получаем бронирования из входных данных или состояния
             const bookings = Array.isArray(bookingsInput)
                 ? bookingsInput
                 : Array.isArray(state.bookings)
                     ? state.bookings
-                    : Object.values(state.bookings || {});
+                    : [];
 
             if (!bookings.length) {
-                container.innerHTML = '<div class="text-gray-400">Данные бронирований не загружены.</div>';
+                container.innerHTML = '<div class="text-gray-500">У вас нет бронирований на выбранный период</div>';
                 return;
             }
 
-            // Фильтрация: только сегодня и позже
+            // Фильтруем бронирования в зависимости от текущего вида
+            let filteredBookings = [];
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
             switch (state.currentView) {
                 case 'day':
-                    // Фильтрация по текущему дню
                     const dayStr = state.currentDate.toISOString().split('T')[0];
-                    filtered = bookings.filter(b => b.date === dayStr);
+                    filteredBookings = bookings.filter(b => b.date === dayStr);
                     break;
 
                 case 'week':
-                    // Фильтрация по текущей неделе
                     const weekStart = getMonday(state.currentDate);
                     const weekEnd = new Date(weekStart);
                     weekEnd.setDate(weekEnd.getDate() + 6);
 
-                    filtered = bookings.filter(b => {
+                    filteredBookings = bookings.filter(b => {
                         try {
                             const bookingDate = new Date(b.date);
                             return bookingDate >= weekStart && bookingDate <= weekEnd;
@@ -1808,11 +1863,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                     break;
 
                 case 'month':
-                    // Фильтрация по текущему месяцу
                     const monthStart = new Date(state.currentDate.getFullYear(), state.currentDate.getMonth(), 1);
                     const monthEnd = new Date(state.currentDate.getFullYear(), state.currentDate.getMonth() + 1, 0);
 
-                    filtered = bookings.filter(b => {
+                    filteredBookings = bookings.filter(b => {
                         try {
                             const bookingDate = new Date(b.date);
                             return bookingDate >= monthStart && bookingDate <= monthEnd;
@@ -1825,10 +1879,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                 default:
                     // По умолчанию показываем все будущие бронирования
-                    filtered = bookings.filter(b => {
+                    filteredBookings = bookings.filter(b => {
                         try {
                             const bookingDate = new Date(b.date);
-                            bookingDate.setHours(0, 0, 0, 0);
                             return bookingDate >= today;
                         } catch (e) {
                             console.warn('Ошибка при разборе даты бронирования:', b.date);
@@ -1836,27 +1889,27 @@ document.addEventListener('DOMContentLoaded', async function () {
                         }
                     });
             }
-            const titleElement = document.getElementById('user-bookings-title');
-            if (titleElement) {
-                titleElement.textContent = `Ваши бронирования на ${getPeriodDescription()}`;
-            }
-            if (!filtered.length) {
-                container.innerHTML = `<div class="text-gray-400">У вас нет бронирований на ${getPeriodDescription()}.</div>`;
-                return;
-            }
 
-            // Сортировка по дате и времени
-            filtered.sort((a, b) => {
+            // Сортируем по дате и времени
+            filteredBookings.sort((a, b) => {
                 const dateCompare = new Date(a.date) - new Date(b.date);
                 if (dateCompare !== 0) return dateCompare;
 
-                // Если дата одинаковая, сортируем по времени начала
                 const timeA = a.start ? parseInt(a.start.replace(':', '')) : 0;
                 const timeB = b.start ? parseInt(b.start.replace(':', '')) : 0;
                 return timeA - timeB;
             });
 
-            // Генерация HTML-таблицы (остается без изменений)
+            // Обновляем заголовок
+            titleElement.querySelector('#bookings-period-display').textContent = getPeriodDescription();
+
+            // Если нет бронирований после фильтрации
+            if (!filteredBookings.length) {
+                container.innerHTML = `<div class="text-gray-500">У вас нет бронирований на ${getPeriodDescription()}</div>`;
+                return;
+            }
+
+            // Генерируем HTML таблицы
             const tableHTML = `
         <table class="min-w-full border text-sm text-left">
             <thead>
@@ -1869,7 +1922,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 </tr>
             </thead>
             <tbody>
-                ${filtered.map(b => {
+                ${filteredBookings.map(b => {
                 const dateStr = new Date(b.date).toLocaleDateString('ru-RU');
                 const status = b.status || '—';
                 const statusClass = getStatusColorClass(status);
@@ -1879,13 +1932,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return `
                         <tr class="${rowClass}">
                             <td class="px-3 py-2 border">${dateStr}</td>
-                            <td class="px-3 py-2 border">${b.start ?? '—'}-${b.end ?? '—'}</td>
-                            <td class="px-3 py-2 border">#${b.table_number ?? '?'} (${b.table_type ?? '—'})</td>
+                            <td class="px-3 py-2 border">${b.start || '—'}—${b.end || '—'}</td>
+                            <td class="px-3 py-2 border">#${b.table_number || '?'} (${b.table_type || '—'})</td>
                             <td class="px-3 py-2 border font-semibold ${statusClass}">
                                 ${status}
                             </td>
                             <td class="px-3 py-2 border">
-                                ${actions ?? '—'}
+                                ${actions || '—'}
                             </td>
                         </tr>
                     `;
@@ -1896,7 +1949,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             container.innerHTML = tableHTML;
         }
-
 
         // Обработчики слотов недели
         function attachWeekSlotListeners() {
@@ -1929,18 +1981,13 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 
         function getStatusColorClass(status) {
-            if (!status || typeof status !== 'string') return 'text-yellow-600'; // безопасная защита
+            if (!status) return 'text-yellow-600';
 
-            switch (status.toLowerCase()) {
-                case 'ожидает оплаты':
-                    return 'text-green-600';
-                case 'оплачено':
-                    return 'text-blue-600';
-                case 'отменено':
-                    return 'text-red-600';
-                default:
-                    return 'text-yellow-600';
-            }
+            const statusLower = status.toLowerCase();
+            if (statusLower.includes('ожидает') || statusLower.includes('оплаты')) return 'text-yellow-600';
+            if (statusLower.includes('оплачено') || statusLower.includes('подтверждено')) return 'text-green-600';
+            if (statusLower.includes('отменено') || statusLower.includes('отклонено')) return 'text-red-600';
+            return 'text-blue-600';
         }
 
         function renderBookingActions(booking) {
