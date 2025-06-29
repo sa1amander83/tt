@@ -142,7 +142,7 @@ class CalendarAPIView(APIView):
             return Booking.objects.filter(
                 start_time__lt=end,
                 end_time__gt=start,
-
+                
             )
 
         # Для анонимных пользователей не возвращаем бронирования

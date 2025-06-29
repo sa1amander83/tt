@@ -331,6 +331,7 @@ class PromoCode(models.Model):
     is_active = models.BooleanField(default=True)
     usage_limit = models.PositiveIntegerField(null=True, blank=True)
     used_count = models.PositiveIntegerField(default=0)
+    max_uses_per_user = models.PositiveIntegerField(null=True, blank=True)
     user = models.ForeignKey(
         'accounts.User',
         null=True,

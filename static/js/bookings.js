@@ -1046,14 +1046,15 @@ document.addEventListener('DOMContentLoaded', async function () {
                     throw new Error(paymentErrorMessage);
                 }
 
-                const paymentResult = await paymentResponse.json();
+               const paymentResult = await paymentResponse.json();
 
-                if (paymentResult.confirmation_url) {
-                    // Открываем ссылку оплаты в новой вкладке
-                    window.open(paymentResult.confirmation_url, '_blank');
-                } else {
-                    throw new Error('Не получен URL для оплаты');
-                }
+if (paymentResult.confirmation_url) {
+    window.open(paymentResult.confirmation_url, '_blank');
+} else if (paymentResult.status === 'paid') {
+    showNotification('Бронирование успешно оплачено с промокодом!', 'success');
+} else {
+    throw new Error('Не получен URL для оплаты и не подтверждена оплата');
+}
 
             } catch (error) {
                 console.error('Ошибка бронирования:', error);

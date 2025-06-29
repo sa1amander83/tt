@@ -32,7 +32,8 @@ class BookingPackage(models.Model):
             self.save()
             return True
         return False
-
+def default_expires_at():
+    return timezone.now() + timezone.timedelta(days=1)
 
 class Booking(models.Model):
     from admin_settings.models import Table, Equipment
@@ -144,7 +145,7 @@ class Booking(models.Model):
     notes = models.TextField(blank=True, verbose_name="Примечания")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
-    expires_at = models.DateTimeField(default=datetime.now() + timezone.timedelta(days=1), verbose_name="Срок действия")
+    expires_at = models.DateTimeField(default=default_expires_at, verbose_name="Срок действия")
     class Meta:
         verbose_name = "Бронирование"
         verbose_name_plural = "Бронирования"
@@ -154,25 +155,18 @@ class Booking(models.Model):
         return f"Бронирование #{self.id} - {self.user} ({self.get_status_display()})"
 
     def save(self, *args, **kwargs):
-        is_new = self.pk is None
+        self.calculate_prices()
         super().save(*args, **kwargs)
-
-        if not is_new:
-            self.calculate_prices()
-            # Обновляем цены напрямую, чтобы избежать бесконечной рекурсии
-            Booking.objects.filter(pk=self.pk).update(
-                base_price=self.base_price,
-                equipment_price=self.equipment_price,
-                total_price=self.total_price,
-            )
 
     def calculate_prices(self):
         from bookings.BookingEngine import BookingEngine
 
-        equipment_data = [
-            {'equipment': be.equipment, 'quantity': be.quantity}
-            for be in self.bookingequipment_set.all()
-        ]
+        equipment_data = []
+        if self.pk:
+            equipment_data = [
+                {'equipment': be.equipment, 'quantity': be.quantity}
+                for be in self.bookingequipment_set.all()
+            ]
 
         engine = BookingEngine(
             user=self.user,
@@ -193,6 +187,7 @@ class Booking(models.Model):
 
         self.promo_code_discount_percent = engine.promo_code_discount_percent or 0
         self.special_offer_discount_percent = engine.special_offer_discount_percent or 0
+
 
 class BookingEquipment(models.Model):
     from admin_settings.models import  Equipment
