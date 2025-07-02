@@ -16,7 +16,7 @@ from admin_settings.forms import TableForm, TableTypeForm,  \
 from admin_settings.models import ClubSettings, Holiday, WorkingDay, NotificationSettings, Table, TableType, Equipment
 from bookings.models import  TableTypePricing
 from management.forms import MembershipTypeForm, SpecialOfferForm
-from management.models import MembershipType, SpecialOffer
+from management.models import MembershipType, SpecialOffer, MaxUnpaidBookings
 from pricing.forms import PricingPlanForm, TableTypePricingForm
 from pricing.models import PricingPlan
 
@@ -114,6 +114,7 @@ class ClubSettingsView(LoginRequiredMixin, View):
                 'pricing_plans_json': serializers.serialize('json', pricing_plans),
 
                 'equipment_pricings': equipment_pricings,
+                'max_unpaid_bookings': MaxUnpaidBookings.objects.first().max_unpaid_bookings,
                 'pricing_plan_form': PricingPlanForm(),
                 'table_type_pricing': TableTypePricing.objects.all(),
                 'table_type_pricing_form': TableTypePricingForm(),
@@ -412,7 +413,7 @@ class HolidayDeleteView(LoginRequiredMixin, View):
 
 
 from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods, require_GET
+from django.views.decorators.http import require_http_methods, require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
 import json
 import logging
@@ -504,3 +505,24 @@ def get_equipment(request, equip_id):
         return JsonResponse({'status': 'error', 'message': 'Equipment not found'}, status=404)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@require_POST
+@csrf_exempt  # если не используете csrf_token в шаблоне, иначе уберите эту строку
+def set_max_unpaid_bookings(request):
+    try:
+        value = int(request.POST.get('max_unpaid_bookings', 2))
+        obj, created = MaxUnpaidBookings.objects.get_or_create(pk=1)
+        obj.max_unpaid_bookings = value
+        obj.save()
+        return JsonResponse({'success': True, 'message': 'Настройка сохранена'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=400)
+
+
+
+
+@require_GET
+def get_max_unpaid_bookings(request):
+    obj, created = MaxUnpaidBookings.objects.get_or_create(pk=1)
+    return JsonResponse({'max_unpaid_bookings': obj.max_unpaid_bookings})

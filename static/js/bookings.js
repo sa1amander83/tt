@@ -984,7 +984,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     promo_code: state.promoCode?.code || null
                 };
 
-                console.log("Full payload:", JSON.stringify(formData, null, 2));
+                //console.log("Full payload:", JSON.stringify(formData, null, 2));
 
                 // Создаём бронирование
                 const response = await fetch(API_ENDPOINTS.BOOKINGS, {
@@ -1001,10 +1001,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                     try {
                         errorDetails = await response.json();
                     } catch (e) {
-                        console.error("Couldn't parse error response", e);
+                        // console.error("Couldn't parse error response", e);
                     }
 
-                    console.error("Server response:", response.status, errorDetails);
+                    //  console.error("Server response:", response.status, errorDetails);
 
                     const errorMessage = errorDetails.message ||
                         errorDetails.error ||
@@ -1046,20 +1046,21 @@ document.addEventListener('DOMContentLoaded', async function () {
                     throw new Error(paymentErrorMessage);
                 }
 
-               const paymentResult = await paymentResponse.json();
+                const paymentResult = await paymentResponse.json();
 
-if (paymentResult.confirmation_url) {
-    window.open(paymentResult.confirmation_url, '_blank');
-} else if (paymentResult.status === 'paid') {
-    showNotification('Бронирование успешно оплачено с промокодом!', 'success');
-} else {
-    throw new Error('Не получен URL для оплаты и не подтверждена оплата');
-}
+                if (paymentResult.confirmation_url) {
+                    window.open(paymentResult.confirmation_url, '_blank');
+                } else if (paymentResult.status === 'paid') {
+                    showNotification('Бронирование успешно оплачено с промокодом!', 'success');
+                } else {
+                    throw new Error('Не получен URL для оплаты и не подтверждена оплата');
+                }
 
             } catch (error) {
-                console.error('Ошибка бронирования:', error);
+                //  console.error('Ошибка бронирования:', error);
                 showNotification(`Ошибка бронирования: ${error.message}`, 'error');
-                console.error("Full error:", error);
+
+                //  console.error("Full error:", error);
             }
         }
 

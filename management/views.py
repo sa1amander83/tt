@@ -1,22 +1,22 @@
 import json
-from datetime import timedelta, datetime, date
-
+from datetime import timedelta, datetime
+from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import user_passes_test
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Sum, Q, F, Count
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import  render
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.timezone import localtime
 from django.utils.translation import gettext_lazy as _
 from django.views import View
-from django.views.generic import ListView, DetailView, TemplateView, CreateView
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import ListView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.paginator import Paginator
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
+
 
 from admin_settings.models import Table
 from bookings.forms import BookingForm
@@ -24,7 +24,8 @@ from bookings.models import Booking, BookingPackage
 
 from management.LoyaltyEngine import LoyaltyEngine
 from management.forms import UserAdminForm, MembershipTypeForm, LevelBenefitForm
-from management.models import LoyaltyProfile, MembershipType, Membership, LoyaltySettings, LevelBenefit
+from management.models import LoyaltyProfile, MembershipType, Membership, LoyaltySettings, LevelBenefit, \
+    MaxUnpaidBookings
 
 UserModel = get_user_model()
 
@@ -1049,4 +1050,7 @@ from .serializers import PromoCodeSerializer
 class PromoCodeViewSet(viewsets.ModelViewSet):
     queryset = PromoCode.objects.select_related('user').all()
     serializer_class = PromoCodeSerializer
+
+
+
 

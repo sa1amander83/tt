@@ -15,6 +15,15 @@ from admin_settings.models import Table
 
 User ='accounts.User'
 
+
+class MaxUnpaidBookings(models.Model):
+    max_unpaid_bookings = models.PositiveIntegerField(default=2, null=True, blank=True)
+    class Meta:
+        verbose_name = 'максимальное количество неоплаченных бронирований'
+        verbose_name_plural = 'максимальное количество неоплаченных бронирований'
+
+
+
 #Модели относящиеся к программе лояльности
 class LoyaltyProfile(models.Model):
     class Level(models.TextChoices):

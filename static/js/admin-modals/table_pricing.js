@@ -1,4 +1,6 @@
 // Функции для работы с тарифными планами
+import {getCSRFToken} from "../bookings/core/utils.js";
+
 function openAddPricingPlanModal() {
     const modal = document.getElementById('addPricingPlanModal');
     const backdrop = document.getElementById('pricingPlanBackdrop');
@@ -10,6 +12,43 @@ function openAddPricingPlanModal() {
         content.classList.remove('opacity-0', 'translate-y-10');
     }, 10);
 }
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Получаем текущее значение с сервера
+    fetch('/settings/get-max-unpaid-bookings/')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('max_unpaid_bookings').value = data.max_unpaid_bookings;
+        });
+
+    document.getElementById('save_max_unpaid_bookings').addEventListener('click', function(e) {
+        e.preventDefault();
+        const value = document.getElementById('max_unpaid_bookings').value;
+
+        fetch("/settings/set-max-unpaid-bookings/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": getCSRFToken(), // если используете csrf_token
+            },
+            body: `max_unpaid_bookings=${encodeURIComponent(value)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+           showNotification('Настройки сохранены!', 'success');
+        })
+        .catch(error => {
+            alert("Ошибка: " + error);
+        });
+    });
+});
+
+
+
+
+
+
 
 
 async function deletePricingPlan(planId) {

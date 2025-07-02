@@ -36,7 +36,7 @@ import json
 from yookassa import Payment
 
 from admin_settings.models import WorkingDay, Holiday, Table, Equipment
-from management.models import SpecialOffer, PromoCode, PromoCodeUsage
+from management.models import SpecialOffer, PromoCode, PromoCodeUsage, MaxUnpaidBookings
 from events.forms import BookingForm
 from management.LoyaltyEngine import LoyaltyEngine
 from pricing.models import PricingPlan
@@ -1117,7 +1117,7 @@ def create_booking_api(request):
 
         loyalty_profile = getattr(request.user, 'loyaltyprofile', None)
         pending_bookings_count = Booking.objects.filter(user=request.user, status='pending').count()
-        MAX_PENDING_BOOKINGS = 2
+        MAX_PENDING_BOOKINGS = MaxUnpaidBookings.objects.first().max_unpaid_bookings
 
         if pending_bookings_count >= MAX_PENDING_BOOKINGS:
             return JsonResponse({

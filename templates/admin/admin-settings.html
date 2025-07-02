@@ -57,14 +57,14 @@
     {% block extrascripts %}
         {{ block.super }}
 
-    <script src="{% static 'js/ru.js' %}"></script>
-    <script src="{% static 'js/admin_settings.js' %}"></script>
-    <script src="{% static 'js/admin-modals/table_pricing.js' %}"></script>
-    <script src="{% static 'js/admin-modals/special_offers.js' %}"></script>
-    <script src="{% static 'js/admin-modals/other.js' %}"></script>
-    <script src="{% static 'js/admin-modals/tabletypeprice.js' %}"></script>
-    <script src="{% static 'js/admin-modals/schedule.js' %}"></script>
+    <script type="module" src="{% static 'js/ru.js' %}"></script>
+    <script type="module" src="{% static 'js/admin_settings.js' %}"></script>
+    <script type="module"  src="{% static 'js/admin-modals/table_pricing.js' %}"></script>
+    <script type="module" src="{% static 'js/admin-modals/special_offers.js' %}"></script>
+    <script type="module" src="{% static 'js/admin-modals/other.js' %}"></script>
+    <script type="module"  src="{% static 'js/admin-modals/tabletypeprice.js' %}"></script>
+    <script type="module" src="{% static 'js/admin-modals/schedule.js' %}"></script>
 
-    <script src="{% static 'js/admin-modals/equipment.js' %}"></script>
+    <script type="module" src="{% static 'js/admin-modals/equipment.js' %}"></script>
 
     {% endblock %}

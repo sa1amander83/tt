@@ -50,4 +50,5 @@ urlpatterns = [
 
     path('loyalty/add-benefit/', add_level_benefit, name='add_level_benefit'),
 
+
 ]

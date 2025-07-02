@@ -1,10 +1,10 @@
 from django.urls import path
 
+
 from .views import *
 
 app_name = 'admin_settings'
 urlpatterns = [
-    path('<str:active_tab>/', ClubSettingsView.as_view(), name='club_settings'),
 
     # Таблицы
     path('tables/create/', TableCreateView.as_view(), name='table_create'),
@@ -21,7 +21,8 @@ urlpatterns = [
 
 
     # Цены
-
+    path('set-max-unpaid-bookings/', set_max_unpaid_bookings, name='set_max_unpaid_bookings'),
+    path('get-max-unpaid-bookings/', get_max_unpaid_bookings, name='get_max_unpaid_bookings'),
     # Расписание
     path('holidays/create/', HolidayCreateView.as_view(), name='holiday_create'),
 
@@ -41,7 +42,8 @@ urlpatterns = [
     path('api/equipment/<int:equip_id>/delete/', delete_equipment, name='delete_equipment'),
     path('api/equipment/<int:equip_id>/', get_equipment, name='get_equipment'),
 
-
-
+    path('set-max-unpaid-bookings/', set_max_unpaid_bookings, name='set_max_unpaid_bookings'),
+    path('get-max-unpaid-bookings/', get_max_unpaid_bookings, name='get_max_unpaid_bookings'),
+    path('<str:active_tab>/', ClubSettingsView.as_view(), name='club_settings'),
 
 ]
