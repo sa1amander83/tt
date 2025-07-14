@@ -880,7 +880,7 @@ class UpdateBookingView(LoginRequiredMixin, UpdateView):
     model = Booking
     form_class = BookingForm
     template_name = 'bookings/update.html'
-    success_url = reverse_lazy('booking-list')
+    success_url = reverse_lazy('management:user_bookings', kwargs={'active_tab': 'bookings'})
 
     def form_valid(self, form):
         # Пересчитываем стоимость при изменении

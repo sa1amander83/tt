@@ -44,6 +44,7 @@ class Booking(models.Model):
         ('cancelled', 'Отменено'),
         ('completed', 'Завершено'),
         ('expired', 'Просрочено'),
+        ('returned', 'Оплата возвращена'),
 
     )
 
@@ -142,6 +143,10 @@ class Booking(models.Model):
         decimal_places=2,
         default=Decimal('0.00')
     )
+    refunded_amount = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Сумма возврата", null=True, blank=True
+    )
     notes = models.TextField(blank=True, verbose_name="Примечания")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
@@ -155,7 +160,12 @@ class Booking(models.Model):
         return f"Бронирование #{self.id} - {self.user} ({self.get_status_display()})"
 
     def save(self, *args, **kwargs):
-        self.calculate_prices()
+        if self.status == 'returned':
+            self.total_price = 0
+            self.base_price = 0
+            self.equipment_price = 0
+        else:
+            self.calculate_prices()
         super().save(*args, **kwargs)
 
     def calculate_prices(self):

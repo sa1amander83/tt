@@ -1,5 +1,7 @@
 import json
 from datetime import timedelta, datetime
+
+from django.utils.http import urlencode
 from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import user_passes_test
@@ -621,31 +623,41 @@ class SingleBookingView(LoginRequiredMixin, UpdateView):
         return reverse_lazy('management:booking_detail', kwargs={'pk': self.object.pk})
 
 
+
 class BookingUpdateView(LoginRequiredMixin, UpdateView):
-    """Редактирование бронирования"""
     model = Booking
-    form_class = BookingForm  # Укажите вашу форму для бронирования
+    form_class = BookingForm
     template_name = 'management/bookings_modals/booking_form.html'
 
+    # 1️⃣  URL‑перенаправление
     def get_success_url(self):
-        return reverse_lazy('management:user_bookings', kwargs={'active_tab': 'bookings'})
+        base = reverse('management:user_bookings', kwargs={'pk': self.object.user.pk})
+        return f'{base}?{urlencode({"active_tab": "bookings"})}'
 
+    # 2️⃣  Кого пускаем
     def get_queryset(self):
-        # Для администраторов разрешаем редактировать все бронирования
-        if self.request.user.is_staff:
-            return Booking.objects.all()
-        # Для обычных пользователей - только их бронирования
-        return Booking.objects.filter(user=self.request.user)
+        qs = Booking.objects.all() if self.request.user.is_staff else \
+             Booking.objects.filter(user=self.request.user)
+        return qs.select_related('user', 'table')
 
+    # 3️⃣  Сохраняем ОДИН раз
     def form_valid(self, form):
-        messages.success(self.request, "Бронирование успешно обновлено")
-        return super().form_valid(form)
+        response = super().form_valid(form)  # сохраняет form.cleaned_data → self.object.save()
+
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+
+        return response                    # <— возвращаем сохранённый response, а не вызываем ещё раз
+
+    def form_invalid(self, form):
+        print("FORM ERRORS:", form.errors)
+        print("POSTED promo_code:", self.request.POST.get("promo_code"))
+        return super().form_invalid(form)
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['users'] = get_user_model().objects.all()
-        return context
-
+        ctx = super().get_context_data(**kwargs)
+        ctx['users'] = get_user_model().objects.all()
+        return ctx
 
 class BookingDeleteView(LoginRequiredMixin, DeleteView):
     """Удаление бронирования"""

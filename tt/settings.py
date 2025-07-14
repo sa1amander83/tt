@@ -90,6 +90,7 @@ WSGI_APPLICATION = 'tt.wsgi.application'
 #     }
 # }
 if os.environ.get('IS_DOCKER') == 'True':
+
     DATABASE_HOST = 'db'
 else:
     DATABASE_HOST = 'localhost'  # Для локальной разработки
@@ -97,13 +98,16 @@ else:
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mydb',
-        'USER': 'myuser',
-        'PASSWORD': 'mypassword',
-        'HOST':    DATABASE_HOST,
+        'NAME': 'tt',
+        'USER': 'postgres',
+        'PASSWORD': '123',
+        'HOST': DATABASE_HOST,
         'PORT': '5432',
     }
 }
+
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 

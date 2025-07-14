@@ -23,6 +23,7 @@ services:
 
     depends_on:
       - redis
+      - db
 
   celery:
     build: .
@@ -39,6 +40,7 @@ services:
     depends_on:
       - redis
       - web
+      - db
 
   celery-beat:
     build: .
@@ -54,6 +56,7 @@ services:
     depends_on:
       - redis
       - web
+      - db
 
   flower:
     image: mher/flower
@@ -79,7 +82,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      - "5433:5432"
+      - "5432:5432"
 
 volumes:
   pgdata:
