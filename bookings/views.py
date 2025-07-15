@@ -898,17 +898,13 @@ def cancel_booking(request, booking_id):
         booking = get_object_or_404(Booking, id=booking_id, user=request.user)
 
         if booking.status not in ['pending', 'paid']:
-            return JsonResponse({'success': False, 'error': 'Невозможно отменить это бронирование'}, status=400)
-
+            return redirect('accounts:profile')
         # Освобождаем временной слот
-        booking.timeslot.is_available = True
-        booking.timeslot.save()
 
         booking.status = 'cancelled'
         booking.save()
 
-        return JsonResponse({'success': True})
-
+        return redirect('accounts:profile')
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
@@ -1117,7 +1113,7 @@ def create_booking_api(request):
 
         loyalty_profile = getattr(request.user, 'loyaltyprofile', None)
         pending_bookings_count = Booking.objects.filter(user=request.user, status='pending').count()
-        MAX_PENDING_BOOKINGS = MaxUnpaidBookings.objects.first().max_unpaid_bookings
+        MAX_PENDING_BOOKINGS = getattr(MaxUnpaidBookings.objects.first(), 'max_unpaid_bookings', 2)
 
         if pending_bookings_count >= MAX_PENDING_BOOKINGS:
             return JsonResponse({

@@ -239,10 +239,17 @@
 
                                         <td>
                                             {% if booking.status_key == 'pending' or booking.status_key == 'paid' %}
-                                                <a href="{% url 'bookings:cancel-booking' booking.id %}"
-                                                   class="text-red-600 hover:text-red-900 text-right">
-                                                    Отменить
-                                                </a>
+                                                <form method="post"
+                                                      action="{% url 'bookings:cancel-booking' booking.id %}"
+                                                      style="display:inline;">
+                                                    {% csrf_token %}
+                                                    <button type="submit"
+                                                            onclick="return confirm('Вы уверены, что хотите отменить бронирование?');"
+                                                            class="text-red-600 hover:text-red-900 text-right underline">
+                                                        Отменить
+                                                    </button>
+                                                </form>
+
                                             {% else %}
                                                 -
                                             {% endif %}
