@@ -1368,9 +1368,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         // Дневное представление
-        function generateDayView(data) {
-            if (!data.is_working_day) {
-                return `
+function generateDayView(data) {
+    if (!data.is_working_day) {
+        return `
             <div class="p-8 text-center">
                 <div class="inline-block p-6 bg-gray-100 rounded-lg">
                     <i class="fas fa-calendar-times text-4xl text-gray-400 mb-4"></i>
@@ -1379,21 +1379,27 @@ document.addEventListener('DOMContentLoaded', async function () {
                 </div>
             </div>
         `;
-            }
+    }
 
-            // Просто выводим все слоты по порядку
-            const rows = data.time_slots.map(slotTime => {
-                return renderSlotRow(slotTime, data);
-            }).join('');
+    const header = renderDayHeader(data.tables);
+    const rows = data.time_slots.map(slotTime => {
+        return `
+            <div class="flex border-b border-gray-200 hover:bg-gray-50 booking-slot-row">
+                <div class="w-24 md:w-32 p-3 text-right text-sm font-semibold text-gray-700">${slotTime}</div>
+                <div class="flex-1 grid grid-cols-${data.tables.length} divide-x divide-gray-200">
+                    ${data.tables.map(table => renderSlotCell(data, table.id, slotTime)).join('')}
+                </div>
+            </div>
+        `;
+    }).join('');
 
-            return `
+    return `
         <div class="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
-            ${renderDayHeader(data.tables)}
+            ${header}
             ${rows}
         </div>
     `;
-        }
-
+}
         function renderSlotRow(slotTime, data) {
             const [hours, minutes] = slotTime.split(':').map(Number);
             const slotDate = new Date(data.date);
@@ -1444,61 +1450,71 @@ document.addEventListener('DOMContentLoaded', async function () {
     `;
         }
 
-        function renderSlotCell(data, tableId, slotTime) {
-            const slot = data.day_schedule[tableId]?.[slotTime] || null;
-            const now = new Date();
-            const selectedDate = new Date(data.date);
-            const [slotHour, slotMinute] = slotTime.split(':').map(Number);
-            const slotDate = new Date(selectedDate);
-            slotDate.setHours(slotHour, slotMinute, 0, 0);
+// Основная функция рендеринга слота
+function renderSlotCell(data, tableId, slotTime) {
+    const slot = data.day_schedule[tableId]?.[slotTime] || null;
+    const now = new Date();
+    const selectedDate = new Date(data.date);
+    const [slotHour, slotMinute] = slotTime.split(':').map(Number);
+    const slotDate = new Date(selectedDate);
+    slotDate.setHours(slotHour, slotMinute, 0, 0);
 
-            const isPast = slotDate < now;
-            const isUserBooking = slot?.is_user_booking || false;
+    const isPast = slotDate < now;
+    const isUserBooking = slot?.is_user_booking || false;
+    const isAdmin = state.isAdmin;
 
-            let status, cellClass, textClass, pointerClass;
+    let status, cellClass, textClass, pointerClass;
 
-            if (isPast) {
-                if (state.isAdmin) {
-                    // Для админа показываем статус даже для прошедших слотов
-                    status = slot?.status || '-';
-                    cellClass = 'bg-gray-200';
-                    textClass = 'text-gray-500 italic';
-                } else {
-                    // Для обычного пользователя показываем только его брони
-                    if (isUserBooking) {
-                        status = 'Ваша бронь';
-                        cellClass = 'bg-blue-100';
-                        textClass = 'text-blue-800';
-                    } else {
-                        status = '-';
-                        cellClass = 'bg-gray-100';
-                        textClass = 'text-gray-400';
-                    }
-                }
-                pointerClass = 'cursor-default pointer-events-none';
-            } else if (slot && slot.status !== 'available') {
-                status = slot.status || 'Занято';
-                cellClass = 'bg-red-100';
-                textClass = 'text-red-800';
-                pointerClass = 'cursor-default pointer-events-none';
-            } else {
-                status = 'Свободно';
-                cellClass = 'bg-green-100 hover:bg-green-200';
-                textClass = 'text-green-800';
-                pointerClass = 'cursor-pointer';
-            }
+    if (isPast) {
+        if (isAdmin && slot?.booking) {
+            // Для админа показываем информацию о прошедших бронированиях
+            const userName = slot.booking.user?.username || 'Аноним';
+            status = userName.substring(0, 8); // Показываем первые 8 символов имени
+            cellClass = 'bg-blue-100';
+            textClass = 'text-blue-800';
+            pointerClass = 'cursor-default';
+        } else if (isUserBooking) {
+            status = 'Ваша бронь';
+            cellClass = 'bg-blue-100';
+            textClass = 'text-blue-800';
+            pointerClass = 'cursor-default';
+        } else {
+            status = '-';
+            cellClass = 'bg-gray-100';
+            textClass = 'text-gray-400';
+            pointerClass = 'cursor-default pointer-events-none';
+        }
+    } else if (slot && slot.status !== 'available') {
+        status = slot.status || 'Занято';
+        cellClass = 'bg-red-100';
+        textClass = 'text-red-800';
+        pointerClass = 'cursor-default pointer-events-none';
+    } else {
+        status = 'Свободно';
+        cellClass = 'bg-green-100 hover:bg-green-200';
+        textClass = 'text-green-800';
+        pointerClass = 'cursor-pointer';
+    }
 
-            return `
+    // Формируем подсказку
+    let tooltip = status;
+    if (isAdmin && slot?.booking) {
+        const user = slot.booking.user?.username || 'Аноним';
+        const status = slot.booking.status || 'неизвестно';
+        tooltip = `Бронирование: ${user} (${status})`;
+    }
+
+    return `
         <div class="flex items-center justify-center border-b mt-1 ml-1 rounded-xl p-2 min-h-12 ${cellClass} ${pointerClass} ${pointerClass.includes('cursor-pointer') ? 'booking-slot-available' : ''}"
              data-date="${data.date}" 
              data-time="${slotTime}" 
              data-table="${tableId}" 
-             data-slot-id="${slot?.slot_id || ''}">
+             data-slot-id="${slot?.slot_id || ''}"
+             title="${tooltip}">
             <span class="text-sm ${textClass}">${status}</span>
         </div>
     `;
-        }
-
+}
         function renderWeekView(data) {
             if (!data.days || !data.tables) {
                 return '<div class="p-4 text-center text-gray-500">Нет данных для отображения</div>';
@@ -1753,28 +1769,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     `;
         }
 
-        function cancelBooking(bookingId) {
-            if (confirm('Вы уверены, что хотите отменить бронирование?')) {
-                fetch(`${API_ENDPOINTS.BOOKINGS}${bookingId}/`, {
-                    method: 'DELETE', headers: {
-                        'X-CSRFToken': getCSRFToken()
-                    }
-                })
-                    .then(async response => {
-                        if (response.ok) {
-                            alert('Бронирование успешно отменено');
-                            await renderCalendar();
-                        } else {
-                            throw new Error('Ошибка при отмене бронирования');
-                        }
-                    })
-                    .catch(error => {
-                        console.error(error);
-                        showError(error.message);
-                    });
-            }
-        }
-
         const freeSlots = document.querySelectorAll('.bg-green-100.cursor-pointer');
         freeSlots.forEach(slot => {
             slot.addEventListener('click', function () {
@@ -2005,12 +1999,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             let actions = '';
 
-            if (isCancellable) {
-                actions += `<button onclick="cancelBooking(${booking.id})" 
+              if (isCancellable) {
+        actions += `<button onclick="window.cancelBooking(${booking.id})" 
             class="text-red-600 hover:text-red-800 mr-2">
             Отменить
         </button>`;
-            }
+    }
 
             if (booking.status.toLowerCase() === 'ожидает оплаты') {
                 actions += `<button onclick="payBooking(${booking.id})" 

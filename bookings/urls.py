@@ -15,7 +15,7 @@ urlpatterns = [
     path('create/', views.CreateBookingView.as_view(), name='create_booking'),
     path('update/<int:pk>/', views.UpdateBookingView.as_view(), name='update_booking'),
 
-    path('cancel/<int:booking_id>/', views.cancel_booking, name='cancel_booking'),
+    path('api/cancel/<int:booking_id>/', views.cancel_booking, name='cancel_booking'),
     path('api/get-booking-info/', views.get_booking_info, name='get_booking_info'),
     path('api/rates/', views.booking_rates_api, name='api_rates'),
     path('api/tables/', views.tables_api, name='api_tables'),

@@ -35,3 +35,28 @@ def short_ru_day(value):
         6: 'Вс',
     }
     return days.get(value.weekday(), '')
+
+
+@register.filter
+def get_item(dictionary, key):
+    """Получение элемента из словаря"""
+    return dictionary.get(key, {})
+
+@register.filter
+def is_past(value):
+    """Проверяет, прошло ли уже указанное время"""
+    try:
+        dt = datetime.strptime(value, "%Y-%m-%d %H:%M")
+        return dt < datetime.now()
+    except:
+        return False
+
+@register.filter
+def concat(value, arg):
+    """Конкатенация строк"""
+    return f"{value}{arg}"
+
+@register.filter
+def get_item(dictionary, key):
+    """Получение элемента из словаря"""
+    return dictionary.get(key, {})

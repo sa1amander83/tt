@@ -1,3 +1,4 @@
+{% load static %}
 <div id="cancel-booking-modal-{{ booking.id }}" 
      class="modal hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50"></div>
@@ -42,27 +43,65 @@
                     </div>
                 </div>
                 
-                <form method="post" action="{% url 'management:cancel_booking' booking.id %}" class="modal-form">
+                   <form id="cancel-booking-form-{{ booking.id }}" method="post" action="{% url 'management:cancel_booking' booking.id %}" class="modal-form">
                     {% csrf_token %}
                     <div class="mb-4">
                         <label for="cancel_reason" class="block text-sm font-medium text-gray-700 mb-1">Причина отмены (необязательно)</label>
                         <textarea name="cancel_reason" id="cancel_reason" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
                     </div>
                     
-                    <div class="form-errors hidden mb-4 p-3 bg-red-50 text-red-600 rounded-lg"></div>
+                    <div id="cancel-errors-{{ booking.id }}" class="form-errors hidden mb-4 p-3 bg-red-50 text-red-600 rounded-lg"></div>
                 </form>
             </div>
             
             <!-- Футер -->
-            <div class="px-6 py-4 border-t border-gray-200 flex justify-end bg-gray-50 rounded-b-xl space-x-3">
+               <div class="px-6 py-4 border-t border-gray-200 flex justify-end bg-gray-50 rounded-b-xl space-x-3">
                 <button type="button" onclick="closeModal('cancel-booking-modal-{{ booking.id }}')" 
                         class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-6 rounded-lg transition duration-200">
                     Отмена
                 </button>
-                <button type="submit" form="cancel-form" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200">
+                <button type="button" onclick="cancelBooking({{ booking.id }})" 
+                        class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200">
                     Подтвердить отмену
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+<script    src="{% static 'js/utils.js' %}"></script>
+
+<script>
+    
+  
+       async function cancelBooking(bookingId) {
+    if (!confirm('Вы уверены, что хотите отменить бронирование?')) return;
+
+    try {
+        const response = await fetch(`/bookings/api/cancel/${bookingId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Ошибка при отмене бронирования');
+        }
+
+        const result = await response.json();
+        if (result.success) {
+            showNotification('Бронирование успешно отменено', 'success');
+            await renderCalendar();
+            await loadUserBookings();
+        } else {
+            throw new Error(result.error || 'Неизвестная ошибка');
+        }
+    } catch (error) {
+        console.error('Ошибка отмены бронирования:', error);
+        showNotification(`Ошибка: ${error.message}`, 'error');
+    }
+};
+
+</script>

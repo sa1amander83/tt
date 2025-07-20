@@ -1,5 +1,5 @@
 // Функции для работы с тарифными планами
-import {getCSRFToken} from "../bookings/core/utils.js";
+import {getCSRFToken} from "../utils.js";
 
 function openAddPricingPlanModal() {
     const modal = document.getElementById('addPricingPlanModal');

@@ -1,8 +1,6 @@
 {% load custom_tags %}
 
 <div id="day-view-container" class="overflow-x-auto">
-
-         
     {% if is_working_day %}
     <div class="border rounded-lg shadow-sm">
         <div class="flex border-b bg-gray-100">
@@ -16,43 +14,65 @@
         </div>
 
         {% for hour in time_slots %}
+        {% with hour_time=hour|time:"H:i" %}
         <div class="flex border-b last:border-b-0">
-            <div class="w-24 md:w-32 p-2 text-right text-sm text-gray-600">{{ hour|time:"H:i" }}</div>
+            <div class="w-24 md:w-32 p-2 text-right text-sm text-gray-600">{{ hour_time }}</div>
             <div class="grid {{ cols_class }} flex-1 divide-x">
                 {% for table in tables %}
-                    {% with schedule|get_item:table.id|get_item:hour as cell %}
-                    <div class="p-2 text-center text-sm min-h-12 flex items-center justify-center
-                        {% if cell.status == 'available' %}
-                            bg-green-100 hover:bg-green-200 cursor-pointer slot-free
-                        {% elif cell.status == 'paid' %}
-                            bg-red-100 text-red-800
-                        {% elif cell.status == 'pending' %}
-                            bg-yellow-100 text-yellow-800
-                        {% else %}
-                            bg-gray-200 text-gray-500
-                        {% endif %}"
-                        {% if cell.status == 'available' %}
-                            data-date="{{ selected_date|date:'Y-m-d' }}"
-                            data-time="{{ hour|time:'H:i' }}"
-                            data-table="{{ table.id }}"
-                            title="Свободно"
-                        {% else %}
-                            title="Занято: {{ cell.booking.status|default:'неизвестно' }}"
-                        {% endif %}>
-                        {{ cell.status|title }}
-                    </div>
-                    {% endwith %}
+                   {% with schedule|get_item:table.id|get_item:hour as cell %}
+{% with is_past=selected_date|concat:" "|concat:hour_time|is_past %}
+
+    {% if is_past and not request.user.is_staff %}
+        <div class="p-2"></div>
+    {% else %}
+        <div class="p-2 text-center text-sm min-h-12 flex items-center justify-center
+            {% if cell.status == 'available' and not is_past %}
+                bg-green-100 hover:bg-green-200 cursor-pointer slot-free
+            {% elif cell.status == 'paid' %}
+                bg-red-100 text-red-800
+            {% elif cell.status == 'pending' %}
+                bg-yellow-100 text-yellow-800
+            {% elif request.user.is_staff and cell.booking %}
+                bg-blue-100 text-blue-800
+            {% else %}
+                bg-gray-200 text-gray-500
+            {% endif %}"
+            {% if cell.status == 'available' and not is_past %}
+                data-date="{{ selected_date|date:'Y-m-d' }}"
+                data-time="{{ hour_time }}"
+                data-table="{{ table.id }}"
+                title="Свободно"
+            {% elif request.user.is_staff and cell.booking %}
+                title="Бронирование: {{ cell.booking.user.get_full_name|default:cell.booking.user.username }} ({{ cell.booking.get_status_display }})"
+            {% else %}
+                title="Занято: {{ cell.booking.get_status_display|default:'неизвестно' }}"
+            {% endif %}>
+            {% if request.user.is_staff and cell.booking %}
+                {{ cell.booking.user.first_name|default:cell.booking.user.username|truncatechars:8 }}
+            {% else %}
+                {{ cell.status|title }}
+            {% endif %}
+        </div>
+    {% endif %}
+
+{% endwith %}
+{% endwith %}
+
                 {% endfor %}
             </div>
         </div>
+        {% endwith %}
         {% endfor %}
     </div>
 
-    <div class="mt-4 text-sm text-gray-500 flex space-x-4">
+    <div class="mt-4 text-sm text-gray-500 flex flex-wrap gap-4">
         <div><span class="inline-block w-4 h-4 bg-green-100 mr-1"></span>Свободно</div>
         <div><span class="inline-block w-4 h-4 bg-yellow-100 mr-1"></span>Ожидает</div>
         <div><span class="inline-block w-4 h-4 bg-red-100 mr-1"></span>Подтверждено</div>
-        <div><span class="inline-block w-4 h-4 bg-gray-200 mr-1"></span>Заблокировано</div>
+        {% if request.user.is_staff %}
+        <div><span class="inline-block w-4 h-4 bg-blue-100 mr-1"></span>Прошедшие брони</div>
+        {% endif %}
+        <div><span class="inline-block w-4 h-4 bg-gray-200 mr-1"></span>Недоступно</div>
     </div>
 
     {% else %}
@@ -62,5 +82,3 @@
     </div>
     {% endif %}
 </div>
-
-

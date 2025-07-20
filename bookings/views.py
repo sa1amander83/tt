@@ -236,14 +236,20 @@ class CalendarAPIView(APIView):
         print("first_slot_end:", slots[0][1])
         for slot_start, slot_end in slots:
             label = slot_start.strftime('%H:%M')
-            time_slots.append(label)
+            slot_visible = False  # флаг
+
 
             for table in tables:
                 overlaps = any(s < slot_end and e > slot_start for s, e in booking_map.get(table.id, []))
-                if slot_start < now:
-                    slot_status = '-'
-                elif overlaps:
+                is_past = slot_end <= now
+
+                if is_past and not (user and user.is_staff):
+                    continue  # Пропустить слот
+
+                if overlaps:
                     slot_status = 'Занято'
+                elif is_past:
+                    slot_status = '-'
                 else:
                     slot_status = 'available'
                 pricing = None
@@ -280,6 +286,10 @@ class CalendarAPIView(APIView):
                     'slot_duration': slot_duration
                 }
 
+                slot_visible = True  # хотя бы один слот видим
+
+            if slot_visible:
+                time_slots.append(label)
         return Response({
             'date': date.strftime('%Y-%m-%d'),
             'is_working_day': True,
@@ -424,11 +434,20 @@ class CalendarAPIView(APIView):
 
             for slot_start, slot_end in slots:
                 label = slot_start.strftime('%H:%M')
-                time_slots_set.add(label)
-                time_slots_for_day.append(label)
+                any_visible = False  # покажем ли этот слот хоть где-то
 
                 for table in tables:
                     overlaps = any(s < slot_end and e > slot_start for s, e in booking_map.get(table.id, []))
+
+                    is_past = slot_end <= timezone.now().astimezone(tz)
+
+                    # Скрываем весь слот, если он в прошлом и пользователь не админ
+                    if is_past and not (user and user.is_staff):
+                        continue
+
+                    # Учитываем, что слот будет отображён
+                    any_visible = True
+
                     is_user_booking = any(
                         s < slot_end and e > slot_start
                         for s, e in booking_map.get(table.id, [])
@@ -437,11 +456,12 @@ class CalendarAPIView(APIView):
 
                     if overlaps:
                         slot_status = 'booked'
-                    elif slot_start < timezone.now().astimezone(tz):
+                    elif is_past:
                         slot_status = '-'
                     else:
                         slot_status = 'available'
 
+                    # Цены
                     pricing = None
                     for p in pricing_data:
                         if p.table_type != table.table_type:
@@ -475,6 +495,11 @@ class CalendarAPIView(APIView):
                         'discount_applied': discount > 0,
                         'discount_percent': discount
                     }
+
+                if any_visible:
+                    time_slots_for_day.append(label)
+                    time_slots_set.add(label)
+
             booking_date_str = day.isoformat()
             user_bookings_count = sum(
                 1 for b in user_bookings if b['start_time'].startswith(booking_date_str)
@@ -895,18 +920,22 @@ class UpdateBookingView(LoginRequiredMixin, UpdateView):
 @require_POST
 def cancel_booking(request, booking_id):
     try:
-        booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+        booking = get_object_or_404(Booking, id=booking_id)
+
+        # Проверяем права: либо пользователь бронирования, либо админ
+        if booking.user != request.user and not request.user.is_staff:
+            return JsonResponse({'error': 'Недостаточно прав'}, status=403)
 
         if booking.status not in ['pending', 'paid']:
-            return redirect('accounts:profile')
-        # Освобождаем временной слот
+            return JsonResponse({'error': 'Невозможно отменить бронирование с текущим статусом'}, status=400)
 
         booking.status = 'cancelled'
         booking.save()
 
-        return redirect('accounts:profile')
+        return JsonResponse({'success': True})
+
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 @require_GET

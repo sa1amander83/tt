@@ -1,2 +1,2 @@
-import { getCSRFToken, safeParseJSON } from './utils';
+import { getCSRFToken, safeParseJSON } from '../../utils';
 
