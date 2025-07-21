@@ -25,7 +25,7 @@ from bookings.forms import BookingForm
 from bookings.models import Booking, BookingPackage
 
 from management.LoyaltyEngine import LoyaltyEngine
-from management.forms import UserAdminForm, MembershipTypeForm, LevelBenefitForm
+from management.forms import UserAdminForm, MembershipTypeForm, LevelBenefitForm, BenefitTypeForm
 from management.models import LoyaltyProfile, MembershipType, Membership, LoyaltySettings, LevelBenefit, \
     MaxUnpaidBookings
 
@@ -1052,6 +1052,24 @@ def add_level_benefit(request):
         form = LevelBenefitForm()
 
     return render(request, 'management/loyalty_modals/add_level_benefit.html', {'form': form})
+
+
+
+def add_benefit_type(request):
+    if request.method == 'POST':
+        form = BenefitTypeForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('management:management', 'loyalty')
+    else:
+        form = BenefitTypeForm()
+    return render(request, 'management/loyalty_modals/add_benefit_type.html', {'form': form})
+
+
+
+
+
+
 
 
 from rest_framework import viewsets, status

@@ -297,7 +297,22 @@ class SpecialOfferForm(forms.ModelForm):
 from django import forms
 from .models import LevelBenefit, BenefitType
 
+class BenefitTypeForm(forms.ModelForm):
+    class Meta:
+        model = BenefitType
+        fields = ["name",'description']
 
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-select block w-full mt-1 rounded-md border-2 border-gray-600 shadow-sm '
+                         'focus:border-indigo-500 focus:ring-indigo-500'
+            }),
+            'description': forms.TextInput(attrs={
+                'class': 'form-select block w-full mt-1 rounded-md border-2 border-gray-600 shadow-sm '
+                         'focus:border-indigo-500 focus:ring-indigo-500'
+            })
+
+        }
 
 class LevelBenefitForm(forms.ModelForm):
     class Meta:

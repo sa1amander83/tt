@@ -289,7 +289,7 @@ class LoyaltySettings(models.Model):
 
 
 class BenefitType(models.Model):
-    code = models.CharField(max_length=50, unique=True, verbose_name="Код")
+    description = models.CharField(max_length=50, unique=True, verbose_name="описание")
     name = models.CharField(max_length=100, verbose_name="Название")
 
     class Meta:
