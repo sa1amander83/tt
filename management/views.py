@@ -1036,7 +1036,7 @@ def loyalty_settings_view(request):
         'active_tab': 'loyalty_modals',
     }
 
-    return render(request, 'management/management_templates/loyalty.html', context)
+    return redirect('management:', '', context)
 
 def add_level_benefit(request):
     if request.method == 'POST':
@@ -1045,13 +1045,13 @@ def add_level_benefit(request):
             try:
                 form.save()
                 messages.success(request, 'Привилегия успешно добавлена')
-                return redirect('loyalty_program')  # Название URL вашей страницы с программой лояльности
+                return redirect('management:management' , active_tab='loyalty')  # Название URL вашей страницы с программой лояльности
             except Exception as e:
                 form.add_error(None, f'Ошибка при сохранении: {e}')
     else:
         form = LevelBenefitForm()
 
-    return render(request, 'management/loyalty_modals/add_level_benefit.html', {'form': form})
+    return redirect(request, 'management/loyalty_modals/add_level_benefit.html', {'form': form})
 
 
 

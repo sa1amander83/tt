@@ -12,7 +12,7 @@ router.register(r'promocodes', PromoCodeViewSet, basename='promocode')
 urlpatterns = [
     path('', ManagementView.as_view(), {'active_tab': 'bookings'}, name='management-default'),  # URL /management/
     path('validate-promo/', validate_promo, name='validate-promo'),
-    path('<str:active_tab>/', ManagementView.as_view(), name='management'),
+
     # path('bookings/', BookingListView.as_view(), name='bookings'),
     path('bookings/<int:pk>/', SingleBookingView.as_view(), name='booking_detail'),
     path('bookings/<int:pk>/update/', BookingUpdateView.as_view(), name='booking_update'),
@@ -51,5 +51,5 @@ urlpatterns = [
     path('loyalty/add-benefit/', add_level_benefit, name='add_level_benefit'),
 
 path('benefit-types/add/', add_benefit_type, name='add_benefit_type'),
-
+    path('<str:active_tab>/', ManagementView.as_view(), name='management'),
 ]
