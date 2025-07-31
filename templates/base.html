@@ -6,6 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+    <link rel="stylesheet" href="{% static 'bookings/css/app.css' %}">
 
     <title>PingPong Club</title>
     <script id="table-types-data" type="application/json">
@@ -16,8 +17,6 @@
 
     <script src="{% static 'js/showNotification.js' %}"></script>
     <script src="{% static 'js/loader.js' %}"></script>
-    <script src="{% static 'js/bookings.js' %}"></script>
-
 
 
 </head>
@@ -30,7 +29,7 @@
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 {% endblock extracss %}
 <body class="bg-gray-100 min-h-screen">
-<header class="bg-green-600 text-white shadow-md">
+<header class="bg-green-600 text-white shadow-md text-xl">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
         <div class="flex items-center">
             <i class="fas fa-table-tennis-paddle-ball text-2xl mr-2"></i>
@@ -51,13 +50,14 @@
 
                     <li><a href="{% url 'accounts:profile' %}" class="hover:text-green-200">Профиль</a></li>
                     <li><a href="{% url 'accounts:logout' %}" class="hover:text-green-200">Выход</a></li>
-                    
-                  
-                    <li><a href="{% url 'management:management' 'bookings' %}" class="hover:text-green-200">Управление</a></li>
-                 
-                        
-{#                      <li><a href="{% url 'management:admin-reports' %}" class="hover:text-green-200">Отчеты</a></li>#}
-                    
+
+
+                    <li><a href="{% url 'management:management' 'bookings' %}"
+                           class="hover:text-green-200">Управление</a></li>
+
+
+                    {#                      <li><a href="{% url 'management:admin-reports' %}" class="hover:text-green-200">Отчеты</a></li>#}
+
                 {% endif %}
                 {#                {% elif user.is_authenticated and user.role == 'USER' %}#}
                 {##}
@@ -72,7 +72,7 @@
                 {% elif user.is_authenticated and user.role == 'USER' %}
                     <li><a href="{% url 'accounts:profile' %}" class="hover:text-green-200">Профиль</a></li>
                     <li><a href="{% url 'accounts:statistics' %}" class="hover:text-green-200">статистика</a></li>
-                    
+
                     <li><a href="{% url 'accounts:logout' %}" class="hover:text-green-200">Выход</a></li>
                 {% endif %}
 
@@ -236,50 +236,50 @@
 
 {% block extrascripts %}
     <script>
-    document.addEventListener('DOMContentLoaded', function () {
-    // Для всех полей с атрибутом data-datepicker
-    const dateInputs = document.querySelectorAll('[data-datepicker]');
-    dateInputs.forEach(input => {
-        flatpickr(input, {
-            enableTime: true,
-            dateFormat: "Y-m-d H:i",
-            locale: "ru",
-          
-            time_24hr: true,
-            minuteIncrement: 15,
-            static: true,
-            onChange: function () {
-                input.dispatchEvent(new Event('change'));
-            }
-        });
-    });
+        document.addEventListener('DOMContentLoaded', function () {
+            // Для всех полей с атрибутом data-datepicker
+            const dateInputs = document.querySelectorAll('[data-datepicker]');
+            dateInputs.forEach(input => {
+                flatpickr(input, {
+                    enableTime: true,
+                    dateFormat: "Y-m-d H:i",
+                    locale: "ru",
 
-    // Для полей времени
-    const timeInputs = document.querySelectorAll('[data-timepicker]');
-    timeInputs.forEach(input => {
-        flatpickr(input, {
-            enableTime: true,
-            noCalendar: true,
-            dateFormat: "H:i",
-            locale: "ru",
-            time_24hr: true,
-            minuteIncrement: 15,
-            onChange: function () {
-                input.dispatchEvent(new Event('change'));
-            }
+                    time_24hr: true,
+                    minuteIncrement: 15,
+                    static: true,
+                    onChange: function () {
+                        input.dispatchEvent(new Event('change'));
+                    }
+                });
+            });
+
+            // Для полей времени
+            const timeInputs = document.querySelectorAll('[data-timepicker]');
+            timeInputs.forEach(input => {
+                flatpickr(input, {
+                    enableTime: true,
+                    noCalendar: true,
+                    dateFormat: "H:i",
+                    locale: "ru",
+                    time_24hr: true,
+                    minuteIncrement: 15,
+                    onChange: function () {
+                        input.dispatchEvent(new Event('change'));
+                    }
+                });
+            });
         });
-    });
-});
     </script>
     <link rel="preload" href="{% static 'js/loader.js' %}" as="script">
     {{ block.super }}
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
     <script src="{% static 'js/ru.js' %}"></script>
     <script src="{% static 'js/flowbite.min.js' %}"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="{% static 'js/script.js' %}"></script>
-
     <script id="user-data" type="application/json"></script>
 
 {% endblock %}

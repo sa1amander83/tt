@@ -19,6 +19,8 @@ urlpatterns = [
     path('api/get-booking-info/', views.get_booking_info, name='get_booking_info'),
     path('api/rates/', views.booking_rates_api, name='api_rates'),
     path('api/tables/', views.tables_api, name='api_tables'),
+    path('api/equipment/', views.equipment_api, name='api_equipment'),
+
     path('api/calendar/', views.CalendarAPIView.as_view(), name='api_calendar'),
     # path('api/week/', views.week_calendar_api, name='week_calendar'),
 

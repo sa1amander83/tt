@@ -29,7 +29,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.timezone import make_aware
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, UpdateView
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.core.exceptions import ObjectDoesNotExist
 import json
 
@@ -914,44 +914,63 @@ def booking_rates_api(request):
     try:
         today = date.today()
 
-        # Поиск актуального тарифного плана (с поддержкой open-ended valid_to)
-        pricing_plan = (
-                PricingPlan.objects.filter(
-                    Q(valid_from__lte=today),
-                    Q(valid_to__gte=today) | Q(valid_to__isnull=True)
-                ).first()
-                or PricingPlan.objects.filter(is_default=True).first()
-        )
+        # Получаем ВСЕ актуальные тарифные планы
+        pricing_plans = PricingPlan.objects.filter(
+            Q(valid_from__lte=today),
+            Q(valid_to__gte=today) | Q(valid_to__isnull=True)
+        ).order_by('-is_default', 'valid_from')
 
-        if not pricing_plan:
-            return JsonResponse({'error': 'Тарифный план не найден'}, status=404)
+        if not pricing_plans.exists():
+            pricing_plans = PricingPlan.objects.filter(is_default=True)
+            if not pricing_plans.exists():
+                return JsonResponse({'error': 'Тарифные планы не найдены'}, status=404)
 
-        prices = TableTypePricing.objects.filter(pricing_plan=pricing_plan)
+        # Получаем все цены для всех найденных тарифных планов
+        prices = TableTypePricing.objects.filter(
+            pricing_plan__in=pricing_plans
+        ).select_related('table_type', 'pricing_plan')
+
         equipment = Equipment.objects.filter(is_available=True)
 
-        # Формируем ответ
+        # Формируем ответ с группировкой по тарифным планам
         response_data = {
-            'pricing_plan': pricing_plan.name,
+            'pricing_plans': [],
             'table_types': [],
             'equipment': [],
             'status': 'success'
         }
 
+        # Добавляем информацию о тарифных планах
+        for plan in pricing_plans:
+            response_data['pricing_plans'].append({
+                'id': plan.id,
+                'name': plan.name,
+                'description': plan.description,
+                'valid_from': plan.valid_from.strftime('%Y-%m-%d'),
+                'valid_to': plan.valid_to.strftime('%Y-%m-%d') if plan.valid_to else None,
+                'is_default': plan.is_default
+            })
+
+        # Добавляем информацию о ценах
         for price in prices:
             response_data['table_types'].append({
                 'id': price.table_type.id,
                 'name': price.table_type.name,
+                'pricing_plan_id': price.pricing_plan.id,
                 'hour_rate': price.hour_rate,
                 'hour_rate_group': price.hour_rate_group,
+                'half_hour_rate': price.half_hour_rate,
                 'min_duration': price.min_duration,
                 'max_duration': price.max_duration
             })
 
+        # Добавляем оборудование
         for item in equipment:
             response_data['equipment'].append({
                 'id': item.id,
                 'name': item.name,
-                'price_per_hour': item.price_per_hour
+                'price_per_hour': item.price_per_hour,
+                'price_per_half_hour': item.price_per_half_hour
             })
 
         return JsonResponse(response_data)
@@ -961,7 +980,6 @@ def booking_rates_api(request):
             'error': str(e),
             'status': 'error'
         }, status=500)
-
 
 @require_GET
 def tables_api(request):
@@ -1387,3 +1405,12 @@ def yookassa_webhook(request):
     except Exception as e:
         # Логируем ошибку, если нужно
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_http_methods(["GET"])
+def equipment_api(request):
+
+    equipment = Equipment.objects.values(
+        'id', 'name', 'description', 'price_per_hour', 'price_per_half_hour'
+    )
+    return JsonResponse(list(equipment), safe=False)

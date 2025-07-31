@@ -532,7 +532,10 @@ class PromoCodeViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['code', 'description']
 
+
+@csrf_exempt
 def validate_promo(request):
+
     try:
         data = json.loads(request.body)
         code = data.get('code', '').strip()

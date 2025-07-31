@@ -92,15 +92,16 @@ WSGI_APPLICATION = 'tt.wsgi.application'
 if os.environ.get('IS_DOCKER') == 'True':
 
     DATABASE_HOST = 'db'
+    print('db')
 else:
     DATABASE_HOST = 'localhost'  # Для локальной разработки
-
+    print('localhost')
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mydb',
-        'USER': 'myuser',
-        'PASSWORD': 'mypassword',
+        'NAME': 'tt',
+        'USER': 'postgres',
+        'PASSWORD': '123',
         'HOST': DATABASE_HOST,
         'PORT': '5432',
     }

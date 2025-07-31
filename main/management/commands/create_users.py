@@ -167,7 +167,7 @@ def create_fake_users_and_bookings(num_users=10):
         # 3 брони в мае или июне 2025
         for _ in range(3):
             for attempt in range(10):
-                month = random.choice([5, 6])
+                month = random.choice([6,7,8])
                 year = 2025
                 start_time = get_valid_booking_datetime(pricing_plans, year, month)
                 if not start_time:
