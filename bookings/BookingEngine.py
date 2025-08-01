@@ -16,13 +16,16 @@ from management.LoyaltyEngine import LoyaltyEngine
 
 class BookingEngine:
     def __init__(self, user, table, start_time, duration_minutes,
-                 participants, equipment_items=None, is_group=False,
-                 promo_code=None, manual_discount_percent=0):
+                 participants, equipment_items=None, is_group=False, loyalty_level=None, loyalty_profile=None,
+                 promo_code=None, promo_code_discount_percent=0, special_offer=None):
         self.loyalty_level = None
         self.loyalty_discount_percent = None
         self.special_offer_discount_percent = None
-        self.promo_code_discount_percent = None
+        self.promo_code_discount_percent = promo_code_discount_percent
+        self.special_offer = special_offer
         self.user = user
+        self.loyalty_level = loyalty_level
+        self.loyalty_profile = loyalty_profile
         self.table = table
         self.start_time = localtime(start_time)
         self.duration_minutes = duration_minutes
@@ -30,7 +33,6 @@ class BookingEngine:
         self.equipment_items = equipment_items or []
         self.is_group = is_group
         self.promo_code = promo_code
-        self.manual_discount_percent = manual_discount_percent
 
         self.membership = self._get_membership()
         self.special_offer = self._get_special_offer()
@@ -144,8 +146,7 @@ class BookingEngine:
             self.loyalty_level = None
 
         # 5. Ручная скидка
-        if self.manual_discount_percent:
-            total *= (100 - self.manual_discount_percent) / 100
+
 
         # Оборудование
         self.equipment_price = self._calculate_equipment_price()
@@ -155,9 +156,19 @@ class BookingEngine:
     def _calculate_equipment_price(self):
         total = 0
         duration_half_hours = self.duration_minutes // 30
+
         for item in self.equipment_items:
             eq = item['equipment']
             qty = item.get('quantity', 1)
-            rate = eq.price_per_half_hour
+
+            # Выбираем цену в зависимости от длительности
+            if duration_half_hours % 2 == 0:
+                # Если полных часов — используем почасовую ставку
+                rate = eq.price_per_hour / 2 if eq.price_per_hour else eq.price_per_half_hour
+            else:
+                # иначе используем ставку за полчаса
+                rate = eq.price_per_half_hour
+
             total += rate * duration_half_hours * qty
+
         return round(total)

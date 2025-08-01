@@ -68,7 +68,7 @@ class Booking(models.Model):
     start_time = models.DateTimeField(verbose_name="Время начала", default=timezone.now)
     end_time = models.DateTimeField(verbose_name="Время окончания", default=timezone.now)
     status = models.CharField(
-        max_length=10,
+        max_length=30,
         choices=STATUS_CHOICES,
         default='pending',
         verbose_name="Статус",
@@ -167,6 +167,16 @@ class Booking(models.Model):
         else:
             self.calculate_prices()
         super().save(*args, **kwargs)
+
+    def apply_prices_from_engine(self, engine):
+        self.base_price = engine.base_price
+        self.equipment_price = engine.equipment_price
+        self.total_price = engine.total_price
+
+        self.promo_code_discount_percent = engine.promo_code_discount_percent or 0
+        self.special_offer_discount_percent = engine.special_offer_discount_percent or 0
+        self.loyalty_discount_percent = engine.loyalty_discount_percent or 0
+        self.loyalty_level = engine.loyalty_level
 
     def calculate_prices(self):
         from bookings.BookingEngine import BookingEngine

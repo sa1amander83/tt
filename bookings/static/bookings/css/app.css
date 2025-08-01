@@ -1,0 +1,6 @@
+.notification {
+  @apply fixed top-4 right-4 px-4 py-2 rounded shadow text-white;
+}
+.notification.error   { background: #ef4444; }
+.notification.success { background: #22c55e; }
+.notification.warning { background: #f59e0b; }

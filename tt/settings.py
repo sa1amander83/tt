@@ -92,6 +92,7 @@ WSGI_APPLICATION = 'tt.wsgi.application'
 if os.environ.get('IS_DOCKER') == 'True':
 
     DATABASE_HOST = 'db'
+
 else:
     DATABASE_HOST = 'localhost'  # Для локальной разработки
 

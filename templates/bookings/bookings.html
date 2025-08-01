@@ -34,9 +34,9 @@
                 <h2 class="text-lg font-medium mb-4" id="user-bookings-title">
                     Ваши бронирования на <span id="bookings-period-display">{{ current_date }}</span>
                 </h2>
-            <div id="user-bookings-container" class="overflow-x-auto">
-            <!-- Сюда будет вставляться таблица с бронированиями -->
-        </div>
+                <div id="user-bookings-container" class="overflow-x-auto">
+                    <!-- Сюда будет вставляться таблица с бронированиями -->
+                </div>
             </div>
         {% endif %}
 
@@ -47,7 +47,9 @@
 {% endblock %}
 {% block extrascripts %}
     {#    <script type="module" src="{% static 'js/admin-modals/weekView.js' %}"></script>#}
-
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="module" src="{% static 'js/showNotification.js' %}"></script>
+    <script type="module" src="{% static 'bookings/js/main.js' %}"></script>
 
 
 {% endblock %}
