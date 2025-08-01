@@ -55,18 +55,23 @@ export const BookingModal = {
         this.store.set({tables: tablesData});
         // 🔁 2. Загружаем тарифы, если ещё не загружены
 
-         let {pricing} = this.store.get();
-    if (!pricing || pricing.length === 0) {
-        const ratesResponse = await fetch('api/rates/');
-        const ratesData = await ratesResponse.json();
+        let {pricing} = this.store.get();
+        if (!pricing || pricing.length === 0) {
+            const ratesResponse = await fetch('api/rates/');
+            const ratesData = await ratesResponse.json();
 
-        // Сохраняем все тарифы и типы столов
-        this.store.set({
-            table_types: ratesData.table_types,
-            pricing: ratesData.pricing_plans || [ratesData] // учитываем разные форматы ответа
-        });
-    }
+            // Сохраняем все тарифы и типы столов
+            this.store.set({
+                table_types: ratesData.table_types,
+                pricing: ratesData.pricing_plans || [ratesData] // учитываем разные форматы ответа
+            });
+        }
 
+        async function fetchPrice(date, time, tableId, duration) {
+            const res = await fetch(`/bookings/api/get-booking-info/?date=${date}&time=${time}&table_id=${tableId}&duration=${duration}`);
+            if (!res.ok) throw new Error('Не удалось получить цену');
+            return res.json();
+        }
 
         // 3. Загружаем оборудование
         const equipment = await EquipmentAPI.list();
@@ -79,9 +84,9 @@ export const BookingModal = {
         this.populateTableSelect(tableId);
         this.populateTimeSelect(time);
         this.populateParticipants(tableId);
-        this.updateBookingCost();
-        $('#booking-date').value = date;
 
+        $('#booking-date').value = date;
+        await this.updateBookingCost();
         // 6. Показываем окно
         $('#booking-modal').classList.remove('hidden');
 
@@ -222,7 +227,38 @@ export const BookingModal = {
         $('#booking-table').value = String(tableId);
         updateCost(this.store);
     },
+    getActivePricingPlanForDateTime(dateStr, timeStr) {
+        const allPlans = this.store.get().pricing || [];
 
+        const date = new Date(`${dateStr}T${timeStr}`);
+        let matchedPlan = null;
+
+        for (const plan of allPlans) {
+            const from = new Date(`${plan.valid_from}T00:00:00`);
+            const to = plan.valid_to ? new Date(`${plan.valid_to}T23:59:59`) : null;
+
+            if (date >= from && (!to || date <= to)) {
+                matchedPlan = plan;
+                break; // можно доработать при наличии времени начала/окончания тарифа
+            }
+        }
+
+        return matchedPlan;
+    },
+    async fetchBookingInfo({date, time, tableId, duration, isGroup = false, equipment = []}) {
+        const params = new URLSearchParams({
+            date,
+            time,
+            table_id: tableId,
+            duration,
+            is_group: isGroup ? 'true' : 'false',
+            equipment: JSON.stringify(equipment)
+        });
+
+        const res = await fetch(`/bookings/api/get-booking-info/?${params.toString()}`);
+        if (!res.ok) throw new Error('Ошибка при получении информации о бронировании');
+        return await res.json();
+    },
     async submit(e) {
         e.preventDefault();
 
@@ -250,62 +286,63 @@ export const BookingModal = {
         this.close();
         await CalendarUI.render();
     },
-    updateBookingCost() {
-
-
-        const {settings} = this.store.get();
-        const open = settings?.current_day?.open_time ?? '09:00';
-        const close = settings?.current_day?.close_time ?? '22:00';
-
-        const duration = parseInt($('#booking-duration')?.value || 60);
+    async updateBookingCost() {
+        const date = $('#booking-date')?.value;
+        const time = $('#booking-start-time')?.value;
+        const durationHours = parseInt($('#booking-duration')?.value || 1);
+        const duration = durationHours * 60;
 
         const selectedOption = $('#booking-table')?.selectedOptions?.[0];
-
         if (!selectedOption) {
-            console.warn("Не удалось найти выбранный стол");
+            console.warn("Не выбран стол");
             return;
         }
 
-        const tablePrice = parseFloat(selectedOption.dataset.price);
-        if (isNaN(tablePrice)) {
-            console.warn("У выбранного стола нет цены:", selectedOption);
-            return;
+        const tableId = selectedOption.value;
+        const isGroup = $('#is-group')?.checked || false;
+
+        // Собираем оборудование
+        const equipment = [...$$('.equipment-checkbox:checked')].map(el => ({
+            id: Number(el.value),
+            quantity: 1 // в будущем можно подставить значение из select
+        }));
+
+        try {
+            // Получаем данные с сервера
+            const params = new URLSearchParams({
+                date,
+                time,
+                table_id: tableId,
+                duration: duration.toString(),
+                is_group: isGroup ? 'true' : 'false',
+                equipment: JSON.stringify(equipment)
+            });
+
+            const res = await fetch(`api/get-booking-info/?${params.toString()}`);
+            if (!res.ok) throw new Error("Ошибка при получении информации о бронировании");
+            const data = await res.json();
+
+            // Применим промокод, если он есть и применён
+            let discountMultiplier = 1;
+            const promo = this.store.get().promoCode;
+            if (this.store.get().promoApplied && promo?.discount_percent) {
+                discountMultiplier = (100 - promo.discount_percent) / 100;
+            }
+
+            // Обновляем UI
+            $('#tariff-name').textContent = data.tariff_description || data.pricing_plan || 'Стандартный тариф';
+            $('#tariff-table-cost').textContent = `${Math.round(data.base_price)} ₽`;
+            $('#tariff-equipment-cost').textContent = `${Math.round(data.equipment_price || 0)} ₽`;
+            $('#tariff-total-cost').textContent = `${Math.round(data.final_price * discountMultiplier)} ₽`;
+            $('#tariff-summary')?.classList.remove('hidden');
+
+        } catch (err) {
+            console.error("Ошибка при расчёте стоимости:", err);
+
+            // При ошибке — скрыть расчёты
+            $('#tariff-name').textContent = 'Ошибка загрузки тарифа';
+            $('#tariff-summary')?.classList.add('hidden');
         }
-        //  const tablePrice = parseFloat(selectedOption.dataset.price || 0);
-        // const tablePrice = parseFloat($('#booking-table').selectedOptions[0]?.dataset.price || 0);
-        const tableHalf = tablePrice / 2;
-
-        // стоимость стола
-        let tableCost = 0;
-        if (duration <= 30) tableCost = tableHalf;
-        else if (duration === 60) tableCost = tablePrice;
-        else {
-            const h = Math.floor(duration / 60);
-            const half = Math.ceil((duration % 60) / 30);
-            tableCost = h * tablePrice + half * tableHalf;
-        }
-
-        // стоимость оборудования
-        const equipmentCost = [...$$('.equipment-checkbox:checked')].reduce((sum, el) => {
-            const priceHalf = parseFloat(el.dataset.priceHalfHour);
-            const priceHour = parseFloat(el.dataset.priceHour) || priceHalf * 2;
-            const h = Math.floor(duration / 60);
-            const half = Math.ceil((duration % 60) / 30);
-            return sum + (h * priceHour + half * priceHalf);
-        }, 0);
-        let discount = 0;
-        const promo = this.store.get().promoCode;
-        if (this.store.get().promoApplied && promo) {
-            discount = promo.discount_percent / 100;
-        }
-        const total = Math.round((tableCost + equipmentCost) * (1 - discount));
-
-        // обновить UI
-        $('#tariff-table-cost').textContent = `${Math.round(tableCost)} ₽`;
-        $('#tariff-equipment-cost').textContent = `${Math.round(equipmentCost)} ₽`;
-        $('#tariff-total-cost').textContent = `${total} ₽`;
-        $('#tariff-summary')?.classList.remove('hidden');
-
     }
 
 };

@@ -570,7 +570,6 @@ def get_booking_info(request):
             equipment_items.append({'equipment': eq, 'quantity': quantity})
 
     # Импорт BookingEngine
-    # замените yourapp на свое приложение
 
     engine = BookingEngine(
         user=request.user,

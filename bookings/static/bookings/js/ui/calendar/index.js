@@ -64,7 +64,7 @@ export const CalendarUI = {
     // Передай данные в модальное окно
 
     import('../bookingModal/index.js').then(module => {
-      module.BookingModal.open({ date, time, tableId });
+      module.BookingModal.open({ date, time,     tableId: Number(tableId) });
     });
   });
 },
