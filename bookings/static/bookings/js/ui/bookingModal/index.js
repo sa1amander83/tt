@@ -231,9 +231,11 @@ export const BookingModal = {
             const {promoCode} = this.store.get();
 
             payload.table_id = Number(payload.table);
-            delete payload.table;
 
-            payload.duration = Number(payload.duration);
+
+            payload.duration = Math.round(Number(payload.duration  * 60));
+
+
             payload.participants = Number(payload.participants);
             payload.date = this.slot.date;
             payload.start_time = this.slot.time;
@@ -265,65 +267,63 @@ export const BookingModal = {
             showNotification(message, 'error');
         }
     },
-    async updateBookingCost() {
-        const date = $('#booking-date')?.value;
-        const time = $('#booking-start-time')?.value;
-        const durationHours = parseInt($('#booking-duration')?.value || 1);
-        const duration = durationHours * 60;
 
-        const selectedOption = $('#booking-table')?.selectedOptions?.[0];
-        if (!selectedOption) {
-            showNotification("Не выбран стол", 'warning');
-            return;
-        }
+    getFormPayload() {
+        const durationHours = parseFloat($('#booking-duration')?.value);
+        const duration_minutes = Math.round(durationHours * 60);
 
-        const tableId = selectedOption.value;
-        const isGroup = $('#is-group')?.checked || false;
-
-        // Собираем оборудование
-        const equipment = [...$$('.equipment-checkbox:checked')].map(el => ({
-            id: Number(el.value),
-            quantity: 1 // в будущем можно подставить значение из select
+        const equipment = [...$$('.equipment-checkbox:checked')].map(cb => ({
+            id: Number(cb.value),
+            quantity: 1
         }));
 
+        return {
+            date: $('#booking-date')?.value,
+            time: $('#booking-start-time')?.value,
+            table_id: Number($('#booking-table')?.value),
+            participants: Number($('#participants')?.value),
+            is_group: $('#is-group')?.checked || false,
+            duration_minutes,
+            equipment
+        };
+    },
+
+
+    async updateBookingCost() {
+        const {
+            date, time, table_id, duration_minutes, is_group, equipment
+        } = this.getFormPayload();
+
+        const params = new URLSearchParams({
+            date,
+            time,
+            table_id,
+            duration: duration_minutes,
+            is_group: is_group ? 'true' : 'false',
+            equipment: JSON.stringify(equipment)
+        });
 
         try {
-            // Получаем данные с сервера
-            const params = new URLSearchParams({
-                date,
-                time,
-                table_id: tableId,
-                duration: duration.toString(),
-                is_group: isGroup ? 'true' : 'false',
-                equipment: JSON.stringify(equipment)
-            });
-
             const res = await fetch(`api/get-booking-info/?${params.toString()}`);
             if (!res.ok) throw new Error("Ошибка при получении информации о бронировании");
+
             const data = await res.json();
             const maxDur = this.getMaxDurationMinutes(time);
-            const tariffMax = data?.max_duration || 180; // пример
-            const effectiveMax = Math.min(maxDur, tariffMax);
+            const effectiveMax = Math.min(maxDur, data?.max_duration || 180);
+
             this.populateDurationOptions(data?.min_duration || 30, effectiveMax);
 
-            // Применим промокод, если он есть и применён
-            let discountMultiplier = 1;
             const promo = this.store.get().promoCode;
-            if (this.store.get().promoApplied && promo?.discount_percent) {
-                discountMultiplier = (100 - promo.discount_percent) / 100;
-            }
+            const discountMultiplier = (this.store.get().promoApplied && promo?.discount_percent)
+                ? (100 - promo.discount_percent) / 100 : 1;
 
-            // Обновляем UI
             $('#tariff-name').textContent = data.tariff_description || data.pricing_plan || 'Стандартный тариф';
             $('#tariff-table-cost').textContent = `${Math.round(data.base_price)} ₽`;
             $('#tariff-equipment-cost').textContent = `${Math.round(data.equipment_price || 0)} ₽`;
             $('#tariff-total-cost').textContent = `${Math.round(data.final_price * discountMultiplier)} ₽`;
             $('#tariff-summary')?.classList.remove('hidden');
-
         } catch (err) {
             showNotification("Ошибка при расчёте стоимости:", err);
-
-            // При ошибке — скрыть расчёты
             $('#tariff-name').textContent = 'Ошибка загрузки тарифа';
             $('#tariff-summary')?.classList.add('hidden');
         }
@@ -341,29 +341,22 @@ export const BookingModal = {
         const diffMinutes = Math.floor((closeDt - startDt) / 60000);
         return Math.max(diffMinutes, 0); // не меньше 0
     },
-populateDurationOptions(minMinutes, maxMinutes) {
-    const select = $('#booking-duration');
-    select.innerHTML = '';
-    const step = 30;
+    populateDurationOptions(min, max) {
+        const select = $('#booking-duration');
+        const prev = select.value;
+        select.innerHTML = '';
 
-    for (let m = minMinutes; m <= maxMinutes; m += step) {
-        const hours = Math.floor(m / 60);
-        const mins = m % 60;
-        let label = hours ? `${hours} ч` : '';
-        if (mins) label += ` ${mins} мин`;
-        const opt = document.createElement('option');
-        opt.value = m / 60;
-        opt.textContent = label.trim();
-        select.appendChild(opt);
-    }
+        const step = 30;
+        for (let m = min; m <= max; m += step) {
+            const opt = document.createElement('option');
+            opt.value = m / 60;
+            opt.textContent = `${Math.floor(m / 60) ? `${Math.floor(m / 60)} ч` : ''}${m % 60 ? ` ${m % 60} мин` : ''}`.trim();
+            select.appendChild(opt);
+        }
 
-    // --- умный дефолт ---
-    if (maxMinutes >= 180) {           // 3 ч и больше – ставим 1 ч
-        select.value = 1;
-    } else if (maxMinutes >= 60) {     // 1–2 ч – ставим максимум
-        select.value = maxMinutes / 60;
-    } else {                           // < 1 ч – ставим максимум
-        select.value = maxMinutes / 60;
+        select.value = [...select.options].some(o => o.value === prev)
+            ? prev
+            : max >= 60 ? 1 : max / 60;
     }
-}};
+};
 

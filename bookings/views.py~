@@ -1133,7 +1133,7 @@ def create_booking_api(request):
             status__in=['pending', 'paid']
         )
         if overlapping.exists():
-            return JsonResponse({'error': 'Стол уже занят на это время'}, status=400)
+            return JsonResponse({'error': 'Timeslot is already booked'}, status=400)
 
         equipment_items = []
         for item in data.get('equipment', []):
@@ -1199,7 +1199,7 @@ def create_booking_api(request):
                 status__in=['pending', 'paid']
             )
             if overlapping.exists():
-                return JsonResponse({'error': 'Стол уже занят на это время'}, status=400)
+                return JsonResponse({'error': 'Timeslot is already booked'}, status=400)
 
             booking = Booking.objects.create(
                 user=request.user,

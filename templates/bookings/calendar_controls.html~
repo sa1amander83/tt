@@ -7,8 +7,8 @@
         </button>
 
         <h2 id="calendar-title" class="text-xl font-semibold">
-            {% if view == 'day' %}
-                {{ current_date|date:"d F Y, D" }}
+        {% if view == 'day' %}
+    {{ current_date|date:"d F Y, D" }}
             {% elif view == 'week' %}
                 Неделя {{ current_date|date:"W" }}, {{ current_date|date:"Y" }}
             {% else %}
