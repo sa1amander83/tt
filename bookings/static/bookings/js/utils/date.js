@@ -1,12 +1,22 @@
 export const formatDate = (date) => date.toISOString().split('T')[0];
 
-export const getMonday = (date) => {
-  const d = new Date(date);
-  const day = d.getDay() || 7;
-  d.setDate(d.getDate() - day + 1);
-  return d;
-};
+export function getMonday(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
+}
 
+export function getWeekInterval(date) {
+    const startOfWeek = getMonday(date);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 6); // конец недели (воскресенье)
+
+    const startStr = startOfWeek.toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
+    const endStr = endOfWeek.toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    return `${startStr} - ${endStr}`;
+}
 export const addDays = (date, days) => {
   const d = new Date(date);
   d.setDate(d.getDate() + days);

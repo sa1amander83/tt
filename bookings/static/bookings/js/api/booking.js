@@ -16,7 +16,7 @@ export const BookingAPI = {
   },
 
   async cancel(id) {
-    return fetch(`/bookings/api/create/${id}/`, {
+    return fetch(`/bookings/api/cancel/${id}/`, {
       method: 'DELETE',
       headers: { 'X-CSRFToken': csrf() },
       credentials: 'include'
@@ -30,5 +30,21 @@ export const BookingAPI = {
       body: JSON.stringify({ booking_id: id }),
       credentials: 'include'
     }).then(r => r.ok ? r.json() : r.json().then(err => Promise.reject(err)));
-  }
+  },
+    async get(id) {
+    return fetch(`/bookings/api/${id}/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrf()
+      },
+      credentials: 'include'
+    }).then(r => {
+      if (!r.ok) {
+        return r.json().then(err => Promise.reject(err));
+      }
+      return r.json();
+    });
+  },
+
 };

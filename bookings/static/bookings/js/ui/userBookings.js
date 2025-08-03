@@ -1,13 +1,13 @@
 import { $ } from '../utils/dom.js';
 import { CalendarAPI } from '../api/calendar.js';
-import { formatDate } from '../utils/date.js';
+import { formatDate, getMonday } from '../utils/date.js';
+
 export const UserBookings = {
   store: null,
+
   init(store) {
     this.store = store;
     store.subscribe(() => this.render());
-       const { user } = this.store.get();
-    if (!user) return;
     this.render();
   },
 
@@ -16,13 +16,22 @@ export const UserBookings = {
     if (!container) return;
 
     const { user, currentDate, currentView } = this.store.get();
-    if (!user) return (container.innerHTML = 'Войдите для просмотра');
+    if (!user) return container.innerHTML = 'Войдите для просмотра';
 
-    const dateParam = currentView === 'week'
-      ? window.utils.getMonday(currentDate)
-      : currentDate;
+    let dateParam;
+    if (currentView === 'week') {
+      const startOfWeek = getMonday(currentDate);
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(endOfWeek.getDate() + 6); // конец недели (воскресенье)
+      dateParam = {
+        start: formatDate(startOfWeek),
+        end: formatDate(endOfWeek)
+      };
+    } else {
+      dateParam = formatDate(currentDate);
+    }
 
-    const params = { date: formatDate(dateParam), view: currentView };
+    const params = { date: dateParam, view: currentView };
     const data = await CalendarAPI.data(params);
 
     const bookings = data.user_bookings || [];
@@ -31,21 +40,33 @@ export const UserBookings = {
       return;
     }
 
+    // Объект для перевода статусов на русский
+    const statusTranslations = {
+      'pending': 'Ожидает оплаты',
+      'paid': 'Оплачено',
+      'cancelled': 'Отменено',
+      'completed': 'Завершено',
+      'processing': 'Идет',
+      'expired': 'Истекло',
+      'available': 'Свободен'
+    };
+
     const rows = bookings.map(b => `
       <tr>
         <td class="border p-2">${b.date}</td>
         <td class="border p-2">${b.start}–${b.end}</td>
         <td class="border p-2">#${b.table_number}</td>
-        <td class="border p-2">${b.status}</td>
+        <td class="border p-2">${statusTranslations[b.status] || b.status}</td>
         <td class="border p-2">
-          ${b.status === 'ожидает оплаты'
-            ? `<button class="text-blue-600">Оплатить</button>`
+          ${b.status === 'pending'
+            ? `<button class="text-blue-600" data-id="${b.id}">Оплатить</button>`
             : ''}
-          ${b.status !== 'отменено'
-            ? `<button class="text-red-600" onclick="BookingAPI.cancel(${b.id})">Отменить</button>`
+          ${b.status !== 'cancelled'
+            ? `<button class="text-red-600" data-id="${b.id}">Отменить</button>`
             : ''}
         </td>
-      </tr>`).join('');
+      </tr>
+    `).join('');
 
     container.innerHTML = `
       <table class="w-full border text-sm">
@@ -53,6 +74,35 @@ export const UserBookings = {
           <tr><th>Дата</th><th>Время</th><th>Стол</th><th>Статус</th><th>Действия</th></tr>
         </thead>
         <tbody>${rows}</tbody>
-      </table>`;
+      </table>
+    `;
+
+    // Добавляем обработчики событий для кнопок
+    container.querySelectorAll('button').forEach(button => {
+      button.addEventListener('click', async (e) => {
+        const bookingId = e.target.dataset.id;
+        const action = e.target.textContent.trim();
+
+        if (action === 'Оплатить') {
+          import('../api/booking.js').then(({ BookingAPI }) => {
+            BookingAPI.payment(bookingId).then(response => {
+              console.log('Payment successful:', response);
+              this.render(); // Обновляем список бронирований
+            }).catch(error => {
+              console.error('Payment failed:', error);
+            });
+          });
+        } else if (action === 'Отменить') {
+          import('../api/booking.js').then(({ BookingAPI }) => {
+            BookingAPI.cancel(bookingId).then(response => {
+              console.log('Booking cancelled:', response);
+              this.render(); // Обновляем список бронирований
+            }).catch(error => {
+              console.error('Cancellation failed:', error);
+            });
+          });
+        }
+      });
+    });
   }
 };

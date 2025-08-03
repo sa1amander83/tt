@@ -1,7 +1,7 @@
 import {DayView} from './day.js';
 import {WeekView} from './week.js';
 import {MonthView} from './month.js';
-import {formatDate, getMonday} from '../../utils/date.js';
+import {formatDate, getMonday, getWeekInterval} from '../../utils/date.js';
 import {CalendarAPI} from "../../api/calendar.js";
 
 const views = {day: DayView, week: WeekView, month: MonthView};
@@ -13,7 +13,16 @@ export const CalendarUI = {
         this.store = store;
         store.subscribe(() => this.render());
         this.bindNav();
+        this.bindFilters();
     },
+    bindFilters() {
+        $('#table-filter, #status-filter').on('change', () => {
+            const tableFilter = $('#table-filter').val();
+            const statusFilter = $('#status-filter').val();
+            this.store.set({tableFilter, statusFilter});
+        });
+    },
+
 
     bindNav() {
         $('#prev-btn').on('click', () => this.navigate(-1));
@@ -59,7 +68,9 @@ export const CalendarUI = {
     },
     updateHeader() {
         const {currentDate, currentView} = this.store.get();
+        const lastFetchedData = this.lastFetchedData;
         const titleEl = $('#calendar-title');
+        const workingHoursEl = $('#calendar-working-hours');
         if (!titleEl.length) return;
 
         const months = [
@@ -74,16 +85,19 @@ export const CalendarUI = {
                 text = `${currentDate.getDate()} ${months[currentDate.getMonth()]} ${currentDate.getFullYear()} ${daysShort[currentDate.getDay()]}`;
                 break;
             case 'week':
-                const weekStart = getMonday(currentDate);
-                const weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekEnd.getDate() + 6);
-                text = `${weekStart.getDate()}–${weekEnd.getDate()} ${months[weekEnd.getMonth()]} ${weekEnd.getFullYear()}`;
+                text = getWeekInterval(currentDate); // используем getWeekInterval
                 break;
             case 'month':
                 text = `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
                 break;
         }
         titleEl.text(text);
+
+        if (workingHoursEl.length && lastFetchedData?.working_hours) {
+            workingHoursEl.text(
+                `Время работы клуба: ${lastFetchedData.working_hours.open_time} – ${lastFetchedData.working_hours.close_time}`
+            );
+        }
     },
     switchView(view) {
         this.store.set({currentView: view});
@@ -98,49 +112,92 @@ export const CalendarUI = {
 
 
     bindSlotClicks() {
-        $('.cursor-pointer[data-date][data-time][data-table]').on('click', (e) => {
+      $('#day-view-container, #week-view-container, #month-view-container').on('click', '.cursor-pointer[data-date][data-time][data-table]', async (e) => {
             const target = e.currentTarget;
             const date = target.dataset.date;
             const time = target.dataset.time;
             const tableId = target.dataset.table;
+            const status = target.dataset.status;
+            const bookingId = target.dataset.booking_id;
+            const clickable = target.dataset.clickable === 'true';
+            const {user} = this.store.get()
+            if (!clickable) {
+                return; // Если слот не кликабельный, ничего не делаем
+            }
 
-            // Передай данные в модальное окно
+            //const {user} = this.store.get();
 
-            import('../bookingModal/index.js').then(module => {
-                module.BookingModal.open({date, time, tableId: Number(tableId)});
-            });
+            if (status === 'available') {
+                import('../bookingModal/index.js').then(module => {
+                    module.BookingModal.open({date, time, tableId: Number(tableId)});
+                });
+            } else if (bookingId && user?.is_staff) {
+                   console.log("Admin is viewing booking", bookingId); // ← сюда
+                import('../../api/booking.js').then(({BookingAPI}) => {
+                    BookingAPI.get(bookingId).then(booking => {
+                        this.showBookingDetails(booking);
+                    }).catch(error => {
+                        console.error('Failed to load booking details:', error);
+                    });
+                }).catch(error => {
+                    console.error('Failed to load BookingAPI:', error);
+                });
+            }
         });
     },
+    showBookingDetails(booking) {
+        // Создаем модальное окно с деталями брони
+        const modal = html`
+            <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg p-6 max-w-md w-full">
+                    <h3 class="text-xl font-bold mb-4">Детали бронирования #${booking.id}</h3>
+                    <div class="space-y-2">
+                        <p><strong>Стол:</strong> ${booking.table.number}</p>
+                        <p><strong>Дата:</strong> ${new Date(booking.start_time).toLocaleDateString()}</p>
+                        <p><strong>Время:</strong> ${new Date(booking.start_time).toLocaleTimeString()} -
+                            ${new Date(booking.end_time).toLocaleTimeString()}</p>
+                        <p><strong>Статус:</strong> ${booking.status}</p>
+                        <p><strong>Клиент:</strong> ${booking.user.name || booking.user.email}</p>
+                        <p><strong>Сумма:</strong> ${booking.total_price} ₽</p>
+                    </div>
+                    <div class="mt-6 flex justify-end space-x-2">
+                        <button class="px-4 py-2 bg-gray-300 rounded" onclick="this.closest('.fixed').remove()">
+                            Закрыть
+                        </button>
+                        ${booking.status === 'pending' ?
+                                `<button class="px-4 py-2 bg-red-500 text-white rounded" onclick="BookingAPI.cancel(${booking.id}).then(() => this.closest('.fixed').remove())">Отменить</button>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
 
+        document.body.insertAdjacentHTML('beforeend', modal);
+    },
 
     async render() {
-        const {currentDate, currentView} = this.store.get();
+        const {currentDate, currentView, tableFilter, statusFilter} = this.store.get();
+
 
         /* 1. Показать нужный контейнер, скрыть остальные */
         $('#day-view-container, #week-view-container, #month-view-container')
             .addClass('hidden');
         $(`#${currentView}-view-container`).removeClass('hidden');
 
-        /* 2. Определить дату для запроса */
-        const dateParam = currentView === 'week'
-            ? getMonday(currentDate)
-            : currentDate;
-
-        /* 3. Сформировать параметры API */
         const params = {
-            date: formatDate(dateParam),
+            date: formatDate(currentView === 'week' ? getMonday(currentDate) : currentDate),
             view: currentView,
-            table: $('#table-filter').val() || 'all',
-            status: $('#status-filter').val() || 'all'
+            table: tableFilter || 'all',
+            status: statusFilter || 'all'
         };
 
         /* 4. Получить данные и отрисовать */
         const data = await CalendarAPI.data(params);
         $(`#${currentView}-view-container`)
-            .html(views[currentView].render(data, this.store));
+            .html(views[currentView].render(data, {store: this.store}));
 
         /* 5. Подписки и обновление шапки */
         this.bindSlotClicks();
+        this.lastFetchedData = data;
         this.updateHeader();
     }
 };

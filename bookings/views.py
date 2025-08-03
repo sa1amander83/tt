@@ -130,25 +130,32 @@ class CalendarAPIView(APIView):
         return False, None, None, False
 
     def get_bookings(self, start, end, user):
-        # Для админа возвращаем все бронирования
-        if user and user.is_staff:
-            return Booking.objects.filter(
-                start_time__lt=end,
-                end_time__gt=start
-            )
+        # Возвращаем все бронирования в указанном временном промежутке
+        return Booking.objects.filter(
+            start_time__lt=end,
+            end_time__gt=start
+        ).exclude(status__in=['cancelled', 'expired'])
 
-        # Для обычных пользователей возвращаем только их бронирования
-        if user:
-            return Booking.objects.filter(
-                start_time__lt=end,
-                end_time__gt=start,
+    # def get_bookings(self, start, end, user):
+    #     # Для админа возвращаем все бронирования
+    #     if user and user.is_staff:
+    #         return Booking.objects.filter(
+    #             start_time__lt=end,
+    #             end_time__gt=start
+    #         )
+    #
+    #     # Для обычных пользователей возвращаем только их бронирования
+    #     if user:
+    #         return Booking.objects.filter(
+    #             start_time__lt=end,
+    #             end_time__gt=start,
+    #
+    #         )
+    #
+    #     # Для анонимных пользователей не возвращаем бронирования
+    #     return Booking.objects.none()
 
-            )
-
-        # Для анонимных пользователей не возвращаем бронирования
-        return Booking.objects.none()
     def get_day_view(self, date, user, slot_duration):
-
         is_working_day, open_time, close_time, shortened = self.get_open_close_times(date)
         if not is_working_day:
             return Response({
@@ -164,64 +171,63 @@ class CalendarAPIView(APIView):
 
         tz = pytz.timezone('Europe/Moscow')
         now = timezone.now().astimezone(tz)
-
-        # Создание start_dt и end_dt как aware сразу
         start_dt = tz.localize(datetime.combine(date, open_time))
         end_dt = tz.localize(datetime.combine(date, close_time))
 
-        # Пользовательские бронирования
-        if user:
-            today = now.astimezone(tz).date()
-            start_of_today = tz.localize(datetime.combine(today, time.min))
-
-            user_bookings_qs = Booking.objects.filter(
-                user=user,
-                start_time__gte=start_of_today
-            )
-
-            user_bookings = [{
-                'id': b.id,
-                'date': b.start_time.date().isoformat(),
-                'start': b.start_time.strftime('%H:%M'),
-                'end': b.end_time.strftime('%H:%M'),
-                'table_number': b.table.number if b.table else None,
-                'table_type': str(b.table.table_type) if b.table and b.table.table_type else None,
-                'status': b.get_status_display()
-            } for b in user_bookings_qs]
-        else:
-            user_bookings = []
+        # Получаем данные с учетом фильтров
+        table_filter = self.request.query_params.get('table', 'all')
+        status_filter = self.request.query_params.get('status', 'all')
 
         tables = Table.objects.filter(is_active=True).order_by('number')
+        if table_filter != 'all':
+            tables = tables.filter(id=table_filter)
 
-        # Генерация временных слотов
+        # Получаем бронирования с учетом фильтров
+        bookings = Booking.objects.filter(
+            start_time__lt=end_dt,
+            end_time__gt=start_dt
+        )
+
+        if status_filter == 'upcoming':
+            bookings = bookings.filter(start_time__gte=now)
+        elif status_filter == 'past':
+            bookings = bookings.filter(end_time__lt=now)
+        elif status_filter == 'cancelled':
+            bookings = bookings.filter(status='cancelled')
+
+        # if user and not user.is_staff:
+        #     bookings = bookings.filter(user=user)
+
+        # Генерация слотов с шагом slot_duration
         slots = []
         current = start_dt
-        if start_dt.minute != 0:
-            next_hour = (start_dt + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
-            if next_hour > end_dt:
-                next_hour = end_dt
-            slots.append((current, next_hour))
-            current = next_hour
-
         while current < end_dt:
             slot_end = current + timedelta(minutes=slot_duration)
             if slot_end > end_dt:
-                slots.append((current, end_dt))
-                break
+                slot_end = end_dt
             slots.append((current, slot_end))
             current = slot_end
 
-        if current < end_dt and current + timedelta(minutes=slot_duration) == end_dt:
-            slots.append((current, end_dt))
-
-        bookings = self.get_bookings(start_dt, end_dt, user)
+        # Подготовка данных о бронированиях
         booking_map = defaultdict(list)
         for b in bookings:
-            booking_map[b.table_id].append((b.start_time, b.end_time, b.status))
-
+            booking_map[b.table_id].append({
+                'start': b.start_time,
+                'end': b.end_time,
+                'status': b.status,
+                'id': b.id,
+                'user': {
+                    'id': b.user.id,
+                    'name': b.user.get_full_name() or b.user.username
+                }
+            })
+        # Получаем данные о ценах и акциях
         pricing_data = TableTypePricing.objects.select_related('pricing_plan', 'table_type')
-        offers = SpecialOffer.objects.filter(is_active=True, valid_from__lte=date, valid_to__gte=date).prefetch_related(
-            'tables')
+        offers = SpecialOffer.objects.filter(
+            is_active=True,
+            valid_from__lte=date,
+            valid_to__gte=date
+        ).prefetch_related('tables')
 
         offers_by_table = defaultdict(list)
         for offer in offers:
@@ -229,51 +235,53 @@ class CalendarAPIView(APIView):
             for table in target_tables:
                 offers_by_table[table.id].append(offer)
 
+        # Формируем расписание дня
         time_slots = []
         day_schedule = defaultdict(dict)
-        print("now:", now)  # для дебага
-        print("first_slot_start:", slots[0][0])
-        print("first_slot_end:", slots[0][1])
+
         for slot_start, slot_end in slots:
             label = slot_start.strftime('%H:%M')
-            slot_visible = False  # флаг
-
+            slot_visible = False
 
             for table in tables:
-                overlapping_booking = next(
-                    ((s, e, status) for s, e, status in booking_map.get(table.id, []) if
-                     s < slot_end and e > slot_start),
-                    None
-                )
-
                 is_past = slot_end <= now
 
+                # Пропускаем прошедшие слоты для обычных пользователей
                 if is_past and not (user and user.is_staff):
-                    continue  # Пропустить слот
+                    continue
 
-                if overlapping_booking:
-                    slot_status = overlapping_booking[2]  # берём статус из модели Booking
-                elif is_past:
-                    slot_status = '-'
+                # Проверяем наличие брони в этом слоте
+                booking_info = None
+                for b in booking_map.get(table.id, []):
+                    if slot_start < b['end'] and slot_end > b['start']:
+                        booking_info = b
+                        break
+
+                # Определяем статус слота
+                if booking_info:
+                    slot_status = booking_info['status']
+                    booking_id = booking_info['id']
                 else:
-                    slot_status = 'available'
+                    slot_status = 'available' if not is_past else 'past'
+                    booking_id = None
 
-
+                # Получаем цену с учетом тарифа и акций
                 pricing = None
                 for p in pricing_data:
                     if p.table_type != table.table_type:
                         continue
-                    plan = p.pricing_plan
-                    if plan.weekdays and str(slot_start.isoweekday()) not in plan.weekdays:
+                    if p.pricing_plan.weekdays and str(slot_start.isoweekday()) not in p.pricing_plan.weekdays:
                         continue
-                    if plan.time_from and plan.time_to:
-                        if not (plan.time_from <= slot_start.time() < plan.time_to):
+                    if p.pricing_plan.time_from and p.pricing_plan.time_to:
+                        if not (p.pricing_plan.time_from <= slot_start.time() < p.pricing_plan.time_to):
                             continue
                     pricing = p
                     break
 
                 duration_hours = (slot_end - slot_start).total_seconds() / 3600
                 base_price = pricing.hour_rate * duration_hours if pricing else 0
+
+                # Применяем акции
                 discount = 0
                 for offer in offers_by_table.get(table.id, []):
                     if str(slot_start.isoweekday()) in offer.weekdays:
@@ -283,6 +291,7 @@ class CalendarAPIView(APIView):
 
                 final_price = base_price * (1 - discount / 100)
 
+                # Сохраняем данные слота
                 day_schedule[table.id][label] = {
                     'status': slot_status,
                     'start': slot_start.strftime('%H:%M'),
@@ -290,28 +299,47 @@ class CalendarAPIView(APIView):
                     'price': int(final_price),
                     'discount_applied': discount > 0,
                     'discount_percent': discount,
-                    'slot_duration': slot_duration
+                    'slot_duration': slot_duration,
+                    'booking_id': booking_id,
+                    'is_past': is_past
                 }
 
-                slot_visible = True  # хотя бы один слот видим
+                slot_visible = True
 
             if slot_visible:
                 time_slots.append(label)
-        return Response({
+
+        # Формируем ответ
+        response_data = {
             'date': date.strftime('%Y-%m-%d'),
             'is_working_day': True,
             'shortened': shortened,
             'weekday': date.weekday(),
             'slot_duration': slot_duration,
             'working_hours': {
-                'open_time': open_time.strftime('%H:%M') if open_time else None,
-                'close_time': close_time.strftime('%H:%M') if close_time else None,
+                'open_time': open_time.strftime('%H:%M'),
+                'close_time': close_time.strftime('%H:%M'),
             },
-            'tables': [{'id': t.id, 'number': t.number, 'table_type': str(t.table_type)} for t in tables],
+            'tables': [{
+                'id': t.id,
+                'number': t.number,
+                'table_type': str(t.table_type),
+                'capacity': t.table_type.max_capacity
+            } for t in tables],
             'time_slots': time_slots,
             'day_schedule': day_schedule,
-            'user_bookings': user_bookings
-        })
+            'user_bookings': [{
+                'id': b.id,
+                'date': b.start_time.date().isoformat(),
+                'start': b.start_time.strftime('%H:%M'),
+                'end': b.end_time.strftime('%H:%M'),
+                'table_number': b.table.number,
+                'status': b.status,
+                'can_cancel': b.status in ['pending', 'paid']
+            } for b in bookings.filter(user=user)] if user else []
+        }
+
+        return Response(response_data)
 
     def get_week_view(self, date, user, slot_duration):
         start = date - timedelta(days=date.weekday())
@@ -419,9 +447,19 @@ class CalendarAPIView(APIView):
             # Получаем бронирования
             bookings = self.get_bookings(day_start, day_end, user)
             booking_map = defaultdict(list)
+            # for b in bookings:
+            #     booking_map[b.table_id].append((b.start_time, b.end_time))
             for b in bookings:
-                booking_map[b.table_id].append((b.start_time, b.end_time))
-
+                booking_map[b.table_id].append({
+                    'start': b.start_time,
+                    'end': b.end_time,
+                    'status': b.status,
+                    'id': b.id,
+                    'user': {
+                        'id': b.user.id,
+                        'name': b.user.get_full_name() or b.user.username
+                    }
+                })
             # Цены и акции
             pricing_data = TableTypePricing.objects.select_related('pricing_plan', 'table_type')
             offers = SpecialOffer.objects.filter(
@@ -481,6 +519,17 @@ class CalendarAPIView(APIView):
                                 continue
                         pricing = p
                         break
+                    booking_info = next((
+                        d for d in booking_map.get(table.id, [])
+                        if d['start'] < slot_end and d['end'] > slot_start
+                    ), None)
+
+                    if booking_info:
+                        slot_status = booking_info['status']
+                        booking_id = booking_info['id']
+                    else:
+                        slot_status = 'available' if not is_past else 'past'
+                        booking_id = None
 
                     duration = (slot_end - slot_start).total_seconds() / 3600
                     base_price = pricing.hour_rate * duration if pricing else 0
@@ -500,7 +549,8 @@ class CalendarAPIView(APIView):
                         'end': slot_end.strftime('%H:%M'),
                         'price': int(final_price),
                         'discount_applied': discount > 0,
-                        'discount_percent': discount
+                        'discount_percent': discount,
+                        'booking_id': str(booking_id) if booking_id else None,
                     }
 
                 if any_visible:
@@ -537,8 +587,6 @@ class CalendarAPIView(APIView):
             'slot_duration': slot_duration,
             'user_bookings': user_bookings
         })
-
-
 
 
 @require_GET
@@ -783,6 +831,7 @@ class UpdateBookingView(LoginRequiredMixin, UpdateView):
     def calculate_booking_cost(self, booking):
         """Аналогично CreateBookingView"""
 
+
 @login_required
 def get_booking_info(request):
     if not request.user.is_authenticated:
@@ -922,6 +971,7 @@ def get_booking_info(request):
 
     return JsonResponse(response)
 
+
 @login_required
 @require_POST
 def cancel_booking(request, booking_id):
@@ -1015,6 +1065,7 @@ def booking_rates_api(request):
             'error': str(e),
             'status': 'error'
         }, status=500)
+
 
 @require_GET
 def tables_api(request):
@@ -1154,7 +1205,7 @@ def create_booking_api(request):
                 return JsonResponse({'error': 'Вы уже использовали этот промокод максимально возможное число раз'},
                                     status=400)
 
-    # Также проверка глобального лимита
+            # Также проверка глобального лимита
             if promo.usage_limit is not None and promo.used_count >= promo.usage_limit:
                 return JsonResponse({'error': 'Этот промокод уже исчерпал лимит использования'}, status=400)
             if not promo or not (promo.valid_from <= start_datetime.date() <= promo.valid_to):
@@ -1255,6 +1306,7 @@ def create_booking_api(request):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
 
 from yookassa import Configuration, Payment
 from django.http import JsonResponse
@@ -1382,6 +1434,7 @@ def create_yookassa_payment(request):
     except Exception as e:
         return JsonResponse({'error': f'Ошибка при создании платежа: {str(e)}'}, status=500)
 
+
 def payment_callback(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
 
@@ -1431,7 +1484,6 @@ def yookassa_webhook(request):
 
 @require_http_methods(["GET"])
 def equipment_api(request):
-
     equipment = Equipment.objects.values(
         'id', 'name', 'description', 'price_per_hour', 'price_per_half_hour'
     )
