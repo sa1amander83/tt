@@ -3,7 +3,7 @@ import {WeekView} from './week.js';
 import {MonthView} from './month.js';
 import {formatDate, getMonday, getWeekInterval} from '../../utils/date.js';
 import {CalendarAPI} from "../../api/calendar.js";
-
+import { BookingModal } from '../bookingModal/index.js';
 const views = {day: DayView, week: WeekView, month: MonthView};
 
 export const CalendarUI = {
@@ -111,40 +111,42 @@ export const CalendarUI = {
     },
 
 
-    bindSlotClicks() {
-      $('#day-view-container, #week-view-container, #month-view-container').on('click', '.cursor-pointer[data-date][data-time][data-table]', async (e) => {
-            const target = e.currentTarget;
+bindSlotClicks() {
+    // Удаляем старые обработчики перед добавлением новых
+    $('#day-view-container, #week-view-container, #month-view-container')
+        .off('click', '.cursor-pointer[data-date][data-time][data-table]');
+
+    // Добавляем новый обработчик с правильным делегированием
+    $('#day-view-container, #week-view-container, #month-view-container')
+        .on('click', '.cursor-pointer[data-date][data-time][data-table]', async (e) => {
+            const target = $(e.target).closest('.cursor-pointer[data-date][data-time][data-table]')[0];
+            if (!target) return;
+
             const date = target.dataset.date;
             const time = target.dataset.time;
             const tableId = target.dataset.table;
             const status = target.dataset.status;
             const bookingId = target.dataset.booking_id;
             const clickable = target.dataset.clickable === 'true';
-            const {user} = this.store.get()
-            if (!clickable) {
-                return; // Если слот не кликабельный, ничего не делаем
-            }
+            const {user} = this.store.get();
 
-            //const {user} = this.store.get();
+            if (!clickable) return;
 
             if (status === 'available') {
-                import('../bookingModal/index.js').then(module => {
-                    module.BookingModal.open({date, time, tableId: Number(tableId)});
-                });
+                e.stopPropagation(); // Предотвращаем всплытие
+                await BookingModal.open({date, time, tableId: Number(tableId)});
             } else if (bookingId && user?.is_staff) {
-                   console.log("Admin is viewing booking", bookingId); // ← сюда
+                e.stopPropagation(); // Предотвращаем всплытие
                 import('../../api/booking.js').then(({BookingAPI}) => {
                     BookingAPI.get(bookingId).then(booking => {
                         this.showBookingDetails(booking);
                     }).catch(error => {
                         console.error('Failed to load booking details:', error);
                     });
-                }).catch(error => {
-                    console.error('Failed to load BookingAPI:', error);
                 });
             }
         });
-    },
+},
     showBookingDetails(booking) {
         // Создаем модальное окно с деталями брони
         const modal = html`

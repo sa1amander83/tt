@@ -17,6 +17,7 @@ export const BookingModal = {
         $('#close-modal')?.addEventListener('click', () => this.close());
         $('#cancel-booking')?.addEventListener('click', () => this.close());
         $('#apply-promo-btn')?.addEventListener('click', () => this.applyPromoCode());
+
         // $('#apply-promo-btn')?.addEventListener('click', async () => {
         //     const code = $('#promo-code')?.value.trim();
         //     const userId = window.CURRENT_USER_ID || null;
@@ -93,8 +94,15 @@ export const BookingModal = {
         // 7. Слушатели
         $('#booking-duration')?.addEventListener('change', () => this.updateBookingCost());
         $('#booking-start-time')?.addEventListener('change', () => this.updateBookingCost());
-        $('#booking-table')?.addEventListener('change', () => this.updateBookingCost());
+        $('#booking-table')?.addEventListener('change', () => {
+            this.populateParticipants($('#booking-table').value);
+            this.populateTimeSelect($('#booking-start-time').value); // Сохраняем текущее выбранное время
+            this.updateBookingCost();
+        });
+
         $('#participants')?.addEventListener('change', () => this.updateBookingCost());
+
+
     },
 
     async applyPromoCode() {
@@ -160,33 +168,57 @@ export const BookingModal = {
         const {settings} = this.store.get();
         const open = settings?.current_day?.open_time ?? '09:00';
         const close = settings?.current_day?.close_time ?? '22:00';
+        const tableId = this.slot?.tableId || $('#booking-table')?.value;
 
-        const [openH, openM] = open.split(':').map(Number);
-        const [closeH, closeM] = close.split(':').map(Number);
+        // Получаем расписание для выбранного стола
+        const tableSchedule = settings?.current_day?.schedule?.find(s =>
+            s.table_id === Number(tableId))?.bookings || [];
 
         const sel = $('#booking-start-time');
         sel.innerHTML = '';
 
-        let dt = new Date();
-        const date = this.slot?.date;
-        dt = new Date(`${date}T${open}`);
-
+        let currentTime = new Date(`${this.slot.date}T${open}`);
+        const endTime = new Date(`${this.slot.date}T${close}`);
         const now = new Date();
 
-        const step = 30;
-        const last = new Date(`${date}T${close}`);
-        last.setMinutes(last.getMinutes() - step);
+        const minDuration = 30; // минимальная длительность в минутах
+        const step = 30; // шаг в минутах
 
-        while (dt <= last) {
-            if (dt > now) {  // 🔒 Проверка на прошедшее время
-                const t = dt.toTimeString().slice(0, 5);
+        while (currentTime < endTime) {
+            const timeStr = currentTime.toTimeString().substring(0, 5);
+
+            // Пропускаем прошедшее время
+            if (currentTime <= now) {
+                currentTime = new Date(currentTime.getTime() + step * 60000);
+                continue;
+            }
+
+            // Проверяем доступность слота
+            let isAvailable = true;
+            const slotEnd = new Date(currentTime.getTime() + minDuration * 60000);
+
+            // Проверяем пересечения с существующими бронированиями
+            for (const booking of tableSchedule) {
+                const bookingStart = new Date(booking.start_time);
+                const bookingEnd = new Date(booking.end_time);
+
+                if ((currentTime >= bookingStart && currentTime < bookingEnd) ||
+                    (slotEnd > bookingStart && slotEnd <= bookingEnd) ||
+                    (currentTime <= bookingStart && slotEnd >= bookingEnd)) {
+                    isAvailable = false;
+                    break;
+                }
+            }
+
+            if (isAvailable) {
                 const opt = document.createElement('option');
-                opt.value = t;
-                opt.textContent = t;
-                opt.selected = t === defaultTime;
+                opt.value = timeStr;
+                opt.textContent = timeStr;
+                opt.selected = timeStr === defaultTime;
                 sel.appendChild(opt);
             }
-            dt.setMinutes(dt.getMinutes() + step);
+
+            currentTime = new Date(currentTime.getTime() + step * 60000);
         }
     },
     populateParticipants(tableId) {
@@ -230,14 +262,14 @@ export const BookingModal = {
         const schedule = settings?.current_day?.schedule ?? [];
 
         const tableSchedule = schedule.find(s => s.table_id === Number(tableId))?.bookings || [];
-
         const startTime = new Date(`${date}T${time}`);
 
-        const futureBookings = tableSchedule
+        // Находим ближайшее бронирование после указанного времени
+        const nextBooking = tableSchedule
             .filter(b => new Date(b.start_time) > startTime)
-            .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+            .sort((a, b) => new Date(a.start_time) - new Date(b.start_time))[0];
 
-        return futureBookings.length ? new Date(futureBookings[0].start_time) : null;
+        return nextBooking ? new Date(nextBooking.start_time) : null;
     },
     async updateBookingCost() {
         const {
@@ -257,6 +289,20 @@ export const BookingModal = {
             const res = await fetch(`api/get-booking-info/?${params.toString()}`);
             if (!res.ok) throw new Error("Ошибка при получении информации о бронировании");
 
+
+            const formData = this.getFormPayload();
+
+            // Проверяем доступность выбранного времени
+            const {date, time, table_id} = formData;
+            const nextBooking = this.getNextBookingTime(date, time, table_id);
+
+            if (nextBooking) {
+                const availableMinutes = (nextBooking - new Date(`${date}T${time}`)) / 60000;
+                if (availableMinutes < formData.duration_minutes) {
+                    showNotification('Выбранная длительность недоступна', 'error');
+                    return;
+                }
+            }
             const data = await res.json();
             const maxDur = this.getMaxDurationMinutes(time);
             const effectiveMax = Math.min(maxDur, data?.max_duration || 180);
