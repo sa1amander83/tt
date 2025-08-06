@@ -2018,71 +2018,71 @@ function renderSlotCell(data, tableId, slotTime) {
         }
 
 
-        document.getElementById("apply-promo-btn").addEventListener("click", async () => {
-            const codeInput = document.getElementById("promo-code");
-            const message = document.getElementById("promo-code-message");
-            const code = codeInput.value.trim();
-
-            if (!code) {
-                message.textContent = "Введите промокод.";
-                message.classList.remove("hidden");
-                message.classList.replace("text-green-600", "text-red-600");
-                return;
-            }
-
-            try {
-                const response = await fetch("/management/validate-promo/", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        'X-CSRFToken': getCSRFToken()
-                    },
-                    body: JSON.stringify({
-                        code: code,
-                        user_id: state.currentUserId || null
-                    })
-                });
-
-                if (!response.ok) {
-                    const text = await response.text();
-                    throw new Error(text || "Ошибка сервера");
-                }
-
-                const data = await response.json();
-
-                if (!data.valid) {
-                    throw new Error(data.error || "Недействительный промокод");
-                }
-
-                // Сохраняем промокод в состоянии
-                state.promoCode = {
-                    code: code,
-                    discount_percent: data.discount_percent || 0,
-                    description: data.description || code,
-                    promo_type: data.promo_type || 'percent'
-                };
-                state.promoApplied = true;
-
-                message.textContent = `Промокод применен: ${state.promoCode.description}`;
-                message.classList.remove("hidden");
-                message.classList.replace("text-red-600", "text-green-600");
-
-                // Обновляем стоимость с учетом скидки
-                updateBookingCost();
-
-            } catch (err) {
-                console.error("Ошибка промокода:", err);
-                state.promoCode = null;
-                state.promoApplied = false;
-
-                message.textContent = err.message || "Ошибка применения";
-                message.classList.remove("hidden");
-                message.classList.replace("text-green-600", "text-red-600");
-
-                // Пересчитываем стоимость без скидки
-                updateBookingCost();
-            }
-        });
+        // document.getElementById("apply-promo-btn").addEventListener("click", async () => {
+        //     const codeInput = document.getElementById("promo-code");
+        //     const message = document.getElementById("promo-code-message");
+        //     const code = codeInput.value.trim();
+        //
+        //     if (!code) {
+        //         message.textContent = "Введите промокод.";
+        //         message.classList.remove("hidden");
+        //         message.classList.replace("text-green-600", "text-red-600");
+        //         return;
+        //     }
+        //
+        //     try {
+        //         const response = await fetch("/management/validate-promo/", {
+        //             method: "POST",
+        //             headers: {
+        //                 "Content-Type": "application/json",
+        //                 'X-CSRFToken': getCSRFToken()
+        //             },
+        //             body: JSON.stringify({
+        //                 code: code,
+        //                 user_id: state.currentUserId || null
+        //             })
+        //         });
+        //
+        //         if (!response.ok) {
+        //             const text = await response.text();
+        //             throw new Error(text || "Ошибка сервера");
+        //         }
+        //
+        //         const data = await response.json();
+        //
+        //         if (!data.valid) {
+        //             throw new Error(data.error || "Недействительный промокод");
+        //         }
+        //
+        //         // Сохраняем промокод в состоянии
+        //         state.promoCode = {
+        //             code: code,
+        //             discount_percent: data.discount_percent || 0,
+        //             description: data.description || code,
+        //             promo_type: data.promo_type || 'percent'
+        //         };
+        //         state.promoApplied = true;
+        //
+        //         message.textContent = `Промокод применен: ${state.promoCode.description}`;
+        //         message.classList.remove("hidden");
+        //         message.classList.replace("text-red-600", "text-green-600");
+        //
+        //         // Обновляем стоимость с учетом скидки
+        //         updateBookingCost();
+        //
+        //     } catch (err) {
+        //         console.error("Ошибка промокода:", err);
+        //         state.promoCode = null;
+        //         state.promoApplied = false;
+        //
+        //         message.textContent = err.message || "Ошибка применения";
+        //         message.classList.remove("hidden");
+        //         message.classList.replace("text-green-600", "text-red-600");
+        //
+        //         // Пересчитываем стоимость без скидки
+        //         updateBookingCost();
+        //     }
+        // });
         init();
     }
 )

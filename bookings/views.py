@@ -1200,16 +1200,20 @@ def create_booking_api(request):
         if promo_code_str:
             promo = PromoCode.objects.filter(code=promo_code_str, is_active=True).first()
 
+            if not promo:
+                return JsonResponse({'error': 'Промокод не найден или неактивен'}, status=404)
+
             usage_count = PromoCodeUsage.objects.filter(promo_code=promo, user=request.user).count()
-            if usage_count >= promo.max_uses_per_user:
+            if promo.max_uses_per_user is not None and usage_count >= promo.max_uses_per_user:
                 return JsonResponse({'error': 'Вы уже использовали этот промокод максимально возможное число раз'},
                                     status=400)
 
             # Также проверка глобального лимита
             if promo.usage_limit is not None and promo.used_count >= promo.usage_limit:
                 return JsonResponse({'error': 'Этот промокод уже исчерпал лимит использования'}, status=400)
-            if not promo or not (promo.valid_from <= start_datetime.date() <= promo.valid_to):
-                return JsonResponse({'error': 'Invalid or expired promo code'}, status=400)
+
+            if not (promo.valid_from <= start_datetime.date() <= promo.valid_to):
+                return JsonResponse({'error': 'Срок действия промокода истёк'}, status=400)
 
         membership = request.user.memberships.filter(is_active=True).first()
         if membership and not membership.is_valid():
