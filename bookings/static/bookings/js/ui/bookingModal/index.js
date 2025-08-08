@@ -176,38 +176,7 @@ export const BookingModal = {
 
         },
 
-// async applyPromoCode() {
-//     const promoCode = $('#promo-code').value.trim();
-//     if (!promoCode) return;
-//
-//     try {
-//         const response = await fetch('/management/validate-promo/', {
-//             method: 'POST',
-//             headers: {
-//                 'Content-Type': 'application/json',
-//                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-//             },
-//             body: JSON.stringify({promo_code: promoCode})
-//         });
-//
-//         const data = await response.json();
-//
-//         if (response.ok) {
-//             // Промокод действителен
-//             $('#promo-code-message').classList.add('hidden');
-//             this.store.set({promoCode: data});
-//             this.updateBookingCost();
-//         } else {
-//             // Промокод недействителен
-//             $('#promo-code-message').textContent = data.error || 'Недействительный промокод';
-//             $('#promo-code-message').classList.remove('hidden');
-//         }
-//     } catch (error) {
-//         showNotification('Ошибка применения промокода:', error);
-//         $('#promo-code-message').textContent = 'Ошибка при проверке промокода';
-//         $('#promo-code-message').classList.remove('hidden');
-//     }
-// },
+
         populateTableSelect(defaultId) {
             const {tables, table_types} = this.store.get();
             const sel = $('#booking-table');
@@ -446,8 +415,8 @@ export const BookingModal = {
                 const message = err?.error || err?.message || 'Неизвестная ошибка при бронировании';
                 showNotification(message, 'error');
             }
-        }
-        ,
+
+        },
 
         getFormPayload() {
             const durationHours = parseFloat($('#booking-duration')?.value);

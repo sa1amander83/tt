@@ -1,18 +1,16 @@
 import {html} from '../components.js';
 
 export const DayView = {
-    render(data, options) {
-        const {store} = options;
-        if (!data.is_working_day)
-            return html`
-                <div class="p-8 text-center">Выходной день</div>`;
+   render(data, store) {
+    if (!data.is_working_day)
+        return html`<div class="p-8 text-center">Выходной день</div>`;
 
         const rows = data.time_slots.map(time => {
             const cells = data.tables.map(t => this.slotCell(data, t, time, store));
             return html`
                 <div class="flex border-b">
                     <div class="w-24 p-2 text-right">${time}</div>
-                    <div class="flex-1 grid grid-cols-${data.tables.length}">
+                    <div class="flex-1 grid grid-cols-${data.tables.length} gap-px">
                         ${cells.join('')}
                     </div>
                 </div>`;
@@ -35,7 +33,7 @@ export const DayView = {
     },
 
     slotCell(data, table, time, store) {
-        const slot = data.day_schedule[table.id]?.[time] || {};
+        const slot = data.day_schedule[table.number]?.[time] || {};
         const isPast = new Date(`${data.date}T${time}`) < new Date();
         const state = store.get();
         const user = state.user;
@@ -52,7 +50,7 @@ export const DayView = {
             // Прошедшее время
             switch (status) {
                 case 'completed':
-                    cls = 'bg-green-100 text-green-800 rounded-xl';
+                    cls = 'bg-green-100 text-green-800 rounded-xl ';
                     text = 'Завершено';
                     break;
                 case 'processed':
@@ -75,12 +73,12 @@ export const DayView = {
             switch (status) {
                 case 'processed':
                 case 'pending':
-                    cls = 'bg-red-500 text-white rounded-xl';
+                    cls = 'bg-yellow-500 text-white rounded-xl';
                     text = 'Ждет оплаты';
                     clickable = true;
                     break;
                 case 'paid':
-                    cls = 'bg-yellow-500 text-white rounded-xl';
+                    cls = 'bg-red-500 text-white rounded-xl';
                     text = 'Занят';
                     break;
                 case 'cancelled':
@@ -108,7 +106,7 @@ export const DayView = {
             <div class="flex items-center justify-center h-12 border-b ${cls} ${(clickable || (user && user.is_staff)) ? 'cursor-pointer hover:opacity-90' : ''}"
                  data-date="${data.date}"
                  data-time="${time}"
-                 data-table="${table.id}"
+                 data-table="${table.number}"
                  data-status="${status}"
                  data-booking-id="${slot.booking_id || ''}"
                  data-clickable="${clickable || (user && user.is_staff)}">

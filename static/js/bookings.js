@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
 
             if (elements.tableSelect && state.tables.length) {
-                elements.tableSelect.innerHTML = state.tables.map(table => `<option value="${table.id}" 
+                elements.tableSelect.innerHTML = state.tables.map(table => `<option value="${table.number}" 
                     data-type="${table.table_type}" 
                     data-capacity="${table.max_capacity}">
                     Стол #${table.number} (${table.table_type})
@@ -699,7 +699,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             select.innerHTML = '';
             tables.forEach(table => {
-                const option = new Option(`Стол #${table.number} (${table.table_type})`, table.id);
+                const option = new Option(`Стол #${table.number} (${table.table_type})`, table.number);
                 option.dataset.maxPlayers = table.max_capacity || 2;
                 select.add(option);
             });
@@ -1387,7 +1387,7 @@ function generateDayView(data) {
             <div class="flex border-b border-gray-200 hover:bg-gray-50 booking-slot-row">
                 <div class="w-24 md:w-32 p-3 text-right text-sm font-semibold text-gray-700">${slotTime}</div>
                 <div class="flex-1 grid grid-cols-${data.tables.length} divide-x divide-gray-200">
-                    ${data.tables.map(table => renderSlotCell(data, table.id, slotTime)).join('')}
+                    ${data.tables.map(table => renderSlotCell(data, table.number, slotTime)).join('')}
                 </div>
             </div>
         `;
@@ -1428,7 +1428,7 @@ function generateDayView(data) {
     <div class="w-24 md:w-32 p-3 text-right text-sm font-semibold text-gray-700">${slotTime}</div>
     <div class="flex-1 grid grid-cols-${data.tables.length} divide-x divide-gray-200">
         ${data.tables.map(table => {
-                const slot = renderSlotCell(data, table.id, slotTime);
+                const slot = renderSlotCell(data, table.number, slotTime);
                 return slot;
             }).join('')}
     </div>
@@ -1568,7 +1568,7 @@ function renderSlotCell(data, tableId, slotTime) {
             return `
         <div class="flex flex-col gap-y-2">
             ${data.tables.map(table => {
-                const tableSchedule = day.day_schedule?.[table.id] || {};
+                const tableSchedule = day.day_schedule?.[table.number] || {};
                 const slotEntries = Object.entries(tableSchedule).filter(([key]) => key !== '_meta');
 
                 if (!day.is_working_day || slotEntries.length === 0) {
@@ -1591,17 +1591,17 @@ function renderSlotCell(data, tableId, slotTime) {
                 if (isPastDay) {
                     if (state.isAdmin) {
                         return `<div class="${baseClass} bg-gray-200 text-gray-600 cursor-default pointer-events-none"
-                                    title="${title}" data-date="${day.date}" data-table="${table.id}">
+                                    title="${title}" data-date="${day.date}" data-table="${table.number}">
                                     ${booked}/${total}
                                 </div>`;
                     } else if (userBooked > 0) {
                         return `<div class="${baseClass} bg-blue-100 text-blue-800 cursor-default pointer-events-none"
-                                    title="Ваше бронирование" data-date="${day.date}" data-table="${table.id}">
+                                    title="Ваше бронирование" data-date="${day.date}" data-table="${table.number}">
                                     ${userBooked}/${total}
                                 </div>`;
                     } else {
                         return `<div class="${baseClass} bg-gray-100 text-gray-400 cursor-not-allowed pointer-events-none"
-                                    title="Прошедший день" data-date="${day.date}" data-table="${table.id}">
+                                    title="Прошедший день" data-date="${day.date}" data-table="${table.number}">
                                     –
                                 </div>`;
                     }
@@ -1615,7 +1615,7 @@ function renderSlotCell(data, tableId, slotTime) {
                         : 'bg-green-100 text-green-800';
 
                 return `<div class="${baseClass} ${statusClass} cursor-pointer slot-available"
-                            title="${title}" data-date="${day.date}" data-table="${table.id}">
+                            title="${title}" data-date="${day.date}" data-table="${table.number}">
                             ${booked}/${total}
                         </div>`;
             }).join('')}

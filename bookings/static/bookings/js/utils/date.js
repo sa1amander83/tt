@@ -1,10 +1,15 @@
-export const formatDate = (date) => date.toISOString().split('T')[0];
+export const formatDate = (date) => {
+  if (!date || isNaN(new Date(date))) return '';
+  const d = new Date(date);
+  return d.toISOString().split('T')[0];
+}
 
 export function getMonday(date) {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    return new Date(d.setDate(diff));
+  if (!date || isNaN(new Date(date))) return new Date();
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(d.setDate(diff));
 }
 
 export function getWeekInterval(date) {

@@ -112,7 +112,7 @@ function fillSpecialOfferForm(form, data) {
         if (!applyToAllChecked && data.tables.length > 0) {
             data.tables.forEach(table => {
                 const option = Array.from(tableSelect.options)
-                    .find(opt => parseInt(opt.value) === table.id);
+                    .find(opt => parseInt(opt.value) === table.number);
                 if (option) option.selected = true;
             });
         }

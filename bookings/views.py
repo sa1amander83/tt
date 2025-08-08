@@ -482,8 +482,7 @@ class CalendarAPIView(APIView):
                 any_visible = False  # покажем ли этот слот хоть где-то
 
                 for table in tables:
-                    overlaps = any(s < slot_end and e > slot_start for s, e in booking_map.get(table.id, []))
-
+                    overlaps = any(b['start'] < slot_end and b['end'] > slot_start for b in booking_map.get(table.id, []))
                     is_past = slot_end <= timezone.now().astimezone(tz)
 
                     # Скрываем весь слот, если он в прошлом и пользователь не админ
@@ -494,9 +493,9 @@ class CalendarAPIView(APIView):
                     any_visible = True
 
                     is_user_booking = any(
-                        s < slot_end and e > slot_start
-                        for s, e in booking_map.get(table.id, [])
-                        if user and not user.is_staff and b.user_id == user.id
+                        b['start'] < slot_end and b['end'] > slot_start
+                        for b in booking_map.get(table.id, [])
+                        if user and not user.is_staff and b['user']['id'] == user.id
                     )
 
                     if overlaps:

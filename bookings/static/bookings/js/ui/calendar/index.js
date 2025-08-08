@@ -3,7 +3,8 @@ import {WeekView} from './week.js';
 import {MonthView} from './month.js';
 import {formatDate, getMonday, getWeekInterval} from '../../utils/date.js';
 import {CalendarAPI} from "../../api/calendar.js";
-import { BookingModal } from '../bookingModal/index.js';
+import {BookingModal} from '../bookingModal/index.js';
+
 const views = {day: DayView, week: WeekView, month: MonthView};
 
 export const CalendarUI = {
@@ -93,11 +94,14 @@ export const CalendarUI = {
         }
         titleEl.text(text);
 
-        if (workingHoursEl.length && lastFetchedData?.working_hours) {
-            workingHoursEl.text(
-                `Время работы клуба: ${lastFetchedData.working_hours.open_time} – ${lastFetchedData.working_hours.close_time}`
-            );
-        }
+       if (currentView === 'day' && workingHoursEl.length && lastFetchedData?.working_hours) {
+        workingHoursEl.text(
+            `Время работы клуба: ${lastFetchedData.working_hours.open_time} – ${lastFetchedData.working_hours.close_time}`
+        );
+        workingHoursEl.show();
+    } else if (workingHoursEl.length) {
+        workingHoursEl.hide();
+    }
     },
     switchView(view) {
         this.store.set({currentView: view});
@@ -111,42 +115,45 @@ export const CalendarUI = {
     },
 
 
-bindSlotClicks() {
-    // Удаляем старые обработчики перед добавлением новых
-    $('#day-view-container, #week-view-container, #month-view-container')
-        .off('click', '.cursor-pointer[data-date][data-time][data-table]');
+    bindSlotClicks() {
+        // Удаляем старые обработчики перед добавлением новых
+        $('#day-view-container, #week-view-container, #month-view-container')
+            .off('click', '[data-date][data-time][data-table]');
 
-    // Добавляем новый обработчик с правильным делегированием
-    $('#day-view-container, #week-view-container, #month-view-container')
-        .on('click', '.cursor-pointer[data-date][data-time][data-table]', async (e) => {
-            const target = $(e.target).closest('.cursor-pointer[data-date][data-time][data-table]')[0];
-            if (!target) return;
+        // Добавляем новый обработчик с правильным делегированием
+        $('#day-view-container, #week-view-container, #month-view-container')
+            .on('click', '[data-date][data-time][data-table]', async (e) => {
+                const target = $(e.target).closest('[data-date][data-time][data-table]')[0];
+                if (!target) return;
 
-            const date = target.dataset.date;
-            const time = target.dataset.time;
-            const tableId = target.dataset.table;
-            const status = target.dataset.status;
-            const bookingId = target.dataset.booking_id;
-            const clickable = target.dataset.clickable === 'true';
-            const {user} = this.store.get();
+                const date = target.dataset.date;
+                const time = target.dataset.time;
+                const tableId = target.dataset.table;
+                const status = target.dataset.status;
+                const bookingId = target.dataset.booking_id;
+                const clickable = target.dataset.clickable === 'true';
+                const {user} = this.store.get();
 
-            if (!clickable) return;
+                // Разрешаем клик для свободных слотов или слотов с определенными статусами
+                const allowedStatuses = ['available', 'expired', 'cancelled', 'returned'];
 
-            if (status === 'available') {
-                e.stopPropagation(); // Предотвращаем всплытие
-                await BookingModal.open({date, time, tableId: Number(tableId)});
-            } else if (bookingId && user?.is_staff) {
-                e.stopPropagation(); // Предотвращаем всплытие
-                import('../../api/booking.js').then(({BookingAPI}) => {
-                    BookingAPI.get(bookingId).then(booking => {
-                        this.showBookingDetails(booking);
-                    }).catch(error => {
-                        console.error('Failed to load booking details:', error);
-                    });
-                });
-            }
-        });
-},
+                if (allowedStatuses.includes(status) || (bookingId && user?.is_staff)) {
+                    e.stopPropagation();
+
+                    if (allowedStatuses.includes(status)) {
+                        await BookingModal.open({date, time, tableId: Number(tableId)});
+                    } else if (bookingId && user?.is_staff) {
+                        import('../../api/booking.js').then(({BookingAPI}) => {
+                            BookingAPI.get(bookingId).then(booking => {
+                                this.showBookingDetails(booking);
+                            }).catch(error => {
+                                console.error('Failed to load booking details:', error);
+                            });
+                        });
+                    }
+                }
+            });
+    },
     showBookingDetails(booking) {
         // Создаем модальное окно с деталями брони
         const modal = html`
@@ -178,24 +185,26 @@ bindSlotClicks() {
 
     async render() {
         const {currentDate, currentView, tableFilter, statusFilter} = this.store.get();
-
+        if (!currentDate) return;
 
         /* 1. Показать нужный контейнер, скрыть остальные */
         $('#day-view-container, #week-view-container, #month-view-container')
             .addClass('hidden');
         $(`#${currentView}-view-container`).removeClass('hidden');
 
+
         const params = {
-            date: formatDate(currentView === 'week' ? getMonday(currentDate) : currentDate),
+            date: formatDate(
+                currentView === 'week' ? getMonday(currentDate) : currentDate
+            ),
             view: currentView,
             table: tableFilter || 'all',
             status: statusFilter || 'all'
         };
-
         /* 4. Получить данные и отрисовать */
         const data = await CalendarAPI.data(params);
         $(`#${currentView}-view-container`)
-            .html(views[currentView].render(data, {store: this.store}));
+            .html(views[currentView].render(data, this.store));
 
         /* 5. Подписки и обновление шапки */
         this.bindSlotClicks();
@@ -203,3 +212,4 @@ bindSlotClicks() {
         this.updateHeader();
     }
 };
+window.CalendarUI = CalendarUI;

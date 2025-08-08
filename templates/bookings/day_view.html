@@ -40,7 +40,7 @@
             {% if cell.status == 'available' and not is_past %}
                 data-date="{{ selected_date|date:'Y-m-d' }}"
                 data-time="{{ hour_time }}"
-                data-table="{{ table.id }}"
+                data-table="{{ table.number }}"
                 title="Свободно"
             {% elif request.user.is_staff and cell.booking %}
                 title="Бронирование: {{ cell.booking.user.get_full_name|default:cell.booking.user.username }} ({{ cell.booking.get_status_display }})"

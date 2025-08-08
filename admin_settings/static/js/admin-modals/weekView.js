@@ -57,7 +57,7 @@ export function renderWeekView(containerId, data) {
                 ${data.days.map(day => `
                     <div class="flex flex-col">
                         ${data.tables.map(table => {
-                            const availability = data.week_schedule[table.id]?.[day] || {};
+                            const availability = data.week_schedule[table.number]?.[day] || {};
                             return `
                                 <div class="p-2 border-b text-center 
                                     ${!availability.is_working_day ? 'bg-gray-100 text-gray-500' :
