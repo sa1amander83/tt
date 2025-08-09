@@ -44,7 +44,7 @@ export const BookingModal = {
     },
 
     async open({date, time, tableId}) {
-        console.log('BookingModal.open вызван');
+
         // 1. Если настроек нет или дата другая — подгружаем
         let {settings} = this.store.get();
         if (!settings?.open_time || settings.date !== date) {
@@ -78,6 +78,9 @@ export const BookingModal = {
         const equipment = await EquipmentAPI.list();
         this.populateEquipmentOptions(equipment);
 
+
+        const schedule = await CalendarAPI.schedule(new Date(date));
+        this.store.set({schedule});
         // 4. Сохраняем слот
         this.slot = {date, time, tableId};
 
@@ -103,7 +106,7 @@ export const BookingModal = {
                 const codeInput = document.getElementById("promo-code");
                 const message = document.getElementById("promo-code-message");
                 const code = codeInput.value.trim().toLowerCase();
-                console.log(window.CURRENT_USER_ID);
+
                 if (!code) {
                     message.textContent = "Введите промокод.";
                     message.classList.remove("hidden");
@@ -211,8 +214,9 @@ export const BookingModal = {
         const tableId = this.slot?.tableId || $('#booking-table')?.value;
 
         // Получаем расписание для выбранного стола
-        const tableSchedule = settings?.current_day?.schedule?.find(s =>
-            s.table_id === Number(tableId))?.bookings || [];
+        const scheduleData = this.store.get().schedule ?? {};
+        const scheduleArray = Array.isArray(scheduleData) ? scheduleData : scheduleData.schedule ?? [];
+        const tableSchedule = scheduleArray.find(s => s.table_id === Number(tableId))?.bookings ?? [];
 
         const sel = $('#booking-start-time');
         sel.innerHTML = '';
@@ -316,7 +320,7 @@ export const BookingModal = {
     // }
     ,
     async updateBookingCost() {
-        console.log('updateBookingCost вызван');
+
         try {
             const {user} = this.store.get();
             if (!user || !user.isAuthenticated) {
@@ -349,7 +353,7 @@ export const BookingModal = {
             }
 
             const data = await res.json();
-        const maxDur = this.getMaxDurationMinutes(formData.time);
+            const maxDur = this.getAllowedDurations(formData.time);
 
             const effectiveMax = Math.min(maxDur, data?.max_duration || 180);
 
@@ -454,36 +458,58 @@ export const BookingModal = {
     },
 
 
-    getMaxDurationMinutes(startTimeStr) {
-        const {settings} = this.store.get();
-        const close = settings?.current_day?.close_time ?? '22:00';
-        const [closeH, closeM] = close.split(':').map(Number);
+getAllowedDurations(startTimeStr) {
+    const {settings} = this.store.get();
+    const close = settings?.current_day?.close_time ?? '22:00';
+    const date = this.slot?.date || $('#booking-date')?.value;
+    const tableId = this.slot?.tableId || Number($('#booking-table')?.value);
 
-        // день берём из текущего слота
-        const date = this.slot?.date || $('#booking-date')?.value;
-        const closeDt = new Date(`${date}T${close}:00`);
-        const startDt = new Date(`${date}T${startTimeStr}`);
+    if (!startTimeStr) return [];
 
-        const diffMinutes = Math.floor((closeDt - startDt) / 60000);
-        return Math.max(diffMinutes, 0); // не меньше 0
-    },
-    populateDurationOptions(min, max) {
-        const select = $('#booking-duration');
-        const prev = select.value;
-        select.innerHTML = '';
+    const norm = t => t.length === 5 ? t + ':00' : t;
+    const startDt = new Date(`${date}T${norm(startTimeStr)}`);
+    const closeDt = new Date(`${date}T${norm(close)}`);
 
-        const step = 30;
-        for (let m = min; m <= max; m += step) {
-            const opt = document.createElement('option');
-            opt.value = m / 60; // Сохраняем значение в часах (0.5, 1, 1.5 и т.д.)
-            opt.textContent = `${Math.floor(m / 60) ? `${Math.floor(m / 60)} ч` : ''}${m % 60 ? ` ${m % 60} мин` : ''}`.trim();
-            select.appendChild(opt);
-        }
+    // 1. до закрытия, но не более 3 часов
+    const maxByClose = Math.min(180, Math.floor((closeDt - startDt) / 60000));
 
-        // Устанавливаем значение по умолчанию
-        select.value = [...select.options].some(o => o.value === prev)
-            ? prev
-            : max >= 60 ? '1' : '0.5'; // 1 час или 30 минут по умолчанию
-    }
+    // 2. брони стола
+    const schedule = this.store.get().schedule ?? [];
+    const bookings = (Array.isArray(schedule) ? schedule : schedule.schedule ?? [])
+        .find(s => s.table_id === tableId)?.bookings ?? [];
+
+    // 3. ближайшая граница
+    const nextStart = bookings
+        .map(b => new Date(`${date}T${norm(b.start_time)}`))
+        .find(t => t > startDt);
+
+    const limitMin = nextStart
+        ? Math.min(180, Math.floor((nextStart - startDt) / 60000))
+        : maxByClose;
+
+    // 4. 30, 60, 90 …
+    const step = 30;
+    const allowed = [];
+    for (let m = step; m <= limitMin; m += step) allowed.push(m);
+
+    return allowed.length ? allowed : [step];
+},
+
+
+   populateDurationOptions() {
+    const allowed = this.getAllowedDurations($('#booking-start-time')?.value);
+    const sel = $('#booking-duration');
+    sel.innerHTML = '';
+
+    allowed.forEach(min => {
+        const opt = document.createElement('option');
+        opt.value = min / 60;
+        opt.textContent = `${Math.floor(min / 60) ? `${Math.floor(min / 60)} ч` : ''}${min % 60 ? ` ${min % 60} мин` : ''}`.trim();
+        sel.appendChild(opt);
+    });
+
+    // по умолчанию 1 час (60 мин), если есть
+    sel.value = allowed.includes(60) ? '1' : (allowed[0] / 60).toString();
+}
 };
 

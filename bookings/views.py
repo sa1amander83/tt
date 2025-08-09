@@ -482,7 +482,8 @@ class CalendarAPIView(APIView):
                 any_visible = False  # покажем ли этот слот хоть где-то
 
                 for table in tables:
-                    overlaps = any(b['start'] < slot_end and b['end'] > slot_start for b in booking_map.get(table.id, []))
+                    overlaps = any(
+                        b['start'] < slot_end and b['end'] > slot_start for b in booking_map.get(table.id, []))
                     is_past = slot_end <= timezone.now().astimezone(tz)
 
                     # Скрываем весь слот, если он в прошлом и пользователь не админ
@@ -670,6 +671,42 @@ def get_site_settings(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e), 'status': 'error'}, status=500)
+
+
+# bookings/views.py
+@require_GET
+def get_schedule(request):
+    date_str = request.GET.get('date')
+    if not date_str:
+        return JsonResponse({'error': 'date is required'}, status=400)
+
+    try:
+        date = parse_date(date_str)
+    except ValueError:
+        return JsonResponse({'error': 'Invalid date format'}, status=400)
+
+    tz = pytz.timezone('Europe/Moscow')
+    day_start = tz.localize(datetime.combine(date, time.min))
+    day_end = tz.localize(datetime.combine(date, time.max))
+
+    bookings = Booking.objects.filter(
+        start_time__lt=day_end,
+        end_time__gt=day_start
+    ).exclude(status__in=['cancelled', 'expired'])
+
+    schedule = defaultdict(list)
+    for b in bookings:
+        schedule[b.table_id].append({
+            'start_time': b.start_time.astimezone(tz).strftime('%H:%M'),
+            'end_time': b.end_time.astimezone(tz).strftime('%H:%M'),
+            'status': b.status,
+            'id': b.id,
+        })
+
+    return JsonResponse({'schedule': [
+        {'table_id': table_id, 'bookings': items}
+        for table_id, items in schedule.items()
+    ]})
 
 
 class UserBookingsView(APIView):
@@ -1168,7 +1205,6 @@ def create_booking_api(request):
             'error': 'Для бронирования необходимо войти в систему',
             'login_required': True  # Добавляем флаг для фронтенда
         }, status=403)
-
 
     try:
         data = json.loads(request.body)

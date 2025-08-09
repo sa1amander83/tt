@@ -213,5 +213,6 @@ if (currentView === 'month') {
         this.lastFetchedData = data;
         this.updateHeader();
     }
+
 };
 window.CalendarUI = CalendarUI;

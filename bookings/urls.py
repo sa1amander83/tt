@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
 
-
 from . import views
 from .views import yookassa_webhook, UserBookingsView, cancel_booking
 
@@ -14,10 +13,11 @@ urlpatterns = [
     # path('user-bookings/', views.get_user_bookings, name='user_bookings'),
     path('create/', views.CreateBookingView.as_view(), name='create_booking'),
     path('update/<int:pk>/', views.UpdateBookingView.as_view(), name='update_booking'),
+    path('api/schedule/', views.get_schedule, name='api_schedule'),
 
     path('api/cancel/<int:booking_id>/', views.cancel_booking, name='cancel_booking'),
     path('api/get-booking-info/', views.get_booking_info, name='get_booking_info'),
-        path('api/<int:booking_id>/', views.booking_view, name='api_booking'),
+    path('api/<int:booking_id>/', views.booking_view, name='api_booking'),
     path('api/rates/', views.booking_rates_api, name='api_rates'),
     path('api/tables/', views.tables_api, name='api_tables'),
     path('api/equipment/', views.equipment_api, name='api_equipment'),
@@ -35,6 +35,5 @@ urlpatterns = [
 
     path('api/yookassa/webhook/', yookassa_webhook, name='yookassa_webhook'),
     path('api/cancel_booking/<int:booking_id>/', cancel_booking, name='cancel-booking'),
-
 
 ]
