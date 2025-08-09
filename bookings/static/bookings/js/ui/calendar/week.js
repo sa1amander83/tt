@@ -3,6 +3,8 @@ import {CalendarUI} from './index.js';
 export const WeekView = {
   render(data, store) {
     if (!data.days || !data.tables) return html`<div class="p-4 text-gray-500">Нет данных для отображения</div>`;
+console.log('store date:', store.get().currentDate);
+console.log('first day in data:', Object.keys(data.days)[0]);
 
 const days = Object.entries(data.days || {})
   .sort(([a], [b]) => new Date(a) - new Date(b))
@@ -52,7 +54,7 @@ dayCell(day, table, store) {
       <span class="text-xs">Закрыто</span>
     </div>`;
 
-  // 👇 Прошедший день — красный фон, белый текст
+
   if (isPast) {
     return html`
       <div class="flex flex-col items-center justify-center rounded-lg p-3 h-full bg-red-100 text-red-800 border border-red-200">
@@ -63,7 +65,6 @@ dayCell(day, table, store) {
       </div>`;
   }
 
-  // 👇 Обычные дни — зелёный / жёлтый / красный по % занятости
   const percent = total > 0 ? Math.round((booked / total) * 100) : 0;
   const cls = percent === 100 ? 'bg-red-100 text-red-800 border-red-200' :
               percent > 50  ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :

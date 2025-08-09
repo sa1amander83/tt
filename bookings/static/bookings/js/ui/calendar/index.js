@@ -181,38 +181,52 @@ export const CalendarUI = {
         document.body.insertAdjacentHTML('beforeend', modal);
     },
 
-    async render() {
-        const {currentDate, currentView, tableFilter, statusFilter} = this.store.get();
-        if (!currentDate) return;
+async render() {
+    const { currentDate, currentView, tableFilter, statusFilter } = this.store.get();
+    if (!currentDate) return;
 
-        /* 1. Показать нужный контейнер, скрыть остальные */
-        $('#day-view-container, #week-view-container, #month-view-container')
-            .addClass('hidden');
-        $(`#${currentView}-view-container`).removeClass('hidden');
+    // Показываем контейнеры
+    $('#day-view-container, #week-view-container, #month-view-container').addClass('hidden');
+    $(`#${currentView}-view-container`).removeClass('hidden');
 
+    // Вычисляем дату для API (понедельник, если week)
+    const apiDate = currentView === 'week' ? getMonday(new Date(currentDate)) : new Date(currentDate);
+    const apiDateStr = formatDate(apiDate);
 
-        const params = {
-            date: formatDate(
-                currentView === 'week' ? getMonday(currentDate) : currentDate
-            ),
-            view: currentView,
-            table: tableFilter || 'all',
-            status: statusFilter || 'all'
-        };
-        /* 4. Получить данные и отрисовать */
-        const data = await CalendarAPI.data(params);
+    console.log('[CalendarUI] store.currentDate:', new Date(currentDate));
+    console.log('[CalendarUI] apiDate (for request):', apiDate, '=>', apiDateStr);
 
+    const params = {
+        date: apiDateStr,
+        view: currentView,
+        table: tableFilter || 'all',
+        status: statusFilter || 'all'
+    };
 
-        $(`#${currentView}-view-container`)
-            .html(views[currentView].render(data, this.store));
-if (currentView === 'month') {
-    MonthView.bindDayClicks(this.store);
-}
-        /* 5. Подписки и обновление шапки */
+    // Форсируем отсутствие кеша добавлением timestamp — временная мера для отладки
+    const url = `/bookings/api/calendar/?${new URLSearchParams(params).toString()}&_ts=${Date.now()}`;
+    console.log('[CalendarUI] request URL:', url);
+
+    try {
+        const resp = await fetch(url, { credentials: 'include' });
+        const data = await resp.json();
+        console.log('[CalendarUI] response.ok:', resp.ok, 'status:', resp.status);
+        console.log('[CalendarUI] response.days keys:', Object.keys(data.days || {}));
+        // для удобства покажем первый ключ и его значение
+        const firstDayKey = Object.keys(data.days || {})[0];
+        console.log('[CalendarUI] firstDayKey:', firstDayKey, 'firstDayValue:', data.days?.[firstDayKey]);
+
+        // Рендерим представление как обычно
+        $(`#${currentView}-view-container`).html(views[currentView].render(data, this.store));
+
+        if (currentView === 'month') MonthView.bindDayClicks(this.store);
         this.bindSlotClicks();
         this.lastFetchedData = data;
         this.updateHeader();
+    } catch (err) {
+        console.error('[CalendarUI] failed to fetch calendar data:', err);
     }
+}
 
 };
 window.CalendarUI = CalendarUI;

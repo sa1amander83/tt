@@ -1,16 +1,19 @@
-export const formatDate = (date) => {
-  if (!date || isNaN(new Date(date))) return '';
-  const d = new Date(date);
-  return d.toISOString().split('T')[0];
+export const formatDate = (d) => {
+  const dt = new Date(d); // клон
+  dt.setHours(0, 0, 0, 0); // чтобы часовой пояс не сдвинул дату
+  const yyyy = dt.getFullYear();
+  const mm = String(dt.getMonth() + 1).padStart(2, '0');
+  const dd = String(dt.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 export function getMonday(d) {
-  d = new Date(d);
-  const day = d.getDay();
-  const diff = (day === 0 ? -6 : 1) - day; // сдвигаем так, чтобы был понедельник
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
+  const dt = new Date(d);
+  dt.setHours(0, 0, 0, 0);
+  const day = dt.getDay(); // 0 = вс
+  const diff = (day === 0 ? -6 : 1) - day;
+  dt.setDate(dt.getDate() + diff);
+  return dt;
 }
 
 export function getWeekInterval(date) {
