@@ -26,8 +26,8 @@ from bookings.models import Booking, BookingPackage
 
 from management.LoyaltyEngine import LoyaltyEngine
 from management.forms import UserAdminForm, MembershipTypeForm, LevelBenefitForm
-from management.models import LoyaltyProfile, MembershipType, Membership, LoyaltySettings, LevelBenefit, \
-    MaxUnpaidBookings
+from management.models import LoyaltyProfile, MembershipType, Membership, LoyaltySettings, LevelBenefit
+
 
 UserModel = get_user_model()
 

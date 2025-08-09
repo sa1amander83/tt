@@ -317,37 +317,33 @@ export const BookingModal = {
         }
         ,
         async updateBookingCost() {
-            const {
-                date, time, table_id, duration_minutes, is_group, equipment
-            } = this.getFormPayload();
-
-            const params = new URLSearchParams({
-                date,
-                time,
-                table_id,
-                duration: duration_minutes,
-                is_group: is_group ? 'true' : 'false',
-                equipment: JSON.stringify(equipment)
-            });
-
             try {
-                const res = await fetch(`api/get-booking-info/?${params.toString()}`);
-                if (!res.ok) throw new Error("Ошибка при получении информации о бронировании");
-
-
-                const formData = this.getFormPayload();
-
-                // Проверяем доступность выбранного времени
-                const {date, time, table_id} = formData;
-                const nextBooking = this.getNextBookingTime(date, time, table_id);
-
-                if (nextBooking) {
-                    const availableMinutes = (nextBooking - new Date(`${date}T${time}`)) / 60000;
-                    if (availableMinutes < formData.duration_minutes) {
-                        showNotification('Выбранная длительность недоступна', 'error');
-                        return;
-                    }
+                const {user} = this.store.get();
+                if (!user || !user.is_authenticated) {
+                    // Если не залогинен — просто скрыть стоимость и не делать запрос
+                    $('#tariff-summary')?.classList.add('hidden');
+                    return;
                 }
+
+                const {
+                    date, time, table_id, duration_minutes, is_group, equipment
+                } = this.getFormPayload();
+
+                const params = new URLSearchParams({
+                    date,
+                    time,
+                    table_id,
+                    duration: duration_minutes,
+                    is_group: is_group ? 'true' : 'false',
+                    equipment: JSON.stringify(equipment)
+                });
+
+                const res = await fetch(`api/get-booking-info/?${params.toString()}`);
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(`Ошибка сервера: ${res.status} ${res.statusText} — ${text}`);
+                }
+
                 const data = await res.json();
                 const maxDur = this.getMaxDurationMinutes(time);
                 const effectiveMax = Math.min(maxDur, data?.max_duration || 180);
@@ -364,27 +360,34 @@ export const BookingModal = {
                 $('#tariff-total-cost').textContent = `${Math.round(data.final_price * discountMultiplier)} ₽`;
                 $('#tariff-summary')?.classList.remove('hidden');
             } catch (err) {
-                showNotification("Ошибка при расчёте стоимости:", err);
+                console.error('Ошибка при обновлении стоимости бронирования:', err);
+                showNotification("Ошибка при расчёте стоимости: " + (err.message || err), 'error');
                 $('#tariff-name').textContent = 'Ошибка загрузки тарифа';
                 $('#tariff-summary')?.classList.add('hidden');
             }
-        }
-        ,
+        },
 
         async submit(e) {
             e.preventDefault();
 
             try {
+                // Проверяем авторизацию пользователя
+                const {user} = this.store.get();
+                // if (!user || !user.is_authenticated) {
+                //     showNotification('Для бронирования необходимо войти в систему', 'error');
+                //     // Перенаправляем на страницу авторизации через 3 секунды
+                //     setTimeout(() => {
+                //         window.location.href = '/accounts/signin/';
+                //     }, 3000);
+                //     return;
+                // }
+
                 const fd = new FormData(e.target);
                 const payload = Object.fromEntries(fd.entries());
                 const {promoCode} = this.store.get();
 
                 payload.table_id = Number(payload.table);
-
-
                 payload.duration = Math.round(Number(payload.duration * 60));
-
-
                 payload.participants = Number(payload.participants);
                 payload.date = this.slot.date;
                 payload.start_time = this.slot.time;
@@ -401,7 +404,6 @@ export const BookingModal = {
 
                 if (paymentRes.confirmation_url) {
                     window.open(paymentRes.confirmation_url, '_blank');
-
                 } else if (paymentRes.status === 'paid') {
                     showNotification('Бронирование успешно оплачено.', 'success');
                     this.close();
@@ -411,11 +413,17 @@ export const BookingModal = {
                 }
             } catch (err) {
                 console.error('Ошибка при бронировании:', err);
-
                 const message = err?.error || err?.message || 'Неизвестная ошибка при бронировании';
                 showNotification(message, 'error');
-            }
 
+                // if (err?.login_required) {
+                //     showNotification('Для бронирования необходимо войти в систему', 'error');
+                //     setTimeout(() => {
+                //         window.location.href = '/accounts/signin/';
+                //     }, 3000);
+                //     return;
+                // }
+            }
         },
 
         getFormPayload() {

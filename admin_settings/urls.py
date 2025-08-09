@@ -23,6 +23,12 @@ urlpatterns = [
     # Цены
     path('set-max-unpaid-bookings/', set_max_unpaid_bookings, name='set_max_unpaid_bookings'),
     path('get-max-unpaid-bookings/', get_max_unpaid_bookings, name='get_max_unpaid_bookings'),
+
+    path('set-min-time-to-cancel/', set_min_time_to_cancel, name='set_min_time_to_cancel'),
+    path('get_min_time_to_cancel/', get_min_time_to_cancel, name='get_min_time_to_cancel'),
+
+
+
     # Расписание
     path('holidays/create/', HolidayCreateView.as_view(), name='holiday_create'),
 

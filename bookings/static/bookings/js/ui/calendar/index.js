@@ -4,6 +4,7 @@ import {MonthView} from './month.js';
 import {formatDate, getMonday, getWeekInterval} from '../../utils/date.js';
 import {CalendarAPI} from "../../api/calendar.js";
 import {BookingModal} from '../bookingModal/index.js';
+import {UserBookings} from "../userBookings.js";
 
 const views = {day: DayView, week: WeekView, month: MonthView};
 
@@ -12,7 +13,11 @@ export const CalendarUI = {
 
     init(store) {
         this.store = store;
-        store.subscribe(() => this.render());
+         store.subscribe(() => {
+            this.render();
+            // При изменении даты или представления обновляем бронирования
+            UserBookings.render();
+        });
         this.bindNav();
         this.bindFilters();
     },
@@ -59,14 +64,7 @@ export const CalendarUI = {
         this.store.set({currentDate: newDate});
     },
 
-    showView(view) {
-        // прячем все
-        $('#day-view-container, #week-view-container, #month-view-container')
-            .addClass('hidden');
 
-        // показываем нужный
-        $(`#${view}-view-container`).removeClass('hidden');
-    },
     updateHeader() {
         const {currentDate, currentView} = this.store.get();
         const lastFetchedData = this.lastFetchedData;
@@ -203,9 +201,13 @@ export const CalendarUI = {
         };
         /* 4. Получить данные и отрисовать */
         const data = await CalendarAPI.data(params);
+
+
         $(`#${currentView}-view-container`)
             .html(views[currentView].render(data, this.store));
-
+if (currentView === 'month') {
+    MonthView.bindDayClicks(this.store);
+}
         /* 5. Подписки и обновление шапки */
         this.bindSlotClicks();
         this.lastFetchedData = data;

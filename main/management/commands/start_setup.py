@@ -5,7 +5,7 @@ from random import randint, choice
 
 from admin_settings.models import WorkingDay, TableType, Table
 from bookings.models import  TableTypePricing
-from management.models import SpecialOffer
+from management.models import SpecialOffer, MinTimeToCancelBooking, MaxUnpaidBookings
 from pricing.models import PricingPlan
 
 
@@ -118,3 +118,6 @@ class Command(BaseCommand):
                 'apply_to_all': True
             }
         )
+
+        MinTimeToCancelBooking.objects.get_or_create(MinTimeToCancelBooking=10)
+        MaxUnpaidBookings.objects.get_or_create(MaxUnpaidBookings=2)

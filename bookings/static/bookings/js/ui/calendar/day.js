@@ -1,9 +1,10 @@
 import {html} from '../components.js';
 
 export const DayView = {
-   render(data, store) {
-    if (!data.is_working_day)
-        return html`<div class="p-8 text-center">Выходной день</div>`;
+    render(data, store) {
+        if (!data.is_working_day)
+            return html`
+                <div class="p-8 text-center">Выходной день</div>`;
 
         const rows = data.time_slots.map(time => {
             const cells = data.tables.map(t => this.slotCell(data, t, time, store));
@@ -32,85 +33,89 @@ export const DayView = {
             </div>`;
     },
 
-    slotCell(data, table, time, store) {
-        const slot = data.day_schedule[table.number]?.[time] || {};
-        const isPast = new Date(`${data.date}T${time}`) < new Date();
-        const state = store.get();
-        const user = state.user;
+slotCell(data, table, time, store) {
+    const slot = data.day_schedule[table.number]?.[time] || {};
+    const state = store.get();
+    const user = state.user;
 
-        const status = slot.status || 'available';
-        let cls = '';
-        let text = '';
-        let clickable = false;
+    const now = new Date();
+    const slotStart = new Date(`${data.date}T${time}`);
+    const durationMinutes = slot.duration || 30;
+    const slotEnd = new Date(slotStart.getTime() + durationMinutes * 60000);
 
-        // Определяем, идет ли бронирование сейчас
-        const isCurrent = !isPast && status === 'processing';
+    const bookingId = slot.booking_id || null;
+    const status = slot.status || 'available';
+    let cls = '';
+    let text = '';
+    let clickable = false;
 
-        if (isPast) {
-            // Прошедшее время
-            switch (status) {
-                case 'completed':
-                    cls = 'bg-green-100 text-green-800 rounded-xl ';
-                    text = 'Завершено';
-                    break;
-                case 'processed':
-                    cls = 'bg-red-200 text-red-800 rounded-xl';
-                    text = 'Идет';
-                    break;
-                case 'cancelled':
-                case 'expired':
-                case 'returned':
-                case 'available':
-                    cls = 'bg-gray-200 text-gray-800 rounded-xl';
-                    text = 'Свободен';
-                    break;
-                default:
-                    cls = 'bg-gray-100 text-gray-800 rounded-xl';
-                    text = '-';
-            }
-        } else {
-            // Будущее время
-            switch (status) {
-                case 'processed':
-                case 'pending':
-                    cls = 'bg-yellow-500 text-white rounded-xl';
-                    text = 'Ждет оплаты';
-                    clickable = true;
-                    break;
-                case 'paid':
-                    cls = 'bg-red-500 text-white rounded-xl';
-                    text = 'Занят';
-                    break;
-                case 'cancelled':
-                case 'expired':
-                case 'returned':
-                case 'available':
-                    cls = 'bg-green-500 text-white rounded-xl';
-                    text = 'Свободен';
-                    clickable = true;
-                    break;
-                default:
-                    cls = 'bg-green-500 text-white rounded-xl';
-                    text = 'Свободен';
-                    clickable = true;
-            }
+    // --- Если бронь есть, ищем её полное время ---
+    let bookingStart = slotStart;
+    let bookingEnd = slotEnd;
+
+    if (bookingId) {
+        const allSlots = Object.entries(data.day_schedule[table.number] || {})
+            .filter(([t, s]) => s.booking_id === bookingId)
+            .map(([t, s]) => ({
+                start: new Date(`${data.date}T${t}`),
+                end: new Date(new Date(`${data.date}T${t}`).getTime() + (s.duration || 30) * 60000)
+            }));
+
+        if (allSlots.length) {
+            bookingStart = new Date(Math.min(...allSlots.map(s => s.start.getTime())));
+            bookingEnd = new Date(Math.max(...allSlots.map(s => s.end.getTime())));
         }
+    }
 
-        // Если бронирование идет сейчас, обновляем статус и цвет
-        if (isCurrent) {
-            cls = 'bg-blue-500 text-white rounded-xl';
-            text = 'Идет сейчас';
+    // --- Логика отображения ---
+    const isPast = now >= bookingEnd;
+    const isCurrentBooking = bookingId && status === 'paid' && now >= bookingStart && now < bookingEnd;
+
+    if (isCurrentBooking) {
+        cls = 'bg-blue-500 text-white rounded-xl';
+        text = 'Идёт сейчас';
+    } else if (isPast) {
+        switch (status) {
+            case 'completed':
+                cls = 'bg-green-100 text-green-800 rounded-xl';
+                text = 'Завершено';
+                break;
+            default:
+                cls = 'bg-gray-200 text-gray-800 rounded-xl';
+                text = '—';
         }
+    } else {
+        switch (status) {
+            case 'processed':
+            case 'pending':
+                cls = 'bg-yellow-500 text-white rounded-xl';
+                text = 'Ждёт оплаты';
+                clickable = true;
+                break;
+            case 'paid':
+                cls = 'bg-red-500 text-white rounded-xl';
+                text = 'Занят';
+                break;
+            default:
+                cls = 'bg-green-500 text-white rounded-xl';
+                text = 'Свободен';
+                clickable = true;
+        }
+    }
 
-        return html`
-            <div class="flex items-center justify-center h-12 border-b ${cls} ${(clickable || (user && user.is_staff)) ? 'cursor-pointer hover:opacity-90' : ''}"
+    // Убрали border-b, чтобы gap-px создавал ровные линии
+    return html`
+        <div class="p-px">
+            <div class="flex items-center justify-center h-12 w-full ${cls} ${(clickable || (user && user.is_staff)) ? 'cursor-pointer hover:opacity-90' : ''}"
                  data-date="${data.date}"
                  data-time="${time}"
                  data-table="${table.number}"
                  data-status="${status}"
-                 data-booking-id="${slot.booking_id || ''}"
+                 data-booking-id="${bookingId || ''}"
                  data-clickable="${clickable || (user && user.is_staff)}">
                 ${text}
-            </div>`;
-    }
+            </div>
+        </div>
+    `;
+}
 };

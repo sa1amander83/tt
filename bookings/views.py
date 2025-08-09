@@ -331,8 +331,8 @@ class CalendarAPIView(APIView):
             'user_bookings': [{
                 'id': b.id,
                 'date': b.start_time.date().isoformat(),
-                'start': b.start_time.strftime('%H:%M'),
-                'end': b.end_time.strftime('%H:%M'),
+                'start': b.start_time.astimezone(pytz.timezone('Europe/Moscow')).strftime('%H:%M'),
+                'end': b.end_time.astimezone(pytz.timezone('Europe/Moscow')).strftime('%H:%M'),
                 'table_number': b.table.number,
                 'status': b.status,
                 'can_cancel': b.status in ['pending', 'paid']
@@ -560,7 +560,15 @@ class CalendarAPIView(APIView):
             user_bookings_count = sum(
                 1 for b in user_bookings if b['start_time'].startswith(booking_date_str)
             )
+            total_hours = 0
+            paid_completed_hours = 0
 
+            for table_id, slots_info in day_schedule.items():
+                for slot in slots_info.values():
+                    slot_hours = slot_duration / 60  # переводим слот в часы
+                    total_hours += slot_hours
+                    if slot['status'] in ('paid', 'completed'):
+                        paid_completed_hours += slot_hours
             calendar_schedule[day.isoformat()] = {
                 'user_bookings': [],
                 'date': day.isoformat(),
@@ -573,7 +581,9 @@ class CalendarAPIView(APIView):
                 },
                 'day_schedule': day_schedule,
                 'total_bookings': sum(len(slots) for slots in booking_map.values()),
-                'user_bookings_count': user_bookings_count
+                'user_bookings_count': user_bookings_count,
+                'total_hours': total_hours,
+                'paid_completed_hours': paid_completed_hours
             }
 
         return Response({
@@ -1153,6 +1163,13 @@ from django.db import transaction
 @login_required
 @require_POST
 def create_booking_api(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'error': 'Для бронирования необходимо войти в систему',
+            'login_required': True  # Добавляем флаг для фронтенда
+        }, status=403)
+
+
     try:
         data = json.loads(request.body)
 

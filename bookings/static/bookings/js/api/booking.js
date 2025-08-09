@@ -17,7 +17,7 @@ export const BookingAPI = {
 
   async cancel(id) {
     return fetch(`/bookings/api/cancel/${id}/`, {
-      method: 'DELETE',
+      method: 'POST',
       headers: { 'X-CSRFToken': csrf() },
       credentials: 'include'
     });
