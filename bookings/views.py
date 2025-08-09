@@ -1275,7 +1275,7 @@ def create_booking_api(request):
         pending_bookings_count = Booking.objects.filter(user=request.user, status='pending').count()
         MAX_PENDING_BOOKINGS = getattr(MaxUnpaidBookings.objects.first(), 'max_unpaid_bookings', 2)
 
-        if pending_bookings_count >= MAX_PENDING_BOOKINGS:
+        if pending_bookings_count >= MAX_PENDING_BOOKINGS and not request.user.is_staff:
             return JsonResponse({
                 'error': f'У вас уже есть {MAX_PENDING_BOOKINGS} неоплаченных бронирований. Пожалуйста, оплатите их или отмените, чтобы создать новое.'},
                 status=400)

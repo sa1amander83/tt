@@ -413,6 +413,8 @@ export const BookingModal = {
 
             if (paymentRes.confirmation_url) {
                 window.open(paymentRes.confirmation_url, '_blank');
+                this.close();
+                await CalendarUI.render();
             } else if (paymentRes.status === 'paid') {
                 showNotification('Бронирование успешно оплачено.', 'success');
                 this.close();
@@ -458,58 +460,58 @@ export const BookingModal = {
     },
 
 
-getAllowedDurations(startTimeStr) {
-    const {settings} = this.store.get();
-    const close = settings?.current_day?.close_time ?? '22:00';
-    const date = this.slot?.date || $('#booking-date')?.value;
-    const tableId = this.slot?.tableId || Number($('#booking-table')?.value);
+    getAllowedDurations(startTimeStr) {
+        const {settings} = this.store.get();
+        const close = settings?.current_day?.close_time ?? '22:00';
+        const date = this.slot?.date || $('#booking-date')?.value;
+        const tableId = this.slot?.tableId || Number($('#booking-table')?.value);
 
-    if (!startTimeStr) return [];
+        if (!startTimeStr) return [];
 
-    const norm = t => t.length === 5 ? t + ':00' : t;
-    const startDt = new Date(`${date}T${norm(startTimeStr)}`);
-    const closeDt = new Date(`${date}T${norm(close)}`);
+        const norm = t => t.length === 5 ? t + ':00' : t;
+        const startDt = new Date(`${date}T${norm(startTimeStr)}`);
+        const closeDt = new Date(`${date}T${norm(close)}`);
 
-    // 1. до закрытия, но не более 3 часов
-    const maxByClose = Math.min(180, Math.floor((closeDt - startDt) / 60000));
+        // 1. до закрытия, но не более 3 часов
+        const maxByClose = Math.min(180, Math.floor((closeDt - startDt) / 60000));
 
-    // 2. брони стола
-    const schedule = this.store.get().schedule ?? [];
-    const bookings = (Array.isArray(schedule) ? schedule : schedule.schedule ?? [])
-        .find(s => s.table_id === tableId)?.bookings ?? [];
+        // 2. брони стола
+        const schedule = this.store.get().schedule ?? [];
+        const bookings = (Array.isArray(schedule) ? schedule : schedule.schedule ?? [])
+            .find(s => s.table_id === tableId)?.bookings ?? [];
 
-    // 3. ближайшая граница
-    const nextStart = bookings
-        .map(b => new Date(`${date}T${norm(b.start_time)}`))
-        .find(t => t > startDt);
+        // 3. ближайшая граница
+        const nextStart = bookings
+            .map(b => new Date(`${date}T${norm(b.start_time)}`))
+            .find(t => t > startDt);
 
-    const limitMin = nextStart
-        ? Math.min(180, Math.floor((nextStart - startDt) / 60000))
-        : maxByClose;
+        const limitMin = nextStart
+            ? Math.min(180, Math.floor((nextStart - startDt) / 60000))
+            : maxByClose;
 
-    // 4. 30, 60, 90 …
-    const step = 30;
-    const allowed = [];
-    for (let m = step; m <= limitMin; m += step) allowed.push(m);
+        // 4. 30, 60, 90 …
+        const step = 30;
+        const allowed = [];
+        for (let m = step; m <= limitMin; m += step) allowed.push(m);
 
-    return allowed.length ? allowed : [step];
-},
+        return allowed.length ? allowed : [step];
+    },
 
 
-   populateDurationOptions() {
-    const allowed = this.getAllowedDurations($('#booking-start-time')?.value);
-    const sel = $('#booking-duration');
-    sel.innerHTML = '';
+    populateDurationOptions() {
+        const allowed = this.getAllowedDurations($('#booking-start-time')?.value);
+        const sel = $('#booking-duration');
+        sel.innerHTML = '';
 
-    allowed.forEach(min => {
-        const opt = document.createElement('option');
-        opt.value = min / 60;
-        opt.textContent = `${Math.floor(min / 60) ? `${Math.floor(min / 60)} ч` : ''}${min % 60 ? ` ${min % 60} мин` : ''}`.trim();
-        sel.appendChild(opt);
-    });
+        allowed.forEach(min => {
+            const opt = document.createElement('option');
+            opt.value = min / 60;
+            opt.textContent = `${Math.floor(min / 60) ? `${Math.floor(min / 60)} ч` : ''}${min % 60 ? ` ${min % 60} мин` : ''}`.trim();
+            sel.appendChild(opt);
+        });
 
-    // по умолчанию 1 час (60 мин), если есть
-    sel.value = allowed.includes(60) ? '1' : (allowed[0] / 60).toString();
-}
+        // по умолчанию 1 час (60 мин), если есть
+        sel.value = allowed.includes(60) ? '1' : (allowed[0] / 60).toString();
+    }
 };
 

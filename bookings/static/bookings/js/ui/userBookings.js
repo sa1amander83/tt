@@ -136,23 +136,32 @@ const rows = bookings.map((b, idx) => {
 
     const now = new Date();
     const minutesUntilStart = diffMinutes(now, startLocal);
+
+    // Можно отменять, если осталось мин. времени до начала, и статус pending или paid
     const canCancel = (minutesUntilStart >= this.minTimeToCancel) && (b.status === 'pending' || b.status === 'paid');
+
     const isOngoing = b.status === 'paid' && now >= startLocal && now <= endLocal;
 
     let statusText = statusTranslations[b.status] || b.status;
     let actionsHtml = '';
 
     if (isOngoing) {
-        // Если сейчас идёт оплаченная бронь — показываем в статусе
         statusText = 'Оплачено / Идет сейчас';
-        // В действиях ничего не показываем
+        // Нет кнопок для ongoing
     } else {
-        // Иначе показываем кнопки если надо
         if (b.status === 'pending') {
-            actionsHtml += `<button class="text-blue-600 hover:underline" data-id="${b.id}">Оплатить</button>`;
+            actionsHtml += `
+<button class="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition"
+        data-id="${b.id}">
+    Оплатить
+</button>`;
         }
         if (canCancel) {
-            actionsHtml += `<button class="text-red-600 hover:underline" data-id="${b.id}">Отменить</button>`;
+            actionsHtml += `
+<button class="ml-2 px-3 py-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition"
+        data-id="${b.id}">
+    Отменить
+</button>`;
         }
     }
 
@@ -160,7 +169,7 @@ const rows = bookings.map((b, idx) => {
 <tr class="hover:bg-gray-50 transition-colors">
   <td class="border border-gray-300 px-4 py-2">${idx + 1}</td>
   <td class="border border-gray-300 px-4 py-2">${b.date}</td>
-  <td class="border border-gray-300 px-4 py-2">${startLocal.toTimeString().slice(0,5)}–${endLocal.toTimeString().slice(0,5)}</td>
+  <td class="border border-gray-300 px-4 py-2">${startLocal.toTimeString().slice(0, 5)}–${endLocal.toTimeString().slice(0, 5)}</td>
   <td class="border border-gray-300 px-4 py-2">#${b.table_number}</td>
   <td class="border border-gray-300 px-4 py-2">${statusText}</td>
   <td class="border border-gray-300 px-4 py-2 space-x-2">${actionsHtml}</td>
@@ -192,16 +201,27 @@ const rows = bookings.map((b, idx) => {
                 const action = e.target.textContent.trim();
 
                 const {BookingAPI} = await import('../api/booking.js');
+
                 if (action === 'Оплатить') {
                     BookingAPI.payment(bookingId)
-                        .then(() => this.render())
+                        .then(res => {
+                            if (res.status === 'paid') {
+                                // Мгновенная оплата (например промокод 100%)
+                                this.render();
+                            } else if (res.confirmation_url) {
+                                // Переход на YooKassa
+                                window.open(res.confirmation_url, '_blank');
+                            } else {
+                                console.warn('Неожиданный ответ от сервера:', res);
+                            }
+                        })
                         .catch(err => console.error('Payment failed:', err));
                 } else if (action === 'Отменить') {
                     BookingAPI.cancel(bookingId)
                         .then(() => this.render())
                         .catch(err => console.error('Cancellation failed:', err));
                 }
-            })
-        );
+            }));
+
     }
 };
