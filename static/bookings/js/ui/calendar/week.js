@@ -19,14 +19,16 @@ const days = Object.entries(data.days || {})
         </div>
       </div>`).join('');
 
-    const body = data.tables.map(t => html`
-      <div class="grid grid-cols-${days.length + 1} gap-3 mb-3">
-        <div class="flex items-center justify-end bg-white p-3 rounded-lg shadow-sm border border-gray-200 font-medium text-gray-700">
-          Стол #${t.number}
-          ${t.table_type ? html`<span class="ml-2 text-xs text-gray-500">(${t.table_type})</span>` : ''}
-        </div>
-        ${days.map(d => this.dayCell(d, t, store)).join('')}
-      </div>`).join('');
+   const body = data.tables.map(t => html`
+  <div class="grid grid-cols-${days.length + 1} gap-3 mb-3">
+    <div class="flex flex-col items-center bg-white p-3 rounded-lg shadow-sm border border-gray-200 font-medium text-gray-700">
+      <div>Стол #${t.number}</div>
+      ${t.table_type ? html`<div class="mt-1 text-xs text-gray-500">(${t.table_type})</div>` : ''}
+    </div>
+    ${days.map(d => this.dayCell(d, t, store)).join('')}
+  </div>
+`).join('');
+
 
     return html`
       <div class="p-4">

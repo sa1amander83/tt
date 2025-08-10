@@ -232,10 +232,10 @@ export const BookingModal = {
             const timeStr = currentTime.toTimeString().substring(0, 5);
 
             // Пропускаем прошедшее время
-            if (currentTime <= now) {
-                currentTime = new Date(currentTime.getTime() + step * 60000);
-                continue;
-            }
+          if (currentTime.getTime() - now.getTime() < 5 * 60000) {
+    currentTime = new Date(currentTime.getTime() + step * 60000);
+    continue;
+}
 
             // Проверяем доступность слота
             let isAvailable = true;
@@ -302,23 +302,7 @@ export const BookingModal = {
             container.appendChild(div);
         });
 
-    }
-
-    // getNextBookingTime(date, time, tableId) {
-    //     const {settings} = this.store.get();
-    //     const schedule = settings?.current_day?.schedule ?? [];
-    //
-    //     const tableSchedule = schedule.find(s => s.table_id === Number(tableId))?.bookings || [];
-    //     const startTime = new Date(`${date}T${time}`);
-    //
-    //     // Находим ближайшее бронирование после указанного времени
-    //     const nextBooking = tableSchedule
-    //         .filter(b => new Date(b.start_time) > startTime)
-    //         .sort((a, b) => new Date(a.start_time) - new Date(b.start_time))[0];
-    //
-    //     return nextBooking ? new Date(nextBooking.start_time) : null;
-    // }
-    ,
+    }   ,
     async updateBookingCost() {
 
         try {
@@ -498,20 +482,26 @@ export const BookingModal = {
     },
 
 
-    populateDurationOptions() {
-        const allowed = this.getAllowedDurations($('#booking-start-time')?.value);
-        const sel = $('#booking-duration');
-        sel.innerHTML = '';
+populateDurationOptions() {
+    const allowed = this.getAllowedDurations($('#booking-start-time')?.value);
+    const sel = $('#booking-duration');
+    const oldValue = sel.value; // запоминаем текущее значение
+    sel.innerHTML = '';
 
-        allowed.forEach(min => {
-            const opt = document.createElement('option');
-            opt.value = min / 60;
-            opt.textContent = `${Math.floor(min / 60) ? `${Math.floor(min / 60)} ч` : ''}${min % 60 ? ` ${min % 60} мин` : ''}`.trim();
-            sel.appendChild(opt);
-        });
+    allowed.forEach(min => {
+        const opt = document.createElement('option');
+        opt.value = min / 60;
+        opt.textContent = `${Math.floor(min / 60) ? `${Math.floor(min / 60)} ч` : ''}${min % 60 ? ` ${min % 60} мин` : ''}`.trim();
+        sel.appendChild(opt);
+    });
 
-        // по умолчанию 1 час (60 мин), если есть
+    // Если текущее значение не подходит (нет в allowed), устанавливаем 1 час или первый элемент
+    if (!allowed.includes(parseInt(oldValue * 60))) {
         sel.value = allowed.includes(60) ? '1' : (allowed[0] / 60).toString();
+    } else {
+        sel.value = oldValue;
     }
+}
+
 };
 

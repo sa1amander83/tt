@@ -129,71 +129,86 @@ export const UserBookings = {
         };
 
         const now = new Date();
+        const isAdmin = user?.is_staff || user?.role === 'admin';
+        const rows = bookings.map((b, idx) => {
+            const startLocal = addMoscowOffset(b.date, b.start);
+            const endLocal = addMoscowOffset(b.date, b.end);
+            const minutesUntilStart = diffMinutes(now, startLocal);
 
-const rows = bookings.map((b, idx) => {
-    const startLocal = addMoscowOffset(b.date, b.start);
-    const endLocal = addMoscowOffset(b.date, b.end);
+            const canCancel = (isAdmin || (minutesUntilStart >= this.minTimeToCancel)) && (b.status === 'pending' || b.status === 'paid');
+            const isOngoing = b.status === 'paid' && now >= startLocal && now <= endLocal;
 
-    const now = new Date();
-    const minutesUntilStart = diffMinutes(now, startLocal);
+            let statusText = statusTranslations[b.status] || b.status;
+            let actionsHtml = '';
 
-    // Можно отменять, если осталось мин. времени до начала, и статус pending или paid
-    const canCancel = (minutesUntilStart >= this.minTimeToCancel) && (b.status === 'pending' || b.status === 'paid');
+            if (isOngoing) {
+                statusText = 'Оплачено / Идет сейчас';
+            } else {
+                if (b.status === 'pending') {
+                    actionsHtml += `
+ <button class="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition mr-2"
+          data-id="${b.id}">
+      Оплатить
+  </button>`;
+                }
+                if (canCancel) {
+                    actionsHtml += `
+  <button class="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition"
+          data-id="${b.id}">
+      Отменить
+  </button>`;
+                }
+            }
 
-    const isOngoing = b.status === 'paid' && now >= startLocal && now <= endLocal;
+            // Дополнительная ячейка для админа
+           // const adminInfo = isAdmin ? `<td class="px-6 py-4 text-center whitespace-nowrap">${b.user || b.email || ''}<br>${b.user_phone || ''}</td>` : '';
 
-    let statusText = statusTranslations[b.status] || b.status;
-    let actionsHtml = '';
+            return `
+<tr class="bg-white border-b hover:bg-gray-50 text-center">
+  <td class="px-6 py-4 text-center">${idx + 1}</td>
+  <td class="px-6 py-4 text-center">${b.date}</td>
+  <td class="px-6 py-4 text-center">${startLocal.toTimeString().slice(0, 5)}–${endLocal.toTimeString().slice(0, 5)}</td>
 
-    if (isOngoing) {
-        statusText = 'Оплачено / Идет сейчас';
-        // Нет кнопок для ongoing
-    } else {
-        if (b.status === 'pending') {
-            actionsHtml += `
-<button class="px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition"
-        data-id="${b.id}">
-    Оплатить
-</button>`;
-        }
-        if (canCancel) {
-            actionsHtml += `
-<button class="ml-2 px-3 py-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition"
-        data-id="${b.id}">
-    Отменить
-</button>`;
-        }
-    }
+  <td class="px-6 py-4 text-center">#${b.table_number}</td>
+  <td class="px-6 py-4 text-center">${statusText}</td>
+  <td class="px-6 py-4 text-center">${actionsHtml}</td>
 
-    return `
-<tr class="hover:bg-gray-50 transition-colors">
-  <td class="border border-gray-300 px-4 py-2">${idx + 1}</td>
-  <td class="border border-gray-300 px-4 py-2">${b.date}</td>
-  <td class="border border-gray-300 px-4 py-2">${startLocal.toTimeString().slice(0, 5)}–${endLocal.toTimeString().slice(0, 5)}</td>
-  <td class="border border-gray-300 px-4 py-2">#${b.table_number}</td>
-  <td class="border border-gray-300 px-4 py-2">${statusText}</td>
-  <td class="border border-gray-300 px-4 py-2 space-x-2">${actionsHtml}</td>
 </tr>`;
-});
+        });
 
         container.innerHTML = `
-<div class="overflow-x-auto">
-  <table class="w-full border border-gray-300 text-sm text-center rounded-lg overflow-hidden shadow-md">
-    <thead class="bg-gray-100 text-gray-700 uppercase">
-      <tr>
-        <th class="border border-gray-300 px-4 py-2">№</th>
-        <th class="border border-gray-300 px-4 py-2">Дата</th>
-        <th class="border border-gray-300 px-4 py-2">Время</th>
-        <th class="border border-gray-300 px-4 py-2">Стол</th>
-        <th class="border border-gray-300 px-4 py-2">Статус</th>
-        <th class="border border-gray-300 px-4 py-2">Действия</th>
+<div class="overflow-x-auto shadow-md sm:rounded-lg">
+  <table class="w-full text-sm text-gray-500 stripe text-center " id="userBookingsTable">
+    <thead class="text-xs text-gray-700 uppercase bg-gray-50 text-center ">
+      <tr class=" ">
+        <th scope="col" class="px-6 py-3  ">№</th>
+        <th scope="col" class="px-6 py-3  ">Дата</th>
+        <th scope="col" class="px-6 py-3  ">Время</th>
+   
+        <th scope="col" class="px-6 py-3  ">Стол</th>
+        <th scope="col" class="px-6 py-3  ">Статус</th>
+        <th scope="col" class="px-6 py-3  ">Действия</th>
       </tr>
     </thead>
-    <tbody class="divide-y divide-gray-200">
-  ${rows.join('')}
+    <tbody>
+      ${rows.join('')}
     </tbody>
   </table>
 </div>`;
+// После container.innerHTML = ...;
+        if ($.fn.DataTable.isDataTable('#userBookingsTable')) {
+            $('#userBookingsTable').DataTable().destroy();
+        }
+
+        $('#userBookingsTable').DataTable({
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/1.13.5/i18n/ru.json'
+            },
+            paging: true,
+            searching: false,
+            ordering: true,
+            order: [[1, 'asc']]  // сортировка по дате по умолчанию
+        });
 
         container.querySelectorAll('button').forEach(btn =>
             btn.addEventListener('click', async e => {
@@ -206,10 +221,8 @@ const rows = bookings.map((b, idx) => {
                     BookingAPI.payment(bookingId)
                         .then(res => {
                             if (res.status === 'paid') {
-                                // Мгновенная оплата (например промокод 100%)
                                 this.render();
                             } else if (res.confirmation_url) {
-                                // Переход на YooKassa
                                 window.open(res.confirmation_url, '_blank');
                             } else {
                                 console.warn('Неожиданный ответ от сервера:', res);
@@ -221,7 +234,7 @@ const rows = bookings.map((b, idx) => {
                         .then(() => this.render())
                         .catch(err => console.error('Cancellation failed:', err));
                 }
-            }));
-
+            })
+        );
     }
 };

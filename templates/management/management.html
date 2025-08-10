@@ -56,7 +56,7 @@
             {% include 'management/management_templates/loyalty.html' %}
         {% elif active_tab == 'memberships' %}
             {% include 'management/management_templates/memberships.html' %}
-            
+
         {% elif active_tab == 'reports' %}
             {% include 'management/management_templates/reports.html' %}
 
@@ -72,5 +72,6 @@
     <script src="{% static 'js/ru.js' %}"></script>
     <script src="{% static 'js/admin-modals/promocode.js' %}"></script>
     <script src="{% static 'js/admin-modals/membership.js' %}"></script>
+
 
 {% endblock %}

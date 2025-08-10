@@ -301,8 +301,7 @@ class CalendarAPIView(APIView):
                     'discount_percent': discount,
                     'slot_duration': slot_duration,
                     'booking_id': booking_id,
-                    'is_past': is_past,
-                    'user': booking_info['user'] if booking_info else None
+                    'is_past': is_past
                 }
 
                 slot_visible = True

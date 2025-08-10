@@ -2,6 +2,13 @@
 {% load static %}
 
 {% block content %}
+    <head>
+
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css"/>
+
+
+        <title></title>
+    </head>
 
     <main class="container mx-auto px-4 py-8">
         <h1 class="text-2xl font-bold mb-6">Бронирование столов</h1>
@@ -47,8 +54,11 @@
 {% endblock %}
 {% block extrascripts %}
     {#    <script type="module" src="{% static 'js/admin-modals/weekView.js' %}"></script>#}
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script type="module" src="{% static 'js/showNotification.js' %}"></script>
+    <!-- Подключаем DataTables + Tailwind адаптер -->
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+    <script type="module" src="{% static 'js/showNotification.js' %}"></script>
     <script type="module" src="{% static 'bookings/js/main.js' %}"></script>
 
 

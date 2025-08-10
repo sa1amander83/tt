@@ -13,7 +13,7 @@ export const CalendarUI = {
 
     init(store) {
         this.store = store;
-         store.subscribe(() => {
+        store.subscribe(() => {
             this.render();
             // При изменении даты или представления обновляем бронирования
             UserBookings.render();
@@ -92,14 +92,14 @@ export const CalendarUI = {
         }
         titleEl.text(text);
 
-       if (currentView === 'day' && workingHoursEl.length && lastFetchedData?.working_hours) {
-        workingHoursEl.text(
-            `Время работы клуба: ${lastFetchedData.working_hours.open_time} – ${lastFetchedData.working_hours.close_time}`
-        );
-        workingHoursEl.show();
-    } else if (workingHoursEl.length) {
-        workingHoursEl.hide();
-    }
+        if (currentView === 'day' && workingHoursEl.length && lastFetchedData?.working_hours) {
+            workingHoursEl.text(
+                `Время работы клуба: ${lastFetchedData.working_hours.open_time} – ${lastFetchedData.working_hours.close_time}`
+            );
+            workingHoursEl.show();
+        } else if (workingHoursEl.length) {
+            workingHoursEl.hide();
+        }
     },
     switchView(view) {
         this.store.set({currentView: view});
@@ -181,52 +181,42 @@ export const CalendarUI = {
         document.body.insertAdjacentHTML('beforeend', modal);
     },
 
-async render() {
-    const { currentDate, currentView, tableFilter, statusFilter } = this.store.get();
-    if (!currentDate) return;
+    async render() {
+        const {currentDate, currentView, tableFilter, statusFilter} = this.store.get();
+        if (!currentDate) return;
 
-    // Показываем контейнеры
-    $('#day-view-container, #week-view-container, #month-view-container').addClass('hidden');
-    $(`#${currentView}-view-container`).removeClass('hidden');
+        // Показываем контейнеры
+        $('#day-view-container, #week-view-container, #month-view-container').addClass('hidden');
+        $(`#${currentView}-view-container`).removeClass('hidden');
 
-    // Вычисляем дату для API (понедельник, если week)
-    const apiDate = currentView === 'week' ? getMonday(new Date(currentDate)) : new Date(currentDate);
-    const apiDateStr = formatDate(apiDate);
+        // Вычисляем дату для API (понедельник, если week)
+        const apiDate = currentView === 'week' ? getMonday(new Date(currentDate)) : new Date(currentDate);
+        const apiDateStr = formatDate(apiDate);
 
-    console.log('[CalendarUI] store.currentDate:', new Date(currentDate));
-    console.log('[CalendarUI] apiDate (for request):', apiDate, '=>', apiDateStr);
 
-    const params = {
-        date: apiDateStr,
-        view: currentView,
-        table: tableFilter || 'all',
-        status: statusFilter || 'all'
-    };
+        const params = {
+            date: apiDateStr,
+            view: currentView,
+            table: tableFilter || 'all',
+            status: statusFilter || 'all'
+        };
 
-    // Форсируем отсутствие кеша добавлением timestamp — временная мера для отладки
-    const url = `/bookings/api/calendar/?${new URLSearchParams(params).toString()}&_ts=${Date.now()}`;
-    console.log('[CalendarUI] request URL:', url);
+        // Форсируем отсутствие кеша добавлением timestamp — временная мера для отладки
+        const url = `/bookings/api/calendar/?${new URLSearchParams(params).toString()}&_ts=${Date.now()}`;
 
-    try {
-        const resp = await fetch(url, { credentials: 'include' });
-        const data = await resp.json();
-        console.log('[CalendarUI] response.ok:', resp.ok, 'status:', resp.status);
-        console.log('[CalendarUI] response.days keys:', Object.keys(data.days || {}));
-        // для удобства покажем первый ключ и его значение
-        const firstDayKey = Object.keys(data.days || {})[0];
-        console.log('[CalendarUI] firstDayKey:', firstDayKey, 'firstDayValue:', data.days?.[firstDayKey]);
+        try {
+            const resp = await fetch(url, {credentials: 'include'});
+            const data = await resp.json();
 
-        // Рендерим представление как обычно
-        $(`#${currentView}-view-container`).html(views[currentView].render(data, this.store));
-
-        if (currentView === 'month') MonthView.bindDayClicks(this.store);
-        this.bindSlotClicks();
-        this.lastFetchedData = data;
-        this.updateHeader();
-    } catch (err) {
-        console.error('[CalendarUI] failed to fetch calendar data:', err);
+            $(`#${currentView}-view-container`).html(views[currentView].render(data, this.store));
+            if (currentView === 'month') MonthView.bindDayClicks(this.store);
+            this.bindSlotClicks();
+            this.lastFetchedData = data;
+            this.updateHeader();
+        } catch (err) {
+            console.error('[CalendarUI] failed to fetch calendar data:', err);
+        }
     }
-}
 
 };
 window.CalendarUI = CalendarUI;
