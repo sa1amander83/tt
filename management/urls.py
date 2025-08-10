@@ -18,7 +18,7 @@ urlpatterns = [
     path('bookings/<int:pk>/delete/', BookingDeleteView.as_view(), name='booking_delete'),
     path('bookings/<int:pk>/cancel/', BookingCancelView.as_view(), name='cancel_booking'),
     path('bookings/ajax/', ManagementBookingsAjaxView.as_view(), name='bookings_ajax'),
-
+    path('bookings/datatable/', BookingsDatatableView.as_view(), name='bookings_datatable'),
     # path('users/', UserListView.as_view(), name='users'),
     path('users/create/', UserCreateView.as_view(), name='create_user_profile'),
     path('users/<int:pk>/delete/', UserDeleteView.as_view(), name='user_profile_delete'),

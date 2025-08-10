@@ -1,0 +1,5 @@
+<button onclick="openModal('detail-booking-modal-{{ booking.id }}')" class="text-green-600 hover:text-green-800 mr-3">Подробнее</button>
+<button onclick="openModal('edit-booking-modal-{{ booking.id }}')" class="text-blue-600 hover:text-blue-800 mr-3">Редактировать</button>
+{% if booking.status == 'pending' or booking.status == 'paid' %}
+  <button onclick="openModal('cancel-booking-modal-{{ booking.id }}')" class="text-red-600 hover:text-red-800">Отменить</button>
+{% endif %}

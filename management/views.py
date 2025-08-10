@@ -560,6 +560,46 @@ class ManagementView(LoginRequiredMixin, StaffRequiredMixin, View):
         }
 
 
+from django_datatables_view.base_datatable_view import BaseDatatableView
+
+
+class BookingsDatatableView(LoginRequiredMixin, StaffRequiredMixin, BaseDatatableView):
+    model = Booking
+    columns = ['id', 'user', 'created_at', 'start_time', 'end_time', 'table', 'status', 'total_price']
+    order_columns = ['id', 'user__user_name', 'created_at', 'start_time', 'start_time', 'table__id', 'status', 'total_price']
+
+    def get_initial_queryset(self):
+        return Booking.objects.select_related('user', 'table').all()
+
+    def render_column(self, row, column):
+        if column == 'user':
+            return row.user.get_full_name() or row.user.user_name
+        elif column == 'created_at':
+            return row.created_at.strftime('%d.%m.%Y %H:%M')
+        elif column == 'start_time':
+            return row.start_time.strftime('%d.%m.%Y')
+        elif column == 'end_time':
+            return f"{row.start_time.strftime('%H:%M')} - {row.end_time.strftime('%H:%M')}"
+        elif column == 'table':
+            return f"Стол #{row.table.id}"
+        elif column == 'status':
+            return row.get_status_display()
+        elif column == 'total_price':
+            return f"{row.total_price} ₽"
+        elif column == 'actions':
+            return render_to_string('management/bookings_modals/booking_actions.html', {'booking': row})
+        return super().render_column(row, column)
+
+    def filter_queryset(self, qs):
+        search = self.request.GET.get('search[value]', None)
+        if search:
+            qs = qs.filter(
+                Q(user__user_name__icontains=search) |
+                Q(user__email__icontains=search) |
+                Q(id__icontains=search)
+            )
+        return qs
+
 class ManagementBookingsAjaxView(LoginRequiredMixin, StaffRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         status = request.GET.get('status', 'all')
