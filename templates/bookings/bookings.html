@@ -2,6 +2,13 @@
 {% load static %}
 
 {% block content %}
+    <head>
+
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+        <title></title>
+    </head>
 
     <main class="container mx-auto px-4 py-8">
         <h1 class="text-2xl font-bold mb-6">Бронирование столов</h1>
@@ -32,7 +39,7 @@
         {% if user.is_authenticated %}
             <div class="mt-8">
                 <h2 class="text-lg font-medium  text-center mb-4" id="user-bookings-title">
-                    Ваши бронирования на <span id="bookings-period-display">{{ current_date }}</span>
+                    Ваши бронирования на <span id="bookings-period-display"></span>
                 </h2>
                 <div id="user-bookings-container" class="overflow-x-auto">
                     <!-- Сюда будет вставляться таблица с бронированиями -->
@@ -42,14 +49,39 @@
 
         <!-- Модальное окно для нового бронирования -->
         {% include 'bookings/booking_modal.html' %}
+<div id="detail-booking-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="modal-content bg-white p-6 rounded-lg max-w-lg w-full max-h-[80vh] overflow-auto shadow-lg">
+    <!-- сюда динамически вставляется контент -->
+  </div>
+</div>
+
 
     </main>
 {% endblock %}
 {% block extrascripts %}
     {#    <script type="module" src="{% static 'js/admin-modals/weekView.js' %}"></script>#}
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script type="module" src="{% static 'js/showNotification.js' %}"></script>
+    <!-- Подключаем DataTables + Tailwind адаптер -->
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+    <script type="module" src="{% static 'js/showNotification.js' %}"></script>
     <script type="module" src="{% static 'bookings/js/main.js' %}"></script>
+    <script type="module" src="{% static 'management/js/main.js' %}"></script>
 
+<script>
+  document.getElementById('detail-booking-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'detail-booking-modal') {
+      closeModal('detail-booking-modal');
+    }
+  });
 
+  function closeModal(id) {
+    const modal = document.getElementById(id);
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = '';
+  }
+</script>
 {% endblock %}

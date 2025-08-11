@@ -6,14 +6,6 @@ import { $, $$ } from '../utils/dom.js';
 // ==========================================================================
 const csrfToken = () => document.querySelector('[name=csrfmiddlewaretoken]')?.value;
 
-const showNotification = (text, type = 'info') => {
-  const el = $('#notification');
-  if (!el) return alert(text);
-  el.textContent = text;
-  el.className = `notification ${type}`;
-  el.classList.remove('hidden');
-  setTimeout(() => el.classList.add('hidden'), 3000);
-};
 
 // ==========================================================================
 // Модальные окна
@@ -53,6 +45,38 @@ const initMaxUnpaid = () => {
     showNotification('Настройки сохранены', 'success');
   });
 };
+
+
+
+
+
+const initMinTimetoCancel = () => {
+  const saveBtn  = $('#save_min_time_to_cancel');
+  const input    = $('#min_time_to_cancel');
+  if (!saveBtn || !input) return;
+
+  saveBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    await fetch('/settings/set-min-time-to-cancel/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': csrfToken()
+      },
+      body: `min_time_to_cancel=${encodeURIComponent(input.value)}`
+    });
+    showNotification('Настройки сохранены', 'success');
+  });
+};
+
+
+
+
+
+
+
+
+
 
 // ==========================================================================
 // 2. Тарифные планы
@@ -162,6 +186,7 @@ const saveEquipment = async () => {
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', () => {
   initMaxUnpaid();
+  initMinTimetoCancel();
 
   // кнопки «Добавить» через data-modal
   $$('[data-modal]').forEach(btn => {

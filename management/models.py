@@ -23,6 +23,12 @@ class MaxUnpaidBookings(models.Model):
         verbose_name_plural = 'максимальное количество неоплаченных бронирований'
 
 
+class MinTimeToCancelBooking(models.Model):
+    MinTimeToCancelBooking = models.PositiveIntegerField(default=10, null=True, blank=True)
+    class Meta:
+        verbose_name = 'Минимальное время отмены бронирования'
+        verbose_name_plural = 'минимальное время отмены бронирования'
+
 
 #Модели относящиеся к программе лояльности
 class LoyaltyProfile(models.Model):

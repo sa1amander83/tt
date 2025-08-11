@@ -4,14 +4,16 @@
         <h2 class="text-lg md:text-xl font-semibold mb-4 md:mb-6">Настройка цен</h2>
 
 
+        <div class=" flex flex-col justify-center h-full">
 
-        <div class="space-y-6">
 
-         <div>
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 md:mb-4">
-                    <h3 class="text-base md:text-lg font-medium mb-2 sm:mb-0">Максимальное количество неоплаченных бронирований для пользователя</h3>
+                    <h3 class="text-base md:text-lg font-medium mb-2 sm:mb-0">Максимальное количество неоплаченных
+                        бронирований для пользователя</h3>
                     <label>
-                        <input type="number" name="max_unpaid_bookings" id="max_unpaid_bookings"  value="{{ max_unpaid_bookings }}"  class="w-25 px-3 py-1.5 text-lg-center text-center border-2 border-green-300 rounded-lg">
+                        <input type="number" name="max_unpaid_bookings" id="max_unpaid_bookings"
+                               value="{{ max_unpaid_bookings }}"
+                               class="w-25 px-3 py-1.5 text-lg-center text-center border-2 border-green-300 rounded-lg">
                     </label>
 
                     <button data-modal="max-unpaid-bookings" id="save_max_unpaid_bookings"
@@ -19,362 +21,384 @@
                         <i class="fas fa-check mr-1 md:mr-2"></i> Сохранить
                     </button>
                 </div>
- <hr>
 
-            <!-- Тарифные планы -->
-            <div>
+
+
+
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 md:mb-4">
-                    <h3 class="text-base md:text-lg font-medium mb-2 sm:mb-0">Тарифные планы</h3>
-                    <button data-modal="pricing-plan"
+                    <h3 class="text-base md:text-lg font-medium mb-2 sm:mb-0">Минимальное время для отмены
+                        бронирования</h3>
+                    <label>
+                        <input type="number" name="min_time_to_cancel" id="min_time_to_cancel"
+                               value="{{ min_time_to_cancel_booking }}"
+                               class="w-25 px-3 py-1.5 text-lg-center text-center border-2 border-green-300 rounded-lg">
+                    </label>
+
+                    <button data-modal="min_time_to_cancel" id="save_min_time_to_cancel"
                             class="bg-green-600 hover:bg-green-700 text-white font-medium py-1.5 px-3 rounded-md transition duration-300 text-sm md:text-base">
-                        <i class="fas fa-plus mr-1 md:mr-2"></i> Добавить тариф
+                        <i class="fas fa-check mr-1 md:mr-2"></i> Сохранить
                     </button>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Название
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                                Действует с
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                                Действует до
-                            </th>
-                            
-                             <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                               Начинается
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                                Заканчивается
-                            </th>
-                            
-                            
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                По умолчанию
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Действия
-                            </th>
-                        </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                        {% for plan in pricing_plans %}
-                            <tr>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ plan.name }}</td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
-                                    {{ plan.valid_from|date:"d.m.Y" }}</td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
-                                    {% if plan.valid_to %}{{ plan.valid_to|date:"d.m.Y" }}{% else %}-{% endif %}
-                                </td>
-                            
-                            
-                             <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
-                                    {{ plan.time_from|time:"H:i" }}</td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
-                                    {% if plan.time_to %}{{ plan.time_to|time:"H:i" }}{% else %}-{% endif %}
-                                </td>
-                            
-                            
-                            
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {% if plan.is_default %}<i class="fas fa-check text-green-500"></i>{% endif %}
-                                </td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium">
-                                    <button onclick="openEditPricingPlanModal({{ plan.id }})"
-                                            class="text-green-600 hover:text-green-900 mr-2 md:mr-3">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button onclick="deletePricingPlan({{ plan.id }})"
-                                            class="text-red-600 hover:text-red-900"><i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
 
-            <!-- Цены для типов столов -->
-            <div class="border-t pt-4 md:pt-6  modal-content">
-                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 md:mb-4">
-                    <h3 class="text-base md:text-lg font-medium mb-2 sm:mb-0">Цены для типов столов</h3>
-                    <button data-modal="table-type-pricing"
-                            class="bg-green-600 hover:bg-green-700 text-white font-medium py-1.5 px-3 rounded-md transition duration-300 text-sm md:text-base">
-                        <i class="fas fa-plus mr-1 md:mr-2"></i> Добавить цену
-                    </button>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Тип стола
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                                Тарифный план
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Цена за час
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Цена за полчаса
-                            </th>
-
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                                Групповая цена
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Мин. время
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                                Макс. время
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Действия
-                            </th>
-                        </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                        {% for pricing in table_type_pricing %}
-                            <tr>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ pricing.table_type }}</td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">{{ pricing.pricing_plan }}</td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">{{ pricing.hour_rate }}
-                                    ₽
-                                </td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">{{ pricing.half_hour_rate }}
-                                    ₽
-                                </td>
-
-
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">{{ pricing.hour_rate_group }}
-                                    ₽
-                                </td>
-
-
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">{{ pricing.min_duration }}
-                                    мин
-                                </td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">{{ pricing.max_duration }}
-                                    мин
-                                </td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium">
-                                    <button data-edit-pricing="{{ pricing.id }}"
-                                            class="text-green-600 hover:text-green-900 mr-2 md:mr-3"><i
-                                            class="fas fa-edit"></i>
-                                    </button>
-                                    <button data-delete-pricing="{{ pricing.id }}"
-                                            class="text-red-600 hover:text-red-900">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
             </div>
 
 
-            <!-- Таблица оборудования -->
-            <div class="border-t pt-4 md:pt-6">
-                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 md:mb-4">
-                    <h3 class="text-base md:text-lg font-medium mb-2 sm:mb-0">Оборудование для аренды</h3>
-                    <button data-modal="equipment-pricing"
-                            class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-md transition duration-300 text-sm md:text-base">
-                        <i class="fas fa-plus mr-1 md:mr-2"></i> Добавить оборудование
-                    </button>
-                </div>
 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+
+        <!-- Тарифные планы -->
+        <div>
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 md:mb-4">
+                <h3 class="text-base md:text-lg font-medium mb-2 sm:mb-0">Тарифные планы</h3>
+                <button data-modal="pricing-plan"
+                        class="bg-green-600 hover:bg-green-700 text-white font-medium py-1.5 px-3 rounded-md transition duration-300 text-sm md:text-base">
+                    <i class="fas fa-plus mr-1 md:mr-2"></i> Добавить тариф
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Название
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            Действует с
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            Действует до
+                        </th>
+
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            Начинается
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            Заканчивается
+                        </th>
+
+
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            По умолчанию
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Действия
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    {% for plan in pricing_plans %}
                         <tr>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Название
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                                Описание
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Цена за час
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Цена за полчаса
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                                Статус
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Действия
-                            </th>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ plan.name }}</td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                                {{ plan.valid_from|date:"d.m.Y" }}</td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                                {% if plan.valid_to %}{{ plan.valid_to|date:"d.m.Y" }}{% else %}-{% endif %}
+                            </td>
+
+
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                                {{ plan.time_from|time:"H:i" }}</td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                                {% if plan.time_to %}{{ plan.time_to|time:"H:i" }}{% else %}-{% endif %}
+                            </td>
+
+
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
+                                {% if plan.is_default %}<i class="fas fa-check text-green-500"></i>{% endif %}
+                            </td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick="openEditPricingPlanModal({{ plan.id }})"
+                                        class="text-green-600 hover:text-green-900 mr-2 md:mr-3">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deletePricingPlan({{ plan.id }})"
+                                        class="text-red-600 hover:text-red-900"><i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
                         </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                        {% for equip in equipment_pricings %}
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                            <i class="fas fa-tools text-blue-600"></i>
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">{{ equip.name }}</div>
-                                            <div class="text-sm text-gray-500 sm:hidden">{{ equip.price_per_hour }}₽/час</div>
-                                        </div>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Цены для типов столов -->
+        <div class="border-t pt-4 md:pt-6  modal-content">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 md:mb-4">
+                <h3 class="text-base md:text-lg font-medium mb-2 sm:mb-0">Цены для типов столов</h3>
+                <button data-modal="table-type-pricing"
+                        class="bg-green-600 hover:bg-green-700 text-white font-medium py-1.5 px-3 rounded-md transition duration-300 text-sm md:text-base">
+                    <i class="fas fa-plus mr-1 md:mr-2"></i> Добавить цену
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Тип стола
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            Тарифный план
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Цена за час
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Цена за полчаса
+                        </th>
+
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            Групповая цена
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Мин. время
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            Макс. время
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Действия
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    {% for pricing in table_type_pricing %}
+                        <tr>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ pricing.table_type }}</td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">{{ pricing.pricing_plan }}</td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">{{ pricing.hour_rate }}
+                                ₽
+                            </td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">{{ pricing.half_hour_rate }}
+                                ₽
+                            </td>
+
+
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">{{ pricing.hour_rate_group }}
+                                ₽
+                            </td>
+
+
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">{{ pricing.min_duration }}
+                                мин
+                            </td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">{{ pricing.max_duration }}
+                                мин
+                            </td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium">
+                                <button data-edit-pricing="{{ pricing.id }}"
+                                        class="text-green-600 hover:text-green-900 mr-2 md:mr-3"><i
+                                        class="fas fa-edit"></i>
+                                </button>
+                                <button data-delete-pricing="{{ pricing.id }}"
+                                        class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- Таблица оборудования -->
+        <div class="border-t pt-4 md:pt-6">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 md:mb-4">
+                <h3 class="text-base md:text-lg font-medium mb-2 sm:mb-0">Оборудование для аренды</h3>
+                <button data-modal="equipment-pricing"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-md transition duration-300 text-sm md:text-base">
+                    <i class="fas fa-plus mr-1 md:mr-2"></i> Добавить оборудование
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Название
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            Описание
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Цена за час
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Цена за полчаса
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            Статус
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Действия
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    {% for equip in equipment_pricings %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-tools text-blue-600"></i>
                                     </div>
-                                </td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm text-gray-500 hidden sm:table-cell">
-                                    {{ equip.description|truncatechars:50 }}
-                                </td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ equip.price_per_hour }}₽
-                                </td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ equip.price_per_half_hour }}₽
-                                </td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap hidden sm:table-cell">
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">{{ equip.name }}</div>
+                                        <div class="text-sm text-gray-500 sm:hidden">{{ equip.price_per_hour }}₽/час</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 text-sm text-gray-500 hidden sm:table-cell">
+                                {{ equip.description|truncatechars:50 }}
+                            </td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ equip.price_per_hour }}₽
+                            </td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ equip.price_per_half_hour }}₽
+                            </td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap hidden sm:table-cell">
               <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                 {% if equip.is_available %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
                 {% if equip.is_available %}Доступно{% else %}Недоступно{% endif %}
               </span>
-                                </td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium">
-                                    <button data-edit-equip="{{ equip.id }}"
-                                            class="text-blue-600 hover:text-blue-900 mr-2 md:mr-3">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button data-delete-equip="{{ equip.id }}"
-                                            class="text-red-600 hover:text-red-900">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                            </td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium">
+                                <button data-edit-equip="{{ equip.id }}"
+                                        class="text-blue-600 hover:text-blue-900 mr-2 md:mr-3">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button data-delete-equip="{{ equip.id }}"
+                                        class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- Специальные предложения -->
+        <div class="border-t pt-4 md:pt-6">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 md:mb-4">
+                <h3 class="text-base md:text-lg font-medium mb-2 sm:mb-0">Специальные предложения</h3>
+                <button data-modal="special-offer"
+                        class="bg-green-600 hover:bg-green-700 text-white font-medium py-1.5 px-3 rounded-md transition duration-300 text-sm md:text-base">
+                    <i class="fas fa-plus mr-1 md:mr-2"></i> Добавить предложение
+                </button>
             </div>
 
-
-            <!-- Специальные предложения -->
-            <div class="border-t pt-4 md:pt-6">
-                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 md:mb-4">
-                    <h3 class="text-base md:text-lg font-medium mb-2 sm:mb-0">Специальные предложения</h3>
-                    <button data-modal="special-offer"
-                            class="bg-green-600 hover:bg-green-700 text-white font-medium py-1.5 px-3 rounded-md transition duration-300 text-sm md:text-base">
-                        <i class="fas fa-plus mr-1 md:mr-2"></i> Добавить предложение
-                    </button>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Название
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Скидка
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            Период действия
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            Время действия
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            Дни
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                            Столы
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Статус
+                        </th>
+                        <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Действия
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    {% for offer in special_offers %}
                         <tr>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Название
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Скидка
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                                Период действия
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                                Время действия
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                                Дни
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                                Столы
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Статус
-                            </th>
-                            <th class="px-3 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Действия
-                            </th>
-                        </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                        {% for offer in special_offers %}
-                            <tr>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ offer.name }}</td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">{{ offer.discount_percent }}%</td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ offer.name }}</td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500">{{ offer.discount_percent }}%</td>
 
-                                <!-- Период действия -->
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
-                                    {{ offer.valid_from|date:"d.m.Y" }} -
-                                    {% if offer.valid_to %}
-                                        {{ offer.valid_to|date:"d.m.Y" }}
-                                    {% else %}
-                                        ∞
-                                    {% endif %}
-                                </td>
+                            <!-- Период действия -->
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                                {{ offer.valid_from|date:"d.m.Y" }} -
+                                {% if offer.valid_to %}
+                                    {{ offer.valid_to|date:"d.m.Y" }}
+                                {% else %}
+                                    ∞
+                                {% endif %}
+                            </td>
 
-                                <!-- Время действия -->
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
-                                    {% if offer.time_from and offer.time_to %}
-                                        {{ offer.time_from|time:"H:i" }} - {{ offer.time_to|time:"H:i" }}
-                                    {% else %}
-                                        —
-                                    {% endif %}
-                                </td>
+                            <!-- Время действия -->
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                                {% if offer.time_from and offer.time_to %}
+                                    {{ offer.time_from|time:"H:i" }} - {{ offer.time_to|time:"H:i" }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
 
-                                <!-- Дни недели -->
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
-                                    {{ offer.get_weekdays_display }}
-                                </td>
+                            <!-- Дни недели -->
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                                {{ offer.get_weekdays_display }}
+                            </td>
 
-                                <!-- Столы -->
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
-                                    {% if offer.apply_to_all %}
-                                        Все
-                                    {% else %}
-                                        {{ offer.get_tables_display }}
-                                    {% endif %}
-                                </td>
+                            <!-- Столы -->
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                                {% if offer.apply_to_all %}
+                                    Все
+                                {% else %}
+                                    {{ offer.get_tables_display }}
+                                {% endif %}
+                            </td>
 
-                                <!-- Статус -->
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap">
+                            <!-- Статус -->
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if offer.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
                                 {% if offer.is_active %}Активно{% else %}Неактивно{% endif %}
                             </span>
-                                </td>
+                            </td>
 
-                                <!-- Действия -->
-                                <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium">
-                                    <button onclick="openSpecialOfferModal({{ offer.id }})"
-                                            class="text-green-600 hover:text-green-900 mr-2 md:mr-3">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button onclick="deleteSpecialOffer({{ offer.id }})"
-                                            class="text-red-600 hover:text-red-900">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                            <!-- Действия -->
+                            <td class="px-3 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick="openSpecialOfferModal({{ offer.id }})"
+                                        class="text-green-600 hover:text-green-900 mr-2 md:mr-3">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteSpecialOffer({{ offer.id }})"
+                                        class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Модальные окна -->
-    {% include 'admin/admin_modals/add_pricing_plan_modal.html' %}
-    {% include 'admin/admin_modals/add_special_offer_modal.html' %}
-    {% include 'admin/admin_modals/add_table_type_pricing_modal.html' %}
-    {% include 'admin/admin_modals/add_equipment_modal.html' %}
-    {% include 'admin/admin_modals/add_membership_modal.html' %}
+<!-- Модальные окна -->
+{% include 'admin/admin_modals/add_pricing_plan_modal.html' %}
+{% include 'admin/admin_modals/add_special_offer_modal.html' %}
+{% include 'admin/admin_modals/add_table_type_pricing_modal.html' %}
+{% include 'admin/admin_modals/add_equipment_modal.html' %}
+{% include 'admin/admin_modals/add_membership_modal.html' %}
 
 </div>
 </div>

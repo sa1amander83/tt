@@ -301,7 +301,8 @@ class CalendarAPIView(APIView):
                     'discount_percent': discount,
                     'slot_duration': slot_duration,
                     'booking_id': booking_id,
-                    'is_past': is_past
+                    'is_past': is_past,
+                    'user': booking_info['user'] if booking_info else None
                 }
 
                 slot_visible = True
@@ -331,8 +332,8 @@ class CalendarAPIView(APIView):
             'user_bookings': [{
                 'id': b.id,
                 'date': b.start_time.date().isoformat(),
-                'start': b.start_time.strftime('%H:%M'),
-                'end': b.end_time.strftime('%H:%M'),
+                'start': b.start_time.astimezone(pytz.timezone('Europe/Moscow')).strftime('%H:%M'),
+                'end': b.end_time.astimezone(pytz.timezone('Europe/Moscow')).strftime('%H:%M'),
                 'table_number': b.table.number,
                 'status': b.status,
                 'can_cancel': b.status in ['pending', 'paid']
@@ -482,7 +483,8 @@ class CalendarAPIView(APIView):
                 any_visible = False  # покажем ли этот слот хоть где-то
 
                 for table in tables:
-                    overlaps = any(b['start'] < slot_end and b['end'] > slot_start for b in booking_map.get(table.id, []))
+                    overlaps = any(
+                        b['start'] < slot_end and b['end'] > slot_start for b in booking_map.get(table.id, []))
                     is_past = slot_end <= timezone.now().astimezone(tz)
 
                     # Скрываем весь слот, если он в прошлом и пользователь не админ
@@ -560,7 +562,15 @@ class CalendarAPIView(APIView):
             user_bookings_count = sum(
                 1 for b in user_bookings if b['start_time'].startswith(booking_date_str)
             )
+            total_hours = 0
+            paid_completed_hours = 0
 
+            for table_id, slots_info in day_schedule.items():
+                for slot in slots_info.values():
+                    slot_hours = slot_duration / 60  # переводим слот в часы
+                    total_hours += slot_hours
+                    if slot['status'] in ('paid', 'completed'):
+                        paid_completed_hours += slot_hours
             calendar_schedule[day.isoformat()] = {
                 'user_bookings': [],
                 'date': day.isoformat(),
@@ -573,7 +583,9 @@ class CalendarAPIView(APIView):
                 },
                 'day_schedule': day_schedule,
                 'total_bookings': sum(len(slots) for slots in booking_map.values()),
-                'user_bookings_count': user_bookings_count
+                'user_bookings_count': user_bookings_count,
+                'total_hours': total_hours,
+                'paid_completed_hours': paid_completed_hours
             }
 
         return Response({
@@ -660,6 +672,42 @@ def get_site_settings(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e), 'status': 'error'}, status=500)
+
+
+# bookings/views.py
+@require_GET
+def get_schedule(request):
+    date_str = request.GET.get('date')
+    if not date_str:
+        return JsonResponse({'error': 'date is required'}, status=400)
+
+    try:
+        date = parse_date(date_str)
+    except ValueError:
+        return JsonResponse({'error': 'Invalid date format'}, status=400)
+
+    tz = pytz.timezone('Europe/Moscow')
+    day_start = tz.localize(datetime.combine(date, time.min))
+    day_end = tz.localize(datetime.combine(date, time.max))
+
+    bookings = Booking.objects.filter(
+        start_time__lt=day_end,
+        end_time__gt=day_start
+    ).exclude(status__in=['cancelled', 'expired'])
+
+    schedule = defaultdict(list)
+    for b in bookings:
+        schedule[b.table_id].append({
+            'start_time': b.start_time.astimezone(tz).strftime('%H:%M'),
+            'end_time': b.end_time.astimezone(tz).strftime('%H:%M'),
+            'status': b.status,
+            'id': b.id,
+        })
+
+    return JsonResponse({'schedule': [
+        {'table_id': table_id, 'bookings': items}
+        for table_id, items in schedule.items()
+    ]})
 
 
 class UserBookingsView(APIView):
@@ -831,6 +879,46 @@ class UpdateBookingView(LoginRequiredMixin, UpdateView):
         """Аналогично CreateBookingView"""
 
 
+
+
+
+@require_GET
+@login_required
+def booking_detail_by_id(request, pk):
+    booking = get_object_or_404(
+        Booking.objects.select_related('user', 'table')
+                       .prefetch_related('bookingequipment_set__equipment'),
+        pk=pk
+    )
+    if booking.user != request.user and not request.user.is_staff:
+        return JsonResponse({'error': 'Нет доступа'}, status=403)
+
+    return JsonResponse({
+        'bookingId'      : booking.id,
+        'userName'       : str(booking.user),
+        'status'         : booking.get_status_display(),
+        'start_time'     : booking.start_time.isoformat(),
+        'end_time'       : booking.end_time.isoformat(),
+        'participants'   : booking.participants,
+        'is_group'       : booking.is_group,
+        'table_number'   : booking.table.number,
+        'base_price'     : booking.base_price,
+        'equipment_price': booking.equipment_price,
+        'total_price'    : booking.total_price,
+        'promo_code_discount_percent' : booking.promo_code_discount_percent,
+        'special_offer_discount_percent' : booking.special_offer_discount_percent,
+        'loyalty_level'        : booking.loyalty_level,
+        'loyalty_discount_percent' : float(booking.loyalty_discount_percent or 0),
+        'notes'          : booking.notes or '',
+        'equipment': [
+            {
+                'id'      : be.equipment.id,
+                'name'    : be.equipment.name,
+                'quantity': be.quantity,
+            }
+            for be in booking.bookingequipment_set.all()
+        ],
+    })
 @login_required
 def get_booking_info(request):
     if not request.user.is_authenticated:
@@ -1153,6 +1241,12 @@ from django.db import transaction
 @login_required
 @require_POST
 def create_booking_api(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'error': 'Для бронирования необходимо войти в систему',
+            'login_required': True  # Добавляем флаг для фронтенда
+        }, status=403)
+
     try:
         data = json.loads(request.body)
 
@@ -1222,7 +1316,7 @@ def create_booking_api(request):
         pending_bookings_count = Booking.objects.filter(user=request.user, status='pending').count()
         MAX_PENDING_BOOKINGS = getattr(MaxUnpaidBookings.objects.first(), 'max_unpaid_bookings', 2)
 
-        if pending_bookings_count >= MAX_PENDING_BOOKINGS:
+        if pending_bookings_count >= MAX_PENDING_BOOKINGS and not request.user.is_staff:
             return JsonResponse({
                 'error': f'У вас уже есть {MAX_PENDING_BOOKINGS} неоплаченных бронирований. Пожалуйста, оплатите их или отмените, чтобы создать новое.'},
                 status=400)

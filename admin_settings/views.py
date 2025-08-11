@@ -1,22 +1,14 @@
-from django.contrib.auth import login
-from django.contrib.auth.decorators import login_required
 from django.core import serializers
-from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import DetailView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
 from admin_settings.forms import TableForm, TableTypeForm,  \
      HolidayForm, ClubSettingsForm, WorkingHoursForm
 from admin_settings.models import ClubSettings, Holiday, WorkingDay, NotificationSettings, Table, TableType, Equipment
 from bookings.models import  TableTypePricing
-from management.forms import MembershipTypeForm, SpecialOfferForm
-from management.models import MembershipType, SpecialOffer, MaxUnpaidBookings
+from management.forms import  SpecialOfferForm
+from management.models import SpecialOffer, MaxUnpaidBookings, MinTimeToCancelBooking
 from pricing.forms import PricingPlanForm, TableTypePricingForm
 from pricing.models import PricingPlan
 
@@ -115,6 +107,7 @@ class ClubSettingsView(LoginRequiredMixin, View):
 
                 'equipment_pricings': equipment_pricings,
                 'max_unpaid_bookings': MaxUnpaidBookings.objects.first().max_unpaid_bookings,
+                'min_time_to_cancel_booking': MinTimeToCancelBooking.objects.first().MinTimeToCancelBooking,
                 'pricing_plan_form': PricingPlanForm(),
                 'table_type_pricing': TableTypePricing.objects.all(),
                 'table_type_pricing_form': TableTypePricingForm(),
@@ -519,10 +512,26 @@ def set_max_unpaid_bookings(request):
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=400)
 
-
-
-
 @require_GET
 def get_max_unpaid_bookings(request):
     obj, created = MaxUnpaidBookings.objects.get_or_create(pk=1)
     return JsonResponse({'max_unpaid_bookings': obj.max_unpaid_bookings})
+
+
+
+@require_POST
+@csrf_exempt  # если не используете csrf_token в шаблоне, иначе уберите эту строку
+def set_min_time_to_cancel(request):
+    try:
+        value = int(request.POST.get('min_time_to_cancel', 10))
+        obj, created = MinTimeToCancelBooking.objects.get_or_create(pk=1)
+        obj.MinTimeToCancelBooking = value
+        obj.save()
+        return JsonResponse({'success': True, 'message': 'Настройка сохранена'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=400)
+
+@require_GET
+def get_min_time_to_cancel(request):
+    obj, created = MinTimeToCancelBooking.objects.get_or_create(pk=1)
+    return JsonResponse({'min_time_to_cancel': obj.MinTimeToCancelBooking})
