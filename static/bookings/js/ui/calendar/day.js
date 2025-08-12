@@ -65,14 +65,55 @@ slotCell(data, table, time, store) {
     const isWithin5Minutes = minutesSinceStart >= 0 && minutesSinceStart <= 5;
     const isSlotPast = now >= slotEnd;
 
-    if (isUserBooking) {
+    // --- Определяем диапазон всей брони ---
+    const mergeableStatuses = ['pending', 'paid', 'processing', 'completed', 'returned'];
+    let bookingRangeStart = slotStart;
+    let bookingRangeEnd = slotEnd;
+
+    if (bookingId && mergeableStatuses.includes(status)) {
+        const allTimes = data.time_slots
+            .map(t => ({
+                time: t,
+                slot: data.day_schedule[table.number]?.[t]
+            }))
+            .filter(s => s.slot?.booking_id === bookingId && mergeableStatuses.includes(s.slot?.status));
+
+        if (allTimes.length) {
+            const firstSlot = new Date(`${data.date}T${allTimes[0].time}`);
+            const lastSlotTime = allTimes[allTimes.length - 1].time;
+            const lastSlot = new Date(`${data.date}T${lastSlotTime}`);
+            const lastDuration = allTimes[allTimes.length - 1].slot.duration || 30;
+            bookingRangeStart = firstSlot;
+            bookingRangeEnd = new Date(lastSlot.getTime() + lastDuration * 60000);
+        }
+    }
+
+    const isOngoing =
+        bookingId &&
+        now >= bookingRangeStart &&
+        now < bookingRangeEnd &&
+        ['paid', 'processing'].includes(status);
+
+    // --- Определяем цвет и текст ---
+    if (isOngoing) {
+        cls = 'bg-blue-500 text-white rounded-xl';
+        textBottom = 'Идёт сейчас';
+        if (user?.is_staff) {
+            textTop = username;
+        } else if (isUserBooking) {
+            textTop = 'Ваша бронь';
+        } else {
+            textTop = '';
+        }
+        clickable = false;
+    } else if (isUserBooking) {
         cls = 'bg-red-900 text-white text-xl rounded-xl ring-4 ring-inset ring-amber-950';
         textTop = 'Ваша бронь';
-        switch(status) {
-            case 'processing': textBottom = 'Идёт сейчас'; break;
+        switch (status) {
             case 'pending': textBottom = 'Ожидает оплаты'; break;
             case 'paid': textBottom = 'Оплачено'; break;
             case 'completed': textBottom = 'Завершено'; break;
+            case 'processing': textBottom = 'Идёт сейчас'; break;
         }
         clickable = false;
     } else if (user?.is_staff) {
@@ -100,11 +141,6 @@ slotCell(data, table, time, store) {
             }
         } else {
             switch (status) {
-                case 'processing':
-                    cls = 'bg-blue-500 text-white rounded-xl';
-                    textBottom = 'Идёт сейчас';
-                    textTop = username;
-                    break;
                 case 'pending':
                     cls = 'bg-yellow-500 text-white rounded-xl';
                     textBottom = 'Ожидает оплаты';
@@ -141,51 +177,42 @@ slotCell(data, table, time, store) {
             }
         }
     } else {
-        if (status === 'processing') {
-            cls = 'bg-blue-500 text-white rounded-xl';
-            textBottom = 'Идёт сейчас';
-            textTop = '';
-        } else if (isSlotPast) {
+        if (isSlotPast) {
             if (status === 'completed') {
                 cls = 'bg-green-100 text-green-800 rounded-xl';
                 textBottom = 'Завершено';
-                textTop = '';
             } else {
                 cls = 'bg-gray-200 text-gray-800 rounded-xl';
                 textBottom = '—';
-                textTop = '';
             }
+            textTop = '';
         } else {
             switch (status) {
                 case 'pending':
                     cls = 'bg-yellow-500 text-white rounded-xl';
                     textBottom = 'Ожидает оплаты';
                     clickable = true;
-                    textTop = '';
                     break;
                 case 'paid':
                     cls = 'bg-red-300 text-white rounded-xl';
                     textBottom = 'Занят';
-                    textTop = '';
                     break;
                 case 'expired':
                     if (now < slotStart) {
                         cls = 'bg-green-500 text-white rounded-xl';
                         textBottom = 'Свободен';
                         clickable = true;
-                        textTop = '';
                     } else {
                         cls = 'bg-gray-200 text-gray-800 rounded-xl';
                         textBottom = '—';
-                        textTop = '';
                     }
                     break;
                 default:
                     cls = 'bg-green-500 text-white rounded-xl';
                     textBottom = 'Свободен';
                     clickable = true;
-                    textTop = '';
             }
+            textTop = '';
         }
     }
 
@@ -193,10 +220,43 @@ slotCell(data, table, time, store) {
         clickable = true;
     }
 
-    // Новый обработчик onClick
-    let onClick = null;
+    // --- Объединение ячеек ---
+    let capsuleStyle = '';
+    let borderRadius = '';
+    let hideText = false;
+    let borderTop = true;
 
-    if (status === 'expired' && clickable || status === 'cancelled' && clickable || status === 'returned' && clickable) {
+    if (bookingId && mergeableStatuses.includes(status)) {
+        const hue = bookingId % 360;
+        capsuleStyle += `border-left: 6px solid hsl(${hue}, 70%, 50%);`;
+
+        const timeSlots = data.time_slots;
+        const idx = timeSlots.indexOf(time);
+
+        const prevTime = timeSlots[idx - 1];
+        const nextTime = timeSlots[idx + 1];
+        const prevSlot = data.day_schedule[table.number]?.[prevTime];
+        const nextSlot = data.day_schedule[table.number]?.[nextTime];
+
+        const isPrevSameBooking = prevSlot?.booking_id === bookingId && mergeableStatuses.includes(prevSlot?.status);
+        const isNextSameBooking = nextSlot?.booking_id === bookingId && mergeableStatuses.includes(nextSlot?.status);
+
+        if (isPrevSameBooking) {
+            borderTop = false;
+            borderRadius = 'border-radius: 0 0 0 0;';
+            hideText = true;
+        } else {
+            borderRadius = 'border-radius: 0.75rem 0.75rem 0 0;';
+        }
+
+        if (!isNextSameBooking) {
+            borderRadius = 'border-radius: 0 0 0.75rem 0.75rem;';
+        }
+    }
+
+    // --- onClick ---
+    let onClick = null;
+    if ((['expired', 'cancelled', 'returned'].includes(status) && clickable) || (status === 'available' && clickable)) {
         onClick = `openCreateBooking({date:'${data.date}',time:'${time}',tableId:${table.number}})`;
     } else if (bookingId && user?.is_staff) {
         onClick = `openBookingDetail(${bookingId})`;
@@ -205,21 +265,21 @@ slotCell(data, table, time, store) {
     }
 
     return html`
-        <div class="p-px">
+        <div class="p-px" style="${!borderTop ? 'margin-top:-1px;' : ''}">
             <div
                 class="flex flex-col items-center justify-center h-12 w-full leading-tight text-center ${cls} ${onClick ? 'cursor-pointer hover:opacity-90' : ''}"
+                style="${capsuleStyle}${borderRadius}"
                 ${onClick ? `onclick="${onClick}"` : ''}
             >
-                ${textTop ? `<div class="text-xs">${textTop}</div>` : ''}
-                ${textBottom ? `<div class="text-xs">${textBottom}</div>` : ''}
+                ${!hideText && textTop ? `<div class="text-xl">${textTop}</div>` : ''}
+                ${!hideText && textBottom ? `<div class="text-xl">${textBottom}</div>` : ''}
             </div>
         </div>
     `;
 }
 };
 window.openCreateBooking = ({date, time, tableId}) => {
-    // если BookingModal – ES-модуль, используйте импорт
-    // import('/static/js/modals/bookingModal.js').then(m => m.BookingModal.open(...))
+
     BookingModal.open({date, time, tableId});
 };
 
@@ -274,7 +334,7 @@ window.openBookingDetail = async (bookingId) => {
   <div class="mt-6 flex justify-end space-x-3">
     <button class="px-4 py-2 bg-gray-200 rounded" onclick="closeModal('detail-booking-modal')">Закрыть</button>
     ${
-           (d.status === 'pending' || d.status === 'Ожидает оплаты')
+            (d.status === 'pending' || d.status === 'Ожидает оплаты')
                 ? `<button class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" onclick="cancelBooking(${d.bookingId})">Отменить</button>
          <button class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600" onclick="payBooking(${d.bookingId})">Оплатить</button>`
                 : ''
@@ -307,84 +367,82 @@ window.closeModal = () => {
 
 
 window.payBooking = async (bookingId) => {
-  console.log('payBooking: bookingId =', bookingId);
+    console.log('payBooking: bookingId =', bookingId);
 
-  if (!bookingId) {
-    showNotification('Не передан ID брони', 'error');
-    return;
-  }
-
-  try {
-    const { payment_url, status, confirmation_url } = await BookingAPI.payment(bookingId);
-
-    if (status === 'paid') {
-      showNotification('Уже оплачено', 'success');
-    } else if (payment_url) {
-      window.open(payment_url, '_blank');
-    } else if (confirmation_url) {
-      window.open(confirmation_url, '_blank');
-    } else {
-      showNotification('Нет ссылки на оплату', 'error');
+    if (!bookingId) {
+        showNotification('Не передан ID брони', 'error');
+        return;
     }
 
-    // Закрываем модалку
-    closeModal('detail-booking-modal');
-
-    // Пытаемся обновить только таблицу бронирований
     try {
-      // Путь поправь, если нужно
-      const mod = await import('../userBookings.js');
-      const UserBookings = mod.UserBookings || mod.default;
-      if (UserBookings && typeof UserBookings.render === 'function') {
-        // Дополнительная проверка — store и контейнер
-        if (!UserBookings.store) {
-          console.warn('UserBookings.store не инициализирован. Попытка вызвать render всё равно.');
+        const {payment_url, status, confirmation_url} = await BookingAPI.payment(bookingId);
+
+        if (status === 'paid') {
+            showNotification('Уже оплачено', 'success');
+        } else if (payment_url) {
+            window.open(payment_url, '_blank');
+        } else if (confirmation_url) {
+            window.open(confirmation_url, '_blank');
+        } else {
+            showNotification('Нет ссылки на оплату', 'error');
         }
-        await UserBookings.render();
-        return; // успешно обновили — не дергаем календарь
-      } else {
-        console.warn('UserBookings не экспортирован корректно или не имеет render()');
-      }
-    } catch (err) {
-      console.warn('Не удалось импортировать или выполнить UserBookings.render():', err);
-    }
 
-    // fallback: обновляем календарь, если таблицу обновить не получилось
-    if (window.CalendarUI && typeof CalendarUI.render === 'function') {
-      await CalendarUI.render();
-    } else {
-      console.warn('Ни UserBookings, ни CalendarUI недоступны для обновления.');
-    }
+        // Закрываем модалку
+        closeModal('detail-booking-modal');
 
-  } catch (e) {
-    console.error('Ошибка payBooking:', e);
-    showNotification('Не удалось начать оплату', 'error');
-  }
+        // Пытаемся обновить только таблицу бронирований
+        try {
+            // Путь поправь, если нужно
+            const mod = await import('../userBookings.js');
+            const UserBookings = mod.UserBookings || mod.default;
+            if (UserBookings && typeof UserBookings.render === 'function') {
+                // Дополнительная проверка — store и контейнер
+                if (!UserBookings.store) {
+                    console.warn('UserBookings.store не инициализирован. Попытка вызвать render всё равно.');
+                }
+                await UserBookings.render();
+                return; // успешно обновили — не дергаем календарь
+            } else {
+                console.warn('UserBookings не экспортирован корректно или не имеет render()');
+            }
+        } catch (err) {
+            console.warn('Не удалось импортировать или выполнить UserBookings.render():', err);
+        }
+
+        // fallback: обновляем календарь, если таблицу обновить не получилось
+        if (window.CalendarUI && typeof CalendarUI.render === 'function') {
+            await CalendarUI.render();
+        } else {
+            console.warn('Ни UserBookings, ни CalendarUI недоступны для обновления.');
+        }
+
+    } catch (e) {
+        console.error('Ошибка payBooking:', e);
+        showNotification('Не удалось начать оплату', 'error');
+    }
 };
 
 
-
-
 window.cancelBooking = async (bookingId) => {
-  if (!confirm('Вы уверены, что хотите отменить бронирование?')) return;
-  try {
-    const response = await fetch(`/bookings/api/cancel/${bookingId}/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCSRFToken()
-      }
-    });
-    const result = await response.json();
-    if (result.success) {
-      showNotification('Бронирование успешно отменено', 'success');
-      closeModal('detail-booking-modal');
-      await UserBookings.render(); // 🔹 просто обновляем таблицу
-    } else {
-      throw new Error(result.error || 'Неизвестная ошибка');
+    if (!confirm('Вы уверены, что хотите отменить бронирование?')) return;
+    try {
+        const response = await fetch(`/bookings/api/cancel/${bookingId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        });
+        const result = await response.json();
+        if (result.success) {
+            showNotification('Бронирование успешно отменено', 'success');
+            closeModal('detail-booking-modal');
+            await UserBookings.render(); // 🔹 просто обновляем таблицу
+        } else {
+            throw new Error(result.error || 'Неизвестная ошибка');
+        }
+    } catch (error) {
+        console.error('Ошибка отмены бронирования:', error);
+        showNotification(`Ошибка: ${error.message}`, 'error');
     }
-  } catch (error) {
-    console.error('Ошибка отмены бронирования:', error);
-    showNotification(`Ошибка: ${error.message}`, 'error');
-  }
 };
