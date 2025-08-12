@@ -101,9 +101,9 @@ class CalendarAPIView(APIView):
             except ValueError:
                 slot_duration = 60
         else:
-            slot_duration = getattr(user, 'slot_view_mode', 60) if user else 60
+            slot_duration = getattr(user, 'slot_view_mode', 30) if user else 30
             if not slot_duration or slot_duration <= 0:
-                slot_duration = 60
+                slot_duration =30
 
         if view_type == 'day':
             return self.get_day_view(date, user, slot_duration)

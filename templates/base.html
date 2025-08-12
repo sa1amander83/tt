@@ -24,25 +24,25 @@
     <script src="{% static 'js/showNotification.js' %}"></script>
     <script src="{% static 'js/loader.js' %}"></script>
 
-{% block extracss %}
-    <link href="{% static 'css/flowbite.min.css' %}" rel="stylesheet"/>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet"/>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css"/>
+    {% block extracss %}
+        <link href="{% static 'css/flowbite.min.css' %}" rel="stylesheet"/>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet"/>
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css"/>
 
-    <style>
-        #userBookingsTable thead th {
-            text-align: center !important;
-        }
-    </style>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            #userBookingsTable thead th {
+                text-align: center !important;
+            }
+        </style>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- DataTables Bootstrap-5 skin -->
-    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-{% endblock extracss %}
+        <!-- DataTables Bootstrap-5 skin -->
+        <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {% endblock extracss %}
 
 </head>
 
@@ -53,11 +53,15 @@
             <i class="fas fa-table-tennis-paddle-ball text-2xl mr-2"></i>
             <a href="{% url 'main:index' %}"><h1 class="text-xl font-bold">PingPong Club</h1></a>
         </div>
+        
+        <div id="moscow-time"></div>
+
         <nav class="hidden md:block">
             <ul class="flex space-x-6">
                 <li><a href="{% url 'main:index' %}" class="hover:text-green-200 font-medium">Главная</a></li>
                 <li><a href="{% url 'bookings:bookings' %}" class="hover:text-green-200">Бронирование</a></li>
                 <div id="user_role" class="hidden">{{ request.user.is_staff }}</div>
+
 
 
                 {% if user.is_authenticated and user.role == 'ADMIN' %}
@@ -303,7 +307,19 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="{% static 'js/script.js' %}"></script>
     <script id="user-data" type="application/json"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
 
+    <script>
+        const {DateTime} = luxon;
+
+        function updateMoscowTime() {
+            const moscowTime = DateTime.now().setZone('Europe/Moscow');
+    document.getElementById('moscow-time').textContent = `Московское время: ${moscowTime.toFormat('HH:mm')}`;
+        }
+
+        updateMoscowTime();
+        setInterval(updateMoscowTime, 60 * 1000);
+    </script>
 {% endblock %}
 </body>
 </html>

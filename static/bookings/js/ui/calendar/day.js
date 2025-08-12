@@ -36,203 +36,69 @@ export const DayView = {
             </div>`;
     },
 
-slotCell(data, table, time, store) {
-    const slot = data.day_schedule[table.number]?.[time] || {};
-    const state = store.get();
-    const user = state.user;
+    slotCell(data, table, time, store) {
+        const slot = data.day_schedule[table.number]?.[time] || {};
+        const state = store.get();
+        const user = state.user;
 
-    const now = new Date();
-    const slotStart = new Date(`${data.date}T${time}`);
-    const durationMinutes = slot.duration || 30;
-    const slotEnd = new Date(slotStart.getTime() + durationMinutes * 60000);
+        const now = new Date();
+        const slotStart = new Date(`${data.date}T${time}`);
+        const durationMinutes = slot.duration || 30;
+        const slotEnd = new Date(slotStart.getTime() + durationMinutes * 60000);
 
-    const status = slot.status || 'available';
-    const username = slot.user?.name || '';
-    const bookingId = slot.booking_id || null;
+        const status = slot.status || 'available';
+        const username = slot.user?.name || '';
+        const bookingId = slot.booking_id || null;
 
-    let cls = '';
-    let textTop = '';
-    let textBottom = '';
-    let clickable = false;
+        let cls = '';
+        let borderColor = '';
+        let dotColor = '';
+        let textTop = '';
+        let textBottom = '';
+        let clickable = false;
 
-    const userId = user?.user_id || null;
-    const isUserBooking =
-        user && !user.is_staff &&
-        slot.user && slot.user.id === userId &&
-        ['pending', 'paid', 'completed', 'processing'].includes(status);
+        const userId = user?.user_id || null;
+        const isUserBooking =
+            user && !user.is_staff &&
+            slot.user && slot.user.id === userId &&
+            ['pending', 'paid', 'completed', 'processing'].includes(status);
 
-    const minutesSinceStart = (now - slotStart) / 60000;
-    const isWithin5Minutes = minutesSinceStart >= 0 && minutesSinceStart <= 5;
-    const isSlotPast = now >= slotEnd;
+        const minutesSinceStart = (now - slotStart) / 60000;
+        const isWithin5Minutes = minutesSinceStart >= 0 && minutesSinceStart <= 5;
+        const isSlotPast = now >= slotEnd;
 
-    // --- Определяем диапазон всей брони ---
-    const mergeableStatuses = ['pending', 'paid', 'processing', 'completed', 'returned'];
-    let bookingRangeStart = slotStart;
-    let bookingRangeEnd = slotEnd;
+        // --- Определяем диапазон всей брони ---
+        const mergeableStatuses = ['pending', 'paid', 'processing', 'completed', 'returned'];
+        let bookingRangeStart = slotStart;
+        let bookingRangeEnd = slotEnd;
 
-    if (bookingId && mergeableStatuses.includes(status)) {
-        const allTimes = data.time_slots
-            .map(t => ({
-                time: t,
-                slot: data.day_schedule[table.number]?.[t]
-            }))
-            .filter(s => s.slot?.booking_id === bookingId && mergeableStatuses.includes(s.slot?.status));
+        if (bookingId && mergeableStatuses.includes(status)) {
+            const allTimes = data.time_slots
+                .map(t => ({
+                    time: t,
+                    slot: data.day_schedule[table.number]?.[t]
+                }))
+                .filter(s => s.slot?.booking_id === bookingId && mergeableStatuses.includes(s.slot?.status));
 
-        if (allTimes.length) {
-            const firstSlot = new Date(`${data.date}T${allTimes[0].time}`);
-            const lastSlotTime = allTimes[allTimes.length - 1].time;
-            const lastSlot = new Date(`${data.date}T${lastSlotTime}`);
-            const lastDuration = allTimes[allTimes.length - 1].slot.duration || 30;
-            bookingRangeStart = firstSlot;
-            bookingRangeEnd = new Date(lastSlot.getTime() + lastDuration * 60000);
-        }
-    }
-
-    const isOngoing =
-        bookingId &&
-        now >= bookingRangeStart &&
-        now < bookingRangeEnd &&
-        ['paid', 'processing'].includes(status);
-
-    // --- Определяем цвет и текст ---
-    if (isOngoing) {
-        cls = 'bg-blue-500 text-white rounded-xl';
-        textBottom = 'Идёт сейчас';
-        if (user?.is_staff) {
-            textTop = username;
-        } else if (isUserBooking) {
-            textTop = 'Ваша бронь';
-        } else {
-            textTop = '';
-        }
-        clickable = false;
-    } else if (isUserBooking) {
-        cls = 'bg-red-900 text-white text-xl rounded-xl ring-4 ring-inset ring-amber-950';
-        textTop = 'Ваша бронь';
-        switch (status) {
-            case 'pending': textBottom = 'Ожидает оплаты'; break;
-            case 'paid': textBottom = 'Оплачено'; break;
-            case 'completed': textBottom = 'Завершено'; break;
-            case 'processing': textBottom = 'Идёт сейчас'; break;
-        }
-        clickable = false;
-    } else if (user?.is_staff) {
-        if (isSlotPast) {
-            switch (status) {
-                case 'completed':
-                    cls = 'bg-green-100 text-green-800 rounded-xl';
-                    textBottom = 'Завершено';
-                    textTop = username;
-                    break;
-                case 'cancelled':
-                    cls = 'bg-red-100 text-red-800 rounded-xl';
-                    textBottom = 'Отменено';
-                    textTop = username;
-                    break;
-                case 'expired':
-                    cls = 'bg-gray-300 text-gray-900 rounded-xl';
-                    textBottom = 'Просрочено';
-                    textTop = username || '';
-                    break;
-                default:
-                    cls = 'bg-gray-200 text-gray-800 rounded-xl';
-                    textBottom = '—';
-                    textTop = username || '';
-            }
-        } else {
-            switch (status) {
-                case 'pending':
-                    cls = 'bg-yellow-500 text-white rounded-xl';
-                    textBottom = 'Ожидает оплаты';
-                    clickable = true;
-                    textTop = username;
-                    break;
-                case 'paid':
-                    cls = 'bg-red-500 text-white text-xl font-bold rounded-xl';
-                    textBottom = 'Оплачено';
-                    textTop = username;
-                    break;
-                case 'returned':
-                    cls = 'bg-purple-200 text-purple-900 rounded-xl';
-                    textBottom = 'Оплата возвращена';
-                    textTop = username;
-                    break;
-                case 'expired':
-                    if (now < slotStart) {
-                        cls = 'bg-green-500 text-white rounded-xl';
-                        textBottom = 'Свободен';
-                        clickable = true;
-                        textTop = '';
-                    } else {
-                        cls = 'bg-gray-300 text-gray-900 rounded-xl';
-                        textBottom = 'Просрочено';
-                        textTop = username || '';
-                    }
-                    break;
-                default:
-                    cls = 'bg-green-500 text-white rounded-xl';
-                    textBottom = 'Свободен';
-                    clickable = true;
-                    textTop = '';
+            if (allTimes.length) {
+                const firstSlot = new Date(`${data.date}T${allTimes[0].time}`);
+                const lastSlotTime = allTimes[allTimes.length - 1].time;
+                const lastSlot = new Date(`${data.date}T${lastSlotTime}`);
+                const lastDuration = allTimes[allTimes.length - 1].slot.duration || 30;
+                bookingRangeStart = firstSlot;
+                bookingRangeEnd = new Date(lastSlot.getTime() + lastDuration * 60000);
             }
         }
-    } else {
-        if (isSlotPast) {
-            if (status === 'completed') {
-                cls = 'bg-green-100 text-green-800 rounded-xl';
-                textBottom = 'Завершено';
-            } else {
-                cls = 'bg-gray-200 text-gray-800 rounded-xl';
-                textBottom = '—';
-            }
-            textTop = '';
-        } else {
-            switch (status) {
-                case 'pending':
-                    cls = 'bg-yellow-500 text-white rounded-xl';
-                    textBottom = 'Ожидает оплаты';
-                    clickable = true;
-                    break;
-                case 'paid':
-                    cls = 'bg-red-300 text-white rounded-xl';
-                    textBottom = 'Занят';
-                    break;
-                case 'expired':
-                    if (now < slotStart) {
-                        cls = 'bg-green-500 text-white rounded-xl';
-                        textBottom = 'Свободен';
-                        clickable = true;
-                    } else {
-                        cls = 'bg-gray-200 text-gray-800 rounded-xl';
-                        textBottom = '—';
-                    }
-                    break;
-                default:
-                    cls = 'bg-green-500 text-white rounded-xl';
-                    textBottom = 'Свободен';
-                    clickable = true;
-            }
-            textTop = '';
-        }
-    }
 
-    if (!clickable && status === 'available' && isWithin5Minutes) {
-        clickable = true;
-    }
+        const isOngoing =
+            bookingId &&
+            now >= bookingRangeStart &&
+            now < bookingRangeEnd &&
+            ['paid', 'processing'].includes(status);
 
-    // --- Объединение ячеек ---
-    let capsuleStyle = '';
-    let borderRadius = '';
-    let hideText = false;
-    let borderTop = true;
-
-    if (bookingId && mergeableStatuses.includes(status)) {
-        const hue = bookingId % 360;
-        capsuleStyle += `border-left: 6px solid hsl(${hue}, 70%, 50%);`;
-
+        // --- Определяем позицию в капсуле ---
         const timeSlots = data.time_slots;
         const idx = timeSlots.indexOf(time);
-
         const prevTime = timeSlots[idx - 1];
         const nextTime = timeSlots[idx + 1];
         const prevSlot = data.day_schedule[table.number]?.[prevTime];
@@ -241,42 +107,235 @@ slotCell(data, table, time, store) {
         const isPrevSameBooking = prevSlot?.booking_id === bookingId && mergeableStatuses.includes(prevSlot?.status);
         const isNextSameBooking = nextSlot?.booking_id === bookingId && mergeableStatuses.includes(nextSlot?.status);
 
-        if (isPrevSameBooking) {
-            borderTop = false;
-            borderRadius = 'border-radius: 0 0 0 0;';
-            hideText = true;
+        // --- Определяем цвет и текст ---
+        if (isOngoing) {
+            cls = 'bg-blue-500 text-white';
+            textBottom = 'Идёт сейчас';
+            clickable = true
+            if (user?.is_staff) {
+                textTop = username;
+            } else if (isUserBooking) {
+                textTop = 'Ваша бронь';
+            } else {
+                textTop = '';
+            }
+            clickable = false;
+        } else if (isUserBooking) {
+            cls = 'bg-red-900 text-white ring-4 ring-inset ring-amber-950';
+            textTop = 'Ваша бронь';
+            switch (status) {
+                case 'pending':
+                    textBottom = 'Ожидает оплаты';
+                    dotColor = 'bg-yellow-500';
+                    break;
+                case 'paid':
+                    textBottom = 'Оплачено';
+                    dotColor = 'bg-red-500';
+                    break;
+                case 'completed':
+                    textBottom = 'Завершено';
+                    dotColor = 'bg-green-500';
+                    break;
+                case 'processing':
+                    textBottom = 'Идёт сейчас';
+                    dotColor = 'bg-blue-500';
+                    break;
+            }
+            clickable = false;
+        } else if (user?.is_staff) {
+            if (isSlotPast) {
+                switch (status) {
+                    case 'completed':
+                        cls = 'bg-green-100 text-green-800';
+                        textBottom = 'Завершено';
+                        textTop = username;
+                        dotColor = 'bg-green-500';
+                        break;
+                    case 'cancelled':
+                        cls = 'bg-red-100 text-red-800';
+                        textBottom = 'Отменено';
+                        textTop = username;
+                        dotColor = 'bg-red-500';
+                        break;
+                    case 'expired':
+                        cls = 'bg-gray-300 text-gray-900';
+                        textBottom = 'Просрочено';
+                        textTop = username || '';
+                        dotColor = 'bg-gray-500';
+                        break;
+                    default:
+                        cls = 'bg-gray-200 text-gray-800';
+                        textBottom = '—';
+                        textTop = username || '';
+                        dotColor = 'bg-gray-500';
+                }
+            } else {
+                switch (status) {
+                    case 'pending':
+                        cls = 'bg-yellow-500 text-white';
+                        textBottom = 'Ожидает оплаты';
+                        clickable = true;
+                        textTop = username;
+                        dotColor = 'bg-yellow-700';
+                        break;
+                    case 'paid':
+                        cls = 'bg-red-500 text-white font-bold';
+                        textBottom = 'Оплачено';
+                        textTop = username;
+                        dotColor = 'bg-red-700';
+                        break;
+                    case 'returned':
+                        cls = 'bg-purple-200 text-purple-900';
+                        textBottom = 'Оплата возвращена';
+                        textTop = username;
+                        dotColor = 'bg-purple-500';
+                        break;
+                    case 'expired':
+                        if (now < slotStart) {
+                            cls = 'bg-green-100 text-green-800 border-2 border-green-500';
+                            textBottom = 'Свободен';
+                            clickable = true;
+                            textTop = '';
+                            dotColor = 'bg-green-500';
+                            borderColor = 'border-green-500';
+                        } else {
+                            cls = 'bg-gray-300 text-gray-900';
+                            textBottom = 'Просрочено';
+                            textTop = username || '';
+                            dotColor = 'bg-gray-500';
+                        }
+                        break;
+                    default:
+                        cls = 'bg-green-100 text-green-800 border-2 border-green-500';
+                        textBottom = 'Свободен';
+                        clickable = true;
+                        textTop = '';
+                        dotColor = 'bg-green-500';
+                        borderColor = 'border-green-500';
+                }
+            }
         } else {
-            borderRadius = 'border-radius: 0.75rem 0.75rem 0 0;';
+            if (isSlotPast) {
+                if (status === 'completed') {
+                    cls = 'bg-green-100 text-green-800';
+                    textBottom = 'Завершено';
+                    dotColor = 'bg-green-500';
+                } else {
+                    cls = 'bg-gray-200 text-gray-800';
+                    textBottom = '—';
+                    dotColor = 'bg-gray-500';
+                }
+                textTop = '';
+            } else {
+                switch (status) {
+                    case 'pending':
+                        cls = 'bg-white text-yellow-800 border-2 border-yellow-500';
+                        textBottom = 'Ожидает оплаты';
+                        clickable = false;
+                        dotColor = 'bg-yellow-500';
+                        borderColor = 'border-yellow-500';
+                        break;
+                    case 'paid':
+                        cls = 'bg-white text-red-800 border-2 border-red-500';
+                        textBottom = 'Занят';
+                        dotColor = 'bg-red-500';
+                        borderColor = 'border-red-500';
+                        break;
+                    case 'expired':
+                        if (now < slotStart) {
+                            cls = 'bg-white text-green-800 border-2 border-green-500';
+                            textBottom = 'Свободен';
+                            clickable = true;
+                            dotColor = 'bg-green-500';
+                            borderColor = 'border-green-500';
+                        } else {
+                            cls = 'bg-gray-200 text-gray-800';
+                            textBottom = '—';
+                            dotColor = 'bg-gray-500';
+                        }
+                        break;
+                    default:
+                        cls = 'bg-white text-green-800 border-2 border-green-500';
+                        textBottom = 'Свободен';
+                        clickable = true;
+                        dotColor = 'bg-green-500';
+                        borderColor = 'border-green-500';
+                }
+                textTop = '';
+            }
         }
 
-        if (!isNextSameBooking) {
-            borderRadius = 'border-radius: 0 0 0.75rem 0.75rem;';
+        if (!clickable && status === 'available' && isWithin5Minutes) {
+            clickable = true;
         }
-    }
 
-    // --- onClick ---
-    let onClick = null;
-    if ((['expired', 'cancelled', 'returned'].includes(status) && clickable) || (status === 'available' && clickable)) {
-        onClick = `openCreateBooking({date:'${data.date}',time:'${time}',tableId:${table.number}})`;
-    } else if (bookingId && user?.is_staff) {
-        onClick = `openBookingDetail(${bookingId})`;
-    } else if (clickable) {
-        onClick = `openCreateBooking({date:'${data.date}',time:'${time}',tableId:${table.number}})`;
-    }
+        let borderRadiusClass = 'rounded-xl';
+        if (bookingId && mergeableStatuses.includes(status)) {
+            if (!isPrevSameBooking && !isNextSameBooking) {
+                borderRadiusClass = 'rounded-xl';                   // один слот
+            } else if (!isPrevSameBooking) {
+                borderRadiusClass = 'rounded-t-xl rounded-b-none';  // верхняя часть
+            } else if (!isNextSameBooking) {
+                borderRadiusClass = 'rounded-b-xl rounded-t-none';  // нижняя часть
+            } else {
+                borderRadiusClass = 'rounded-none';                // середина
+            }
+        }
 
-    return html`
-        <div class="p-px" style="${!borderTop ? 'margin-top:-1px;' : ''}">
-            <div
-                class="flex flex-col items-center justify-center h-12 w-full leading-tight text-center ${cls} ${onClick ? 'cursor-pointer hover:opacity-90' : ''}"
-                style="${capsuleStyle}${borderRadius}"
-                ${onClick ? `onclick="${onClick}"` : ''}
-            >
-                ${!hideText && textTop ? `<div class="text-xl">${textTop}</div>` : ''}
-                ${!hideText && textBottom ? `<div class="text-xl">${textBottom}</div>` : ''}
+// --- Бордер слева: добавим inline только цвет бордера ---
+        let borderLeftStyle = '';
+        if (bookingId && mergeableStatuses.includes(status)) {
+            const hue = bookingId % 360;
+            borderLeftStyle = `border-left-width: 4px; border-left-style: solid; border-left-color: hsl(${hue}, 70%, 50%)`;
+        }
+        let borderBottomStyle = '';
+        if (bookingId && mergeableStatuses.includes(status) && !isNextSameBooking) {
+            const hue = bookingId % 360;
+            borderBottomStyle = `border-bottom-width: 4px; border-bottom-style: solid; border-bottom-color: hsl(${hue}, 70%, 50%)`;
+        }
+
+        const combinedStyle = [borderLeftStyle, borderBottomStyle].filter(Boolean).join('; ');
+
+// --- Собираем итоговый класс для бордера (без цвета) ---
+        let borderLeftClass = '';
+        if (bookingId && mergeableStatuses.includes(status)) {
+            borderLeftClass = 'border-l-4';  // Толщина и стиль задаём классом, цвет через inline
+        }
+        // --- onClick ---
+        let onClick = null;
+        if (isOngoing && !user?.is_staff) {
+            onClick = null;
+        } else if ((['expired', 'cancelled', 'returned'].includes(status) && clickable) ||
+            (status === 'available' && clickable)) {
+            onClick = `openCreateBooking({date:'${data.date}',time:'${time}',tableId:${table.number}})`;
+        } else if (bookingId && user?.is_staff) {
+            onClick = `openBookingDetail(${bookingId})`;
+        } else if (clickable) {
+            onClick = `openCreateBooking({date:'${data.date}',time:'${time}',tableId:${table.number}})`;
+        }
+
+        // --- Скрытие текста для середины капсулы ---
+        const hideText = bookingId && mergeableStatuses.includes(status) && isPrevSameBooking;
+        const marginTop = bookingId && mergeableStatuses.includes(status) && isPrevSameBooking ? 'margin-top:-1px;' : '';
+        const clickableClass = onClick ? 'cursor-pointer hover:opacity-90' : '';
+
+        return html`
+            <div class="p-px" style="${marginTop}">
+               <div
+    class="relative flex flex-col items-center justify-center h-12 w-full leading-tight text-center
+     ${cls} ${borderLeftClass} ${borderRadiusClass} ${clickableClass}"
+    style="${combinedStyle}"
+    ${onClick ? `onclick="${onClick}"` : ''}
+
+                >
+                    ${!isOngoing && dotColor ? html`
+                        <div class="absolute top-1 left-1 w-2 h-2 ${dotColor} rounded-full"></div>` : ''}
+                    ${!hideText && textTop ? `<div class="text-xs">${textTop}</div>` : ''}
+                    ${!hideText && textBottom ? `<div class="text-xs">${textBottom}</div>` : ''}
+                </div>
             </div>
-        </div>
-    `;
-}
+        `;
+    }
 };
 window.openCreateBooking = ({date, time, tableId}) => {
 

@@ -120,7 +120,7 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         context['user'] = user
         context['profile_form'] = ProfileUpdateForm(instance=user)
         context['password_form'] = PasswordChangeForm(user=user)
-        context['slot_view_mode'] = user.slot_view_mode or 60
+        context['slot_view_mode'] = user.slot_view_mode or 30
 
         # Получаем бронирования пользователя, упорядоченные по дате начала (свежие первые)
         bookings_qs = Booking.objects.filter(user=user).order_by('-start_time')
@@ -263,7 +263,7 @@ logger = logging.getLogger(__name__)
 def update_slot_view_mode(request):
     try:
         data = json.loads(request.body)
-        view_mode = int(data.get('slot_view_mode', 60))
+        view_mode = int(data.get('slot_view_mode', 30))
         logger.info(f"Получен запрос на обновление режима: {view_mode} для пользователя {request.user}")
 
         if view_mode not in [30, 60]:
